@@ -44,13 +44,15 @@ class Browser(object):
         return browser
 
     def Firefox(self, image_enable=False, incognito=False):
-        firefox_options = webdriver.FirefoxOptions()
+        firefox_profile = webdriver.FirefoxProfile()
         # Disable images
-        firefox_options.set_preference(
-            "permissions.default.image", 2 if image_enable else 1
-        )
-        firefox_options.add_argument("--private" if incognito else "")
-        browser = webdriver.Firefox(firefox_options=firefox_options)
+        if image_enable:
+            firefox_profile.set_preference("permissions.default.image", 1)
+        else:
+            firefox_profile.set_preference("permissions.default.image", 2)
+        if incognito:
+            firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
+        browser = webdriver.Firefox(firefox_profile=firefox_profile)
         return browser
 
     def _download_chrome_driver_not_exist(self, exe_path):
