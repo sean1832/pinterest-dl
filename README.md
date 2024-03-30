@@ -32,6 +32,12 @@ This CLI tool allows for the scraping and downloading of images from Pinterest. 
 
 ## Installation
 
+### Using pip (recommended)
+```bash
+pip install pinterest-cli
+```
+
+### Using git
 ```bash
 git clone https://github.com/sean1832/pinterest-cli.git
 cd pinterest-cli
