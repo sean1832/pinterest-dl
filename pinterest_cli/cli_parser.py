@@ -18,6 +18,7 @@ def get_parser():
     scrape_cmd.add_argument("-w", "--write", help="Write urls to json file")
     scrape_cmd.add_argument("-t", "--threshold", type=int, default=20, help="Number of scroll to perform (default: 20)")
     scrape_cmd.add_argument("-p", "--persistence", type=int, default=120, help="Time to wait for page to load (default: 120)")
+    scrape_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to download (e.g. 512x512). WARNING: This may be slow.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
     scrape_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")

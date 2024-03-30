@@ -22,7 +22,7 @@ setup(
             "manifest.json",
         ]
     },
-    install_requires=["selenium>=4.9.0"],
+    install_requires=["selenium>=4.9.0", "pillow>=10.1.0"],
     entry_points={
         "console_scripts": [
             "pinterest-cli = pinterest_cli.main:main",

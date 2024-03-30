@@ -66,6 +66,7 @@ pinterest-cli scrape [url] [options]
 - `-w`, `--write [file]`: Write scraped URLs to a JSON file.
 - `-t`, `--threshold [number]`: Number of scrolls to perform on the page (default: 20).
 - `-p`, `--persistence [seconds]`: Time to wait for the page to load (default: 120 seconds).
+- `-r`, `--resolution [width]x[height]`: minimum resolution to download (e.g. 512x512). **This may be slow.**
 - `--incognito`: Enable incognito mode.
 - `--dry-run`: Run the scrape without downloading images.
 - `--firefox`: Use the Firefox browser for scraping.

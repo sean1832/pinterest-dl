@@ -2,7 +2,16 @@ from pinterest_cli import cli_parser, downloader, io, scraper, utils
 
 
 def run_scrape(
-    url, threshold, firefox, output, write, persistence, incognito, dry_run, verbose
+    url,
+    threshold,
+    firefox,
+    output,
+    write,
+    persistence,
+    incognito,
+    dry_run,
+    verbose,
+    min_resolution,
 ):
     browser = scraper.Browser().Chrome(
         exe_path=utils.get_root().joinpath("bin", "chromedriver.exe"),
@@ -11,9 +20,16 @@ def run_scrape(
     if firefox:
         browser = scraper.Browser().Firefox()
     try:
+        if min_resolution:
+            print("Minimum resolution set. This may be slow.")
+            min_resolution = tuple(map(int, min_resolution.split("x")))
         pin_scraper = scraper.Pinterest(browser)
         img_urls = pin_scraper.scrape(
-            url, threshold=threshold, presistence=persistence, verbose=verbose
+            url,
+            threshold=threshold,
+            presistence=persistence,
+            verbose=verbose,
+            min_resolution=min_resolution,
         )
     finally:
         browser.close()
@@ -52,6 +68,7 @@ def main():
             args.incognito,
             args.dry_run,
             args.verbose,
+            args.resolution,
         )
     elif args.cmd == "download":
         run_download(args.url_list, args.output, args.verbose)
