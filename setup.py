@@ -3,7 +3,7 @@ import json
 from setuptools import find_packages, setup
 
 manifest = json.load(open("pinterest_cli/manifest.json", "r"))
-with open("README.md", "r") as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
@@ -31,8 +31,7 @@ setup(
     python_rquires=">=3.10",
     # https://pypi.org/classifiers/
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Science/Research",
+        "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
