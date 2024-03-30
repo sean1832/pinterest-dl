@@ -19,6 +19,12 @@ This CLI tool allows for the scraping and downloading of images from Pinterest. 
 - [x] Support for Firefox browser.
 - [x] Customizable scroll threshold and page persistence.
 
+### Known Issues
+- [ ] Firefox browser support is experimental and may not work as expected.
+- [ ] May not work with Pinterest URLs that require login.
+- [ ] May not work with Pinterest URLs with search queries.
+- [ ] Does not support MacOS and Linux.
+
 
 ## Requirements
 - Python 3.10+
