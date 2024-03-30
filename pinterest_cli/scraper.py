@@ -40,7 +40,7 @@ class Browser(object):
         )
         if incognito:
             chrome_options.add_argument("--incognito")
-        browser = webdriver.Chrome(chrome_options=chrome_options, service=service)
+        browser = webdriver.Chrome(options=chrome_options, service=service)
         return browser
 
     def Firefox(self, image_enable=False, incognito=False):
