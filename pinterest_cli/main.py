@@ -1,3 +1,5 @@
+import requests
+
 from pinterest_cli import cli_parser, downloader, io, scraper, utils
 
 
@@ -20,16 +22,12 @@ def run_scrape(
     if firefox:
         browser = scraper.Browser().Firefox()
     try:
-        if min_resolution:
-            print("Minimum resolution set. This may be slow.")
-            min_resolution = tuple(map(int, min_resolution.split("x")))
         pin_scraper = scraper.Pinterest(browser)
         img_urls = pin_scraper.scrape(
             url,
             threshold=threshold,
             presistence=persistence,
             verbose=verbose,
-            min_resolution=min_resolution,
         )
     finally:
         browser.close()
@@ -38,8 +36,21 @@ def run_scrape(
     if write:
         io.write_json(img_urls, write, indent=4)
     if not dry_run:
+        downloaded_files = []
         for i in img_urls:
-            downloader.download(i, output, verbose=verbose)
+            try:
+                downloaded_file = downloader.download(i, output, verbose=verbose)
+            except requests.exceptions.HTTPError:
+                # if original image is not available, try to download 736x version
+                i = i.replace("originals", "736x")
+                downloaded_file = downloader.download(i, output, verbose=verbose)
+
+            if downloaded_file:
+                downloaded_files.append(downloaded_file)
+        # post download
+        if min_resolution:
+            for i in downloaded_files:
+                utils.prune_by_resolution(i, min_resolution)
     else:
         for i in img_urls:
             print(i)

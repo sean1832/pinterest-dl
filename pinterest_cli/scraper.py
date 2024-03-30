@@ -3,10 +3,8 @@ import os
 import random
 import socket
 import time
-from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
@@ -85,8 +83,6 @@ class Pinterest(object):
         threshold=20,
         presistence=120,
         verbose=False,
-        min_resolution=None,
-        max_try=5,
     ):
         final_results = []
         previous_divs = []
@@ -117,16 +113,9 @@ class Pinterest(object):
                             src = image.get_attribute("src")
                             if src and "/236x/" in src:
                                 src = src.replace("/236x/", "/originals/")
-                                if min_resolution:
-                                    # parse resolution
-                                    res_x, rex_y = min_resolution
-                                    resolution = self._try_get_img_resultion(
-                                        src, max_tries=max_try, verbose=verbose
-                                    )
-                                    if resolution and resolution > (res_x, rex_y):
-                                        final_results.append(src)
-                                else:
-                                    final_results.append(src)
+                                final_results.append(src)
+                                if verbose:
+                                    print(src)
                     previous_divs = copy.copy(divs)  # copy to avoid reference
                     final_results = list(set(final_results))  # remove duplicates
 
@@ -145,32 +134,7 @@ class Pinterest(object):
             return final_results
         return final_results
 
-    def _try_get_img_resultion(
-        self, src, chunk_size=1024, max_tries=5, tries=0, verbose=False
-    ):
-        """Get image resolution from src.
-
-        Args:
-            src (str): image source.
-            chunk_size (int, optional): Chunk size. Defaults to 1024.
-            max_tries (int, optional): Maximum tries. Defaults to 10.
-            tries (int, DO NOT MODIFY): Current try. Defaults to 0.
-
-        Returns:
-            tuple: image resolution.
-        """
-        if tries > max_tries:
-            if verbose:
-                print("Max tries exceeded.")
-            return None
-        sample_chunk = downloader.download_first_chunk(src, chunk_size=chunk_size)
-        try:
-            img = Image.open(BytesIO(sample_chunk))
-            if verbose:
-                print(f"Image resolution: {img.size}, tries: {tries}, src: {src}")
-            return img.size
-        except IOError:
-            self._try_get_img_resultion(src, chunk_size + 1024, max_tries, tries + 1)
+    
 
     def _is_div_ad(self, div: WebElement):
         """Check if div is an ad.
