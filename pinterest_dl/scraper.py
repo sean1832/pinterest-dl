@@ -22,7 +22,9 @@ class Browser(object):
     def __init__(self):
         self.browser = None
 
-    def Chrome(self, image_enable=False, incognito=False, exe_path="chromedriver.exe"):
+    def Chrome(
+        self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headless=False
+    ):
         if not os.path.exists(exe_path):
             driver_installer.install_chrome_driver(
                 utils.get_appdata_dir(), version="123.0.6312.86", platform="win64"
@@ -39,6 +41,9 @@ class Browser(object):
         )
         if incognito:
             chrome_options.add_argument("--incognito")
+        if headless:
+            print("Running in headless mode")
+            chrome_options.add_argument("--headless=new")
         browser = webdriver.Chrome(options=chrome_options, service=service)
         return browser
 

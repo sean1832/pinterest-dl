@@ -1,5 +1,6 @@
 from pinterest_dl import api, cli_parser, io, utils
 
+
 def main():
     parser = cli_parser.get_parser()
     args = parser.parse_args()
@@ -13,6 +14,7 @@ def main():
             write=args.write,
             firefox=args.firefox,
             incognito=args.incognito,
+            headless=args.headless,
             dry_run=args.dry_run,
             verbose=args.verbose,
             min_resolution=utils.parse_resolution(args.resolution) if args.resolution else None,

@@ -43,6 +43,7 @@ def run_scrape(
     write: str | Path = None,
     firefox: bool = False,
     incognito: bool = False,
+    headless: bool = False,
     dry_run: bool = False,
     verbose: bool = False,
     min_resolution: Tuple[int, int] = None,
@@ -64,6 +65,7 @@ def run_scrape(
     browser = scraper.Browser().Chrome(
         exe_path=utils.get_appdata_dir("chromedriver.exe"),
         incognito=incognito,
+        headless=headless,
     )
     if firefox:
         browser = scraper.Browser().Firefox()

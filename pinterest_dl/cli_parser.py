@@ -23,6 +23,7 @@ def get_parser():
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
     scrape_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    scrape_cmd.add_argument("--headless", action="store_true", help="Run in headless mode")
 
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
