@@ -3,7 +3,6 @@ import os
 import random
 import socket
 import time
-from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
@@ -26,7 +25,7 @@ class Browser(object):
     def Chrome(self, image_enable=False, incognito=False, exe_path="chromedriver.exe"):
         if not os.path.exists(exe_path):
             driver_installer.install_chrome_driver(
-                Path(exe_path).parent, version="123.0.6312.86", platform="win64"
+                utils.get_appdata_dir(), version="123.0.6312.86", platform="win64"
             )
 
         service = webdriver.chrome.service.Service(exe_path)

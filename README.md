@@ -1,4 +1,4 @@
-# Pinterest Image Scraper CLI
+# Pinterest Image Downloader CLI (pinterest-dl)
 ![PyPI - Version](https://img.shields.io/pypi/v/pinterest-dl)
 ![Static Badge](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![PyPI - License](https://img.shields.io/pypi/l/pinterest-dl)
