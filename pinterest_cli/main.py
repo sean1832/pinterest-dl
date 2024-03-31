@@ -1,6 +1,11 @@
-import requests
-
 from pinterest_cli import cli_parser, downloader, io, scraper, utils
+
+
+def run_download(img_urls, output, verbose):
+    fallback_urls = [i.replace("/originals/", "/736x/") for i in img_urls]
+    return downloader.download_concurrent_with_fallback(
+        img_urls, output, fallback_urls, verbose=verbose
+    )
 
 
 def run_scrape(
@@ -36,17 +41,8 @@ def run_scrape(
     if write:
         io.write_json(img_urls, write, indent=4)
     if not dry_run:
-        downloaded_files = []
-        for i in img_urls:
-            try:
-                downloaded_file = downloader.download(i, output, verbose=verbose)
-            except requests.exceptions.HTTPError:
-                # if original image is not available, try to download 736x version
-                i = i.replace("originals", "736x")
-                downloaded_file = downloader.download(i, output, verbose=verbose)
+        downloaded_files = run_download(img_urls, output, verbose)
 
-            if downloaded_file:
-                downloaded_files.append(downloaded_file)
         # post download
         if min_resolution:
             for i in downloaded_files:
@@ -54,14 +50,6 @@ def run_scrape(
     else:
         for i in img_urls:
             print(i)
-    print("Done.")
-
-
-def run_download(url_list, output, verbose):
-    img_urls = io.read_json(url_list)
-    for i in img_urls:
-        downloader.download(i, output, verbose=verbose)
-    print("Done.")
 
 
 def main():
@@ -81,8 +69,11 @@ def main():
             args.verbose,
             args.resolution,
         )
+        print("\nDone.")
     elif args.cmd == "download":
-        run_download(args.url_list, args.output, args.verbose)
+        img_list = io.read_json(args.url_list)
+        run_download(img_list, args.output, args.verbose)
+        print("\nDone.")
     else:
         parser.print_help()
 

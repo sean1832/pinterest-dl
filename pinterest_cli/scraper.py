@@ -68,6 +68,7 @@ class Pinterest(object):
     def __init__(self, browser=None):
         self.browser: WebDriver = browser
 
+    # currently not used
     def login(self, email, password):
         self.browser.get("https://www.pinterest.com.au/login/")
         email_field = self.browser.find_element(By.ID, "email")
@@ -92,9 +93,7 @@ class Pinterest(object):
             self.browser.get(url)
             while threshold > 0:
                 try:
-                    divs = self.browser.find_elements(
-                        By.CSS_SELECTOR, "div[data-test-id='pin']"
-                    )
+                    divs = self.browser.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
                     if divs == previous_divs:
                         tries += 1
                     else:
@@ -133,8 +132,6 @@ class Pinterest(object):
         except KeyboardInterrupt:
             return final_results
         return final_results
-
-    
 
     def _is_div_ad(self, div: WebElement):
         """Check if div is an ad.
