@@ -25,16 +25,14 @@ def parse_resolution(resolution: str) -> tuple[int, int]:
         raise ValueError("Invalid resolution format. Use 'width x height'.")
 
 
-def prune_by_resolution(input_file, resolution):
+def prune_by_resolution(input_file: str | Path, resolution: tuple[int, int]):
     size = (0, 0)
     with Image.open(input_file) as im:
         size = im.size
 
-    res = parse_resolution(resolution)
-
-    if size < res:
+    if size < resolution:
         input_file.unlink()
-        print(f"Removed {input_file}, resolution: {size} < {res}")
+        print(f"Removed {input_file}, resolution: {size} < {resolution}")
 
 
 def get_appdata_dir(path_under=None):
