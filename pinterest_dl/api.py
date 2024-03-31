@@ -62,13 +62,15 @@ def run_scrape(
         verbose (bool, optional): print debug logs. Defaults to False.
         min_resolution (Tuple[int, int], optional): minimum resolution to keep. Defaults to None.
     """
-    browser = scraper.Browser().Chrome(
-        exe_path=utils.get_appdata_dir("chromedriver.exe"),
-        incognito=incognito,
-        headless=headless,
-    )
     if firefox:
-        browser = scraper.Browser().Firefox()
+        browser = scraper.Browser().Firefox(incognito=incognito, headless=headless)
+    else:
+        browser = scraper.Browser().Chrome(
+            exe_path=utils.get_appdata_dir("chromedriver.exe"),
+            incognito=incognito,
+            headless=headless,
+        )
+
     try:
         pin_scraper = scraper.Pinterest(browser)
         img_urls = pin_scraper.scrape(

@@ -47,16 +47,19 @@ class Browser(object):
         browser = webdriver.Chrome(options=chrome_options, service=service)
         return browser
 
-    def Firefox(self, image_enable=False, incognito=False):
-        firefox_profile = webdriver.FirefoxProfile()
+    def Firefox(self, image_enable=False, incognito=False, headless=False):
+        firefox_options = webdriver.FirefoxOptions()
         # Disable images
         if image_enable:
-            firefox_profile.set_preference("permissions.default.image", 1)
+            firefox_options.set_preference("permissions.default.image", 1)
         else:
-            firefox_profile.set_preference("permissions.default.image", 2)
+            firefox_options.set_preference("permissions.default.image", 2)
         if incognito:
-            firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
-        browser = webdriver.Firefox(firefox_profile=firefox_profile)
+            firefox_options.set_preference("browser.privatebrowsing.autostart", True)
+        if headless:
+            print("Running in headless mode")
+            firefox_options.add_argument("--headless")
+        browser = webdriver.Firefox(options=firefox_options)
         return browser
 
     def _download_chrome_driver_not_exist(self, exe_path):
