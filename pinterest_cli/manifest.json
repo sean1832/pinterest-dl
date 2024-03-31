@@ -1,6 +1,6 @@
 {
     "name": "pinterest-cli",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "author": "Zeke Zhang",
     "description": "CLI tool to scrape images from Pinterest url",
     "url": "https://github.com/sean1832/pinterest-cli",
