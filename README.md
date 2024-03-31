@@ -1,50 +1,54 @@
 # Pinterest Image Scraper CLI
-
-This CLI tool allows for the scraping and downloading of images from Pinterest. Using Selenium for automation, it provides functionality to scrape images from a given Pinterest URL and download them to a specified directory. 
-
-> **⚠️Disclaimer:**
->This project is not affiliated with Pinterest. It is intended for educational purposes only. Automating the scraping of websites may violate their [terms of service](https://developers.pinterest.com/terms/). Repo owner is not responsible for any misuse of this tool. Use at your own legal risk.
-
-> **🗒️Note:**
-> This project is inspired by [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
-
-### Features
-- [x] Scrape images from a Pinterest URL.
-- [x] Download images from a list of URLs.
-- [x] Customizable output directory.
-- [x] Write scraped URLs to a JSON file.
-- [x] Incognito mode for scraping.
-- [x] Verbose output for debugging.
-- [x] Dry-run mode for outputting URLs without downloading images.
-- [x] Support for Firefox browser.
-- [x] Customizable scroll threshold and page persistence.
-
-### Known Issues
-- [ ] Firefox browser support is experimental and may not work as expected.
-- [ ] May not work with Pinterest URLs that require login.
-- [ ] May not work with Pinterest URLs with search queries.
-- [ ] Does not support MacOS and Linux.
+![PyPI - Version](https://img.shields.io/pypi/v/pinterest-cli)
+![Static Badge](https://img.shields.io/badge/python-3.10%2B-yellow)
+![PyPI - License](https://img.shields.io/pypi/l/pinterest-cli)
 
 
-## Requirements
-- Python 3.10+
+
+This CLI (Command Line Interface) tool facilitates the scraping and downloading of images from [Pinterest](https://pinterest.com). Using [Selenium](https://selenium.dev) for automation, it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
+
+> **⚠️ Disclaimer:**  
+> This project is independent and not affiliated with Pinterest. It's designed solely for educational purposes. Please be aware that automating the scraping of websites might conflict with their [Terms of Service](https://developers.pinterest.com/terms/). The repository owner disclaims any liability for misuse of this tool. Use it responsibly and at your own legal risk.
+
+> **🗒️ Note:**  
+> This project draws inspiration from [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
+
+## 🌟 Features
+- ✅ Scrape images directly from a Pinterest URL.
+- ✅ Asynchronously download images from a list of URLs. ([see pull request](https://github.com/sean1832/pinterest-cli/pull/1))
+- ✅ Configure the output directory to your liking.
+- ✅ Save scraped URLs to a JSON file for easy access.
+- ✅ Utilize incognito mode to keep your scraping discreet.
+- ✅ Access detailed output for effective debugging.
+- ✅ Perform dry-runs to receive URLs without downloading the images.
+- ✅ Full support for the Firefox browser.
+- ✅ Customize scroll threshold and page persistence for tailored scraping.
+
+## 🚩 Known Issues
+- 🔲 Experimental Firefox browser support might not perform as expected.
+- 🔲 Limited functionality with Pinterest URLs requiring login.
+- 🔲 Incompatibility with Pinterest URLs that include search queries.
+- 🔲 Currently does not support MacOS and Linux platforms.
+
+## 📋 Requirements
+- Python 3.10 or newer
 - Chrome or Firefox browser
 
-## Installation
+## 📥 Installation
 
-### Using pip (recommended)
+### Using pip (Recommended)
 ```bash
 pip install pinterest-cli
 ```
 
-### Using git
+### Cloning from GitHub
 ```bash
 git clone https://github.com/sean1832/pinterest-cli.git
 cd pinterest-cli
 pip install .
 ```
 
-## Usage
+## 🛠 Usage
 
 ### General Command Structure
 ```bash
@@ -54,7 +58,7 @@ pinterest-cli [command] [options]
 ### Commands
 
 #### 1. Scrape
-Scrape images from a specified Pinterest URL.
+Extract images from a specified Pinterest URL.
 
 **Syntax:**
 ```bash
@@ -62,18 +66,18 @@ pinterest-cli scrape [url] [options]
 ```
 
 **Options:**
-- `-o`, `--output [directory]`: Specify the output directory for the images (default: `imgs`).
-- `-w`, `--write [file]`: Write scraped URLs to a JSON file.
-- `-t`, `--threshold [number]`: Number of scrolls to perform on the page (default: 20).
-- `-p`, `--persistence [seconds]`: Time to wait for the page to load (default: 120 seconds).
-- `-r`, `--resolution [width]x[height]`: minimum resolution to download (e.g. 512x512). **This may be slow.**
-- `--incognito`: Enable incognito mode.
-- `--dry-run`: Run the scrape without downloading images.
-- `--firefox`: Use the Firefox browser for scraping.
-- `--verbose`: Enable verbose output.
+- `-o`, `--output [directory]`: Set the directory to save images (default: `imgs`).
+- `-w`, `--write [file]`: Save scraped URLs to a JSON file.
+- `-t`, `--threshold [number]`: Set the number of page scrolls (default: 20).
+- `-p`, `--persistence [seconds]`: Wait time for page loading (default: 120 seconds).
+- `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
+- `--incognito`: Activate incognito mode for scraping.
+- `--dry-run`: Execute scrape without downloading images.
+- `--firefox`: Opt for Firefox as the scraping browser.
+- `--verbose`: Enable detailed output for debugging.
 
 #### 2. Download
-Download images from a list of URLs specified in a file.
+Download images from a list of URLs provided in a file.
 
 **Syntax:**
 ```bash
@@ -81,8 +85,7 @@ python scraper.py download [url_list] [options]
 ```
 
 **Options:**
-- `-o`, `--output [directory]`: Specify the output directory for the images (default: `imgs`).
-- `--verbose`: Enable verbose output.
+- Same as for the `scrape` command.
 
 ### Examples
 
@@ -96,7 +99,5 @@ python scraper.py scrape "https://www.pinterest.com/exampleBoard" -o myimages -t
 python scraper.py download urls.json -o downloaded_imgs --verbose
 ```
 
-## License
+## 📜 License
 [Apache License 2.0](LICENSE)
-
-
