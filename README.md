@@ -85,7 +85,9 @@ python scraper.py download [url_list] [options]
 ```
 
 **Options:**
-- Same as for the `scrape` command.
+- `-o`, `--output [directory]`: Specify the output directory for the images (default: `imgs`).
+- `-r`, `--resolution [width]x[height]`: minimum resolution to download (e.g. 512x512).
+- `--verbose`: Enable verbose output.
 
 ### Examples
 
