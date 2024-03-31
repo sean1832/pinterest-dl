@@ -17,3 +17,9 @@ def prune_by_resolution(input_file, resolution):
     if size < res:
         input_file.unlink()
         print(f"Removed {input_file}, resolution: {size} < {res}")
+
+
+def get_appdata_dir(path_under=None):
+    if path_under:
+        return Path.home().joinpath("AppData", "Local", "pinterest-dl", path_under)
+    return Path.home().joinpath("AppData", "Local", "pinterest-dl")

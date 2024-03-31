@@ -27,7 +27,7 @@ def run_scrape(
     min_resolution,
 ):
     browser = scraper.Browser().Chrome(
-        exe_path=utils.get_root().joinpath("bin", "chromedriver.exe"),
+        exe_path=utils.get_appdata_dir("chromedriver.exe"),
         incognito=incognito,
     )
     if firefox:
