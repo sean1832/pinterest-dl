@@ -8,6 +8,12 @@ def run_download(img_urls, output, verbose):
     )
 
 
+def run_prune(local_images, min_resolution):
+    if min_resolution:
+        for i in local_images:
+            utils.prune_by_resolution(i, min_resolution)
+
+
 def run_scrape(
     url,
     threshold,
@@ -44,9 +50,7 @@ def run_scrape(
         downloaded_files = run_download(img_urls, output, verbose)
 
         # post download
-        if min_resolution:
-            for i in downloaded_files:
-                utils.prune_by_resolution(i, min_resolution)
+        run_prune(downloaded_files, min_resolution)
     else:
         for i in img_urls:
             print(i)
@@ -72,7 +76,8 @@ def main():
         print("\nDone.")
     elif args.cmd == "download":
         img_list = io.read_json(args.url_list)
-        run_download(img_list, args.output, args.verbose)
+        downloaded_files = run_download(img_list, args.output, args.verbose)
+        run_prune(downloaded_files, args.resolution)
         print("\nDone.")
     else:
         parser.print_help()
