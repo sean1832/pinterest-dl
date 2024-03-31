@@ -1,7 +1,7 @@
 # Pinterest Image Scraper CLI
-![PyPI - Version](https://img.shields.io/pypi/v/pinterest-cli)
+![PyPI - Version](https://img.shields.io/pypi/v/pinterest-dl)
 ![Static Badge](https://img.shields.io/badge/python-3.10%2B-yellow)
-![PyPI - License](https://img.shields.io/pypi/l/pinterest-cli)
+![PyPI - License](https://img.shields.io/pypi/l/pinterest-dl)
 
 
 
@@ -15,7 +15,7 @@ This CLI (Command Line Interface) tool facilitates the scraping and downloading 
 
 ## 🌟 Features
 - ✅ Scrape images directly from a Pinterest URL.
-- ✅ Asynchronously download images from a list of URLs. ([see pull request](https://github.com/sean1832/pinterest-cli/pull/1))
+- ✅ Asynchronously download images from a list of URLs. ([see pull request](https://github.com/sean1832/pinterest-dl/pull/1))
 - ✅ Configure the output directory to your liking.
 - ✅ Save scraped URLs to a JSON file for easy access.
 - ✅ Utilize incognito mode to keep your scraping discreet.
@@ -38,13 +38,13 @@ This CLI (Command Line Interface) tool facilitates the scraping and downloading 
 
 ### Using pip (Recommended)
 ```bash
-pip install pinterest-cli
+pip install pinterest-dl
 ```
 
 ### Cloning from GitHub
 ```bash
-git clone https://github.com/sean1832/pinterest-cli.git
-cd pinterest-cli
+git clone https://github.com/sean1832/pinterest-dl.git
+cd pinterest-dl
 pip install .
 ```
 
@@ -52,7 +52,7 @@ pip install .
 
 ### General Command Structure
 ```bash
-pinterest-cli [command] [options]
+pinterest-dl [command] [options]
 ```
 
 ### Commands
@@ -62,7 +62,7 @@ Extract images from a specified Pinterest URL.
 
 **Syntax:**
 ```bash
-pinterest-cli scrape [url] [options]
+pinterest-dl scrape [url] [options]
 ```
 
 **Options:**
@@ -81,7 +81,7 @@ Download images from a list of URLs provided in a file.
 
 **Syntax:**
 ```bash
-python scraper.py download [url_list] [options]
+pinterest-dl download [url_list] [options]
 ```
 
 **Options:**
@@ -93,12 +93,12 @@ python scraper.py download [url_list] [options]
 
 **Scraping Images:**
 ```bash
-python scraper.py scrape "https://www.pinterest.com/exampleBoard" -o myimages -t 30 --verbose
+pinterest-dl scrape "https://www.pinterest.com/exampleBoard" -o myimages -t 30 --verbose
 ```
 
 **Downloading Images:**
 ```bash
-python scraper.py download urls.json -o downloaded_imgs --verbose
+pinterest-dl download urls.json -o downloaded_imgs --verbose
 ```
 
 ## 📜 License

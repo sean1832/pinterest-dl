@@ -1,6 +1,6 @@
 import argparse
 
-from pinterest_cli import io, utils
+from pinterest_dl import io, utils
 
 
 # fmt: off

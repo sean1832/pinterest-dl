@@ -1,4 +1,4 @@
-from pinterest_cli import cli_parser, downloader, io, scraper, utils
+from pinterest_dl import cli_parser, downloader, io, scraper, utils
 
 
 def run_download(img_urls, output, verbose):

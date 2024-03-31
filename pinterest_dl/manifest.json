@@ -1,0 +1,8 @@
+{
+    "name": "pinterest-dl",
+    "version": "0.0.9",
+    "author": "Zeke Zhang",
+    "description": "An unofficial Pinterest image downloader",
+    "url": "https://github.com/sean1832/pinterest-dl",
+    "license": "Apache-2.0"
+}

@@ -2,7 +2,7 @@ import json
 
 from setuptools import find_packages, setup
 
-manifest = json.load(open("pinterest_cli/manifest.json", "r"))
+manifest = json.load(open("pinterest_dl/manifest.json", "r"))
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
@@ -25,7 +25,7 @@ setup(
     install_requires=["selenium>=4.9.0", "pillow>=10.1.0"],
     entry_points={
         "console_scripts": [
-            "pinterest-cli = pinterest_cli.main:main",
+            "pinterest-dl = pinterest_dl.main:main",
         ],
     },
     python_rquires=">=3.10",

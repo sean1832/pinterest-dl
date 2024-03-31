@@ -12,7 +12,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from pinterest_cli import downloader, driver_installer, utils
+from pinterest_dl import downloader, driver_installer, utils
 
 
 def randdelay(a, b):

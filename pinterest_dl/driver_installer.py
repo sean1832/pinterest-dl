@@ -2,7 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from pinterest_cli import downloader, io
+from pinterest_dl import downloader, io
 
 
 def print_chrome_version():
