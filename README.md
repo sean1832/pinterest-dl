@@ -75,6 +75,7 @@ pinterest-dl scrape [url] [options]
 - `--dry-run`: Execute scrape without downloading images.
 - `--firefox`: Opt for Firefox as the scraping browser.
 - `--verbose`: Enable detailed output for debugging.
+- `--headless`: Run the browser in headless mode. (no scraping progress output in headless mode)
 
 #### 2. Download
 Download images from a list of URLs provided in a file.

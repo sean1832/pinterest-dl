@@ -1,4 +1,4 @@
-from pinterest_dl import api, cli_parser, io
+from pinterest_dl import api, cli_parser, io, utils
 
 
 def main():
@@ -9,14 +9,15 @@ def main():
         api.run_scrape(
             args.url,
             args.threshold,
-            args.firefox,
             args.output,
-            args.write,
-            args.persistence,
-            args.incognito,
-            args.dry_run,
-            args.verbose,
-            args.resolution,
+            persistence=args.persistence,
+            write=args.write,
+            firefox=args.firefox,
+            incognito=args.incognito,
+            headless=args.headless,
+            dry_run=args.dry_run,
+            verbose=args.verbose,
+            min_resolution=utils.parse_resolution(args.resolution) if args.resolution else None,
         )
         print("\nDone.")
     elif args.cmd == "download":
