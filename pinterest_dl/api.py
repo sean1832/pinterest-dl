@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+from tqdm import tqdm
+
 from pinterest_dl import downloader, io, scraper, utils
 
 
@@ -32,16 +34,23 @@ def run_caption(files: List[str | Path], captions: List[str]):
         utils.write_img_caption(file, caption)
 
 
-def run_prune(local_images: List[str | Path], min_resolution: Tuple[int, int]):
+def run_prune(
+    local_images: List[str | Path], min_resolution: Tuple[int, int], verbose: bool = False
+):
     """prune images by resolution
 
     Args:
         local_images (List[str  |  Path]): list of image paths
         min_resolution (Tuple[int, int]): minimum resolution to keep
     """
+    new_imgs = []
     if min_resolution:
-        for i in local_images:
-            utils.prune_by_resolution(i, min_resolution)
+        for i in tqdm(local_images, desc="Pruning"):
+            if utils.prune_by_resolution(i, min_resolution, verbose=verbose):
+                continue
+            new_imgs.append(i)
+
+    return new_imgs
 
 
 def run_scrape(
@@ -104,7 +113,7 @@ def run_scrape(
     if not dry_run:
         downloaded_files = run_download(srcs, fallbacks, output, verbose)
         # post download
-        run_prune(downloaded_files, min_resolution)
+        downloaded_files = run_prune(downloaded_files, min_resolution)
         if caption:
             if verbose:
                 print("Writing captions to images")
