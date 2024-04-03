@@ -23,14 +23,17 @@ def run_download(
     return downloader.download_concurrent_with_fallback(urls, output, fallbacks, verbose=verbose)
 
 
-def run_caption(files: List[str | Path], captions: List[str]):
+def run_caption(files: List[str | Path], captions: List[str], verbose: bool = False):
     """write captions to image files
 
     Args:
         files (List[str  |  Path]): list of image paths
         captions (List[str]): list of captions
+        verbose (bool, optional): print debug logs. Defaults to False.
     """
     for file, caption in zip(files, captions):
+        if verbose:
+            print(f"{file} -> {caption}")
         utils.write_img_caption(file, caption)
 
 
@@ -46,10 +49,11 @@ def run_prune(
     new_imgs = []
     if min_resolution:
         for i in tqdm(local_images, desc="Pruning"):
-            if utils.prune_by_resolution(i, min_resolution, verbose=verbose):
-                continue
-            new_imgs.append(i)
-
+            if not utils.prune_by_resolution(i, min_resolution, verbose=verbose):
+                new_imgs.append(i)
+    else:
+        new_imgs = local_images
+    print(f"Pruned {len(local_images) - len(new_imgs)} images.")
     return new_imgs
 
 
@@ -115,9 +119,7 @@ def run_scrape(
         # post download
         downloaded_files = run_prune(downloaded_files, min_resolution)
         if caption:
-            if verbose:
-                print("Writing captions to images")
-            run_caption(downloaded_files, alts)
+            run_caption(downloaded_files, alts, verbose=verbose)
     else:
         for i in imgs:
             print(i)
