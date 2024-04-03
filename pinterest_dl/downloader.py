@@ -30,35 +30,36 @@ def download_with_fallback(url: str, output_dir, fallback_url, chunk_size=2048):
 
 
 def download_concurrent(urls: list, output_dir, chunk_size=2048, verbose=False):
-    results = []
+    results = [None] * len(urls)  # Initialize a list to hold the results in order
     with concurrent.futures.ThreadPoolExecutor() as executor, tqdm(
         total=len(urls), desc="Downloading"
     ) as pbar:
-        futures = [executor.submit(download, url, output_dir, chunk_size, verbose) for url in urls]
+        futures = {
+            executor.submit(download, url, output_dir, chunk_size): idx
+            for idx, url in enumerate(urls)
+        }
         for future in concurrent.futures.as_completed(futures):
+            result_index = futures[future]  # Get the original index for the result
             outfile = future.result()
+            results[result_index] = outfile  # Place the result in the corresponding position
             pbar.update(1)
-            if verbose:
-                print(f"Downloaded {outfile.name}")
-            results.append(outfile)
     return results
 
 
 def download_concurrent_with_fallback(
     urls: list, output_dir, fallback_urls, chunk_size=2048, verbose=False
 ):
-    results = []
+    results = [None] * len(urls)  # Initialize a list to hold the results in order
     with concurrent.futures.ThreadPoolExecutor() as executor, tqdm(
         total=len(urls), desc="Downloading"
     ) as pbar:
-        futures = [
-            executor.submit(download_with_fallback, url, output_dir, fallback_url, chunk_size)
-            for url, fallback_url in zip(urls, fallback_urls)
-        ]
+        futures = {
+            executor.submit(download_with_fallback, url, output_dir, fallback_url, chunk_size): idx
+            for idx, (url, fallback_url) in enumerate(zip(urls, fallback_urls))
+        }
         for future in concurrent.futures.as_completed(futures):
+            result_index = futures[future]  # Get the original index for the result
             outfile = future.result()
+            results[result_index] = outfile  # Place the result in the corresponding position
             pbar.update(1)
-            if verbose:
-                print(f"Downloaded {outfile.name}")
-            results.append(outfile)
     return results
