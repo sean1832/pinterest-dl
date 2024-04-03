@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 from pinterest_dl import api, cli_parser, io, utils
 
 
@@ -13,7 +12,7 @@ def main():
             args.url,
             args.limit,
             args.output,
-            persistence=args.persistence,
+            timeout=args.timeout,
             json=args.json,
             firefox=args.firefox,
             incognito=args.incognito,

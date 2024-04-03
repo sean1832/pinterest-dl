@@ -84,7 +84,7 @@ class Pinterest(object):
         self,
         url,
         limit=20,
-        presistence=120,
+        timeout=3,
         verbose=False,
     ):
         unique_results = set()  # Use a set to store unique results
@@ -99,11 +99,11 @@ class Pinterest(object):
                     divs = self.browser.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
                     if divs == previous_divs:
                         tries += 1
+                        time.sleep(1)  # delay 1 second
                     else:
                         tries = 0
-                    if tries > presistence:
-                        if verbose:
-                            print("Exiting: persistence exceeded")
+                    if tries > timeout:
+                        print(f"\nTimeout: no new images in ({timeout}) seconds.")
                         break
 
                     for div in divs:
@@ -115,10 +115,10 @@ class Pinterest(object):
                             src = image.get_attribute("src")
                             if src and "/236x/" in src:
                                 src = src.replace("/236x/", "/originals/")
-                                src_763 = src.replace("/originals/", "/736x/")
+                                src_736 = src.replace("/originals/", "/736x/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = {"src": src, "alt": alt, "fallback": src_763}
+                                    img_data = {"src": src, "alt": alt, "fallback": src_736}
                                     imgs_data.append(img_data)
                                     pbar.update(1)
                                     if verbose:
@@ -134,7 +134,8 @@ class Pinterest(object):
                     randdelay(1, 2)  # delay between 1 and 2 seconds
 
                 except StaleElementReferenceException:
-                    print("StaleElementReferenceException")
+                    if verbose:
+                        print("\nStaleElementReferenceException")
 
         except (socket.error, socket.timeout):
             print("Socket Error")

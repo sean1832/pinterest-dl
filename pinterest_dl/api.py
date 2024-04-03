@@ -32,9 +32,12 @@ def run_caption(files: List[str | Path], captions: List[str], verbose: bool = Fa
         verbose (bool, optional): print debug logs. Defaults to False.
     """
     for file, caption in zip(files, captions):
-        if verbose:
-            print(f"{file} -> {caption}")
-        utils.write_img_caption(file, caption)
+        try:
+            utils.write_img_caption(file, caption)
+            if verbose:
+                print(f"{file} -> {caption}")
+        except Exception as e:
+            print(f"Error captioning {file}: {e}")
 
 
 def run_prune(
@@ -61,7 +64,7 @@ def run_scrape(
     url: str,
     limit: int,
     output: str | Path,
-    persistence: int = 120,
+    timeout: int = 3,
     json: bool = False,
     firefox: bool = False,
     incognito: bool = False,
@@ -101,7 +104,7 @@ def run_scrape(
         imgs = pin_scraper.scrape(
             url,
             limit=limit,
-            presistence=persistence,
+            timeout=timeout,
             verbose=verbose,
         )
         srcs, alts, fallbacks = [], [], []

@@ -17,7 +17,7 @@ def get_parser():
     scrape_cmd.add_argument("output", help="Output directory")
     scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
-    scrape_cmd.add_argument("--persistence", type=int, default=120, help="Retry count if page does not load new content (default: 120)")
+    scrape_cmd.add_argument("--timeout", type=int, default=3, help="Timeout in seconds for requests (default: 3)")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
