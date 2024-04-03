@@ -24,13 +24,18 @@ def run_download(
 
 
 def run_caption(
-    files: List[str | Path], captions: List[str], indexs: List[int], verbose: bool = False
+    files: List[str | Path],
+    captions: List[str],
+    origins: List[str],
+    indexs: List[int],
+    verbose: bool = False,
 ):
     """write captions to image files
 
     Args:
         files (List[str  |  Path]): list of image paths
         captions (List[str]): list of captions
+        origins (List[str]): list of image origin urls
         indexs (List[int]): list of indexs to write caption
         verbose (bool, optional): print debug logs. Defaults to False.
     """
@@ -38,7 +43,10 @@ def run_caption(
         try:
             file = files[index]
             caption = captions[index]
-            utils.write_img_caption(file, caption)
+            origin = origins[index]
+            utils.write_img_comment(file, origin)
+            utils.write_img_subject(file, caption)
+
             if verbose:
                 print(f"{file} -> {caption}")
         except Exception as e:
@@ -113,11 +121,12 @@ def run_scrape(
             timeout=timeout,
             verbose=verbose,
         )
-        srcs, alts, fallbacks = [], [], []
+        srcs, alts, fallbacks, origins = [], [], [], []
         for i in imgs:
             srcs.append(i["src"])
             alts.append(i["alt"])
             fallbacks.append(i["fallback"])
+            origins.append(i["origin"])
     finally:
         browser.close()
 
@@ -128,7 +137,7 @@ def run_scrape(
         # post download
         pruned_idx = run_prune(downloaded_files, min_resolution)
         if caption:
-            run_caption(downloaded_files, alts, pruned_idx, verbose=verbose)
+            run_caption(downloaded_files, alts, origins, pruned_idx, verbose=verbose)
     else:
         for i in imgs:
             print(i)
