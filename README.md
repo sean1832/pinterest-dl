@@ -83,7 +83,7 @@ pinterest-dl scrape [url] [output_dir] [options]
 **Options:**
 - `-l`, `--limit [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
-- `-p`, `--persistence [number]`: Retry count if page does not load new content (default: 120 time).
+- `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--incognito`: Activate incognito mode for scraping.
 - `--json`: Save scraped URLs to a JSON file.
 - `--dry-run`: Execute scrape without downloading images.

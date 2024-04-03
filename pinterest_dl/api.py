@@ -101,7 +101,7 @@ def run_scrape(
         imgs = pin_scraper.scrape(
             url,
             limit=limit,
-            presistence=persistence,
+            timeout=persistence,
             verbose=verbose,
         )
         srcs, alts, fallbacks = [], [], []
