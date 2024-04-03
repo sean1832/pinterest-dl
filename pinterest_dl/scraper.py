@@ -103,7 +103,7 @@ class Pinterest(object):
                     else:
                         tries = 0
                     if tries > timeout:
-                        print(f"Timeout: no new images in ({timeout}) tries")
+                        print(f"\nTimeout: no new images in ({timeout}) seconds.")
                         break
 
                     for div in divs:
@@ -134,7 +134,8 @@ class Pinterest(object):
                     randdelay(1, 2)  # delay between 1 and 2 seconds
 
                 except StaleElementReferenceException:
-                    print("StaleElementReferenceException")
+                    if verbose:
+                        print("\nStaleElementReferenceException")
 
         except (socket.error, socket.timeout):
             print("Socket Error")
