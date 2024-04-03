@@ -47,6 +47,10 @@ def get_appdata_dir(path_under=None):
     return Path.home().joinpath("AppData", "Local", "pinterest-dl")
 
 
-def write_img_caption(image_path, comment):
+def write_img_comment(image_path, comment):
     with pyexiv2.Image(str(image_path)) as img:
         img.modify_exif({"Exif.Image.XPComment": comment})
+
+def write_img_subject(image_path, subject):
+    with pyexiv2.Image(str(image_path)) as img:
+        img.modify_exif({"Exif.Image.XPSubject": subject})

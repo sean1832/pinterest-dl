@@ -110,6 +110,7 @@ class Pinterest(object):
                         if self._is_div_ad(div) or len(unique_results) >= limit:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
+                        href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
                         for image in images:
                             alt = image.get_attribute("alt")
                             src = image.get_attribute("src")
@@ -118,7 +119,12 @@ class Pinterest(object):
                                 src_736 = src.replace("/originals/", "/736x/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = {"src": src, "alt": alt, "fallback": src_736}
+                                    img_data = {
+                                        "src": src,
+                                        "alt": alt,
+                                        "fallback": src_736,
+                                        "origin": href,
+                                    }
                                     imgs_data.append(img_data)
                                     pbar.update(1)
                                     if verbose:

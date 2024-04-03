@@ -23,17 +23,30 @@ def run_download(
     return downloader.download_concurrent_with_fallback(urls, output, fallbacks, verbose=verbose)
 
 
-def run_caption(files: List[str | Path], captions: List[str], verbose: bool = False):
+def run_caption(
+    files: List[str | Path],
+    captions: List[str],
+    origins: List[str],
+    indexs: List[int],
+    verbose: bool = False,
+):
     """write captions to image files
 
     Args:
         files (List[str  |  Path]): list of image paths
         captions (List[str]): list of captions
+        origins (List[str]): list of image origin urls
+        indexs (List[int]): list of indexs to write caption
         verbose (bool, optional): print debug logs. Defaults to False.
     """
-    for file, caption in zip(files, captions):
+    for index in indexs:
         try:
-            utils.write_img_caption(file, caption)
+            file = files[index]
+            caption = captions[index]
+            origin = origins[index]
+            utils.write_img_comment(file, origin)
+            utils.write_img_subject(file, caption)
+
             if verbose:
                 print(f"{file} -> {caption}")
         except Exception as e:
@@ -49,15 +62,16 @@ def run_prune(
         local_images (List[str  |  Path]): list of image paths
         min_resolution (Tuple[int, int]): minimum resolution to keep
     """
-    new_imgs = []
+    new_index = []
     if min_resolution:
-        for i in tqdm(local_images, desc="Pruning"):
-            if not utils.prune_by_resolution(i, min_resolution, verbose=verbose):
-                new_imgs.append(i)
+        for index, img in tqdm(enumerate(local_images), desc="Pruning"):
+            if not utils.prune_by_resolution(img, min_resolution, verbose=verbose):
+                new_index.append(index)
+
     else:
-        new_imgs = local_images
-    print(f"Pruned {len(local_images) - len(new_imgs)} images.")
-    return new_imgs
+        new_index = range(len(local_images))
+    print(f"Pruned {len(local_images) - len(new_index)} images.")
+    return new_index
 
 
 def run_scrape(
@@ -107,11 +121,12 @@ def run_scrape(
             timeout=timeout,
             verbose=verbose,
         )
-        srcs, alts, fallbacks = [], [], []
+        srcs, alts, fallbacks, origins = [], [], [], []
         for i in imgs:
             srcs.append(i["src"])
             alts.append(i["alt"])
             fallbacks.append(i["fallback"])
+            origins.append(i["origin"])
     finally:
         browser.close()
 
@@ -120,9 +135,9 @@ def run_scrape(
     if not dry_run:
         downloaded_files = run_download(srcs, fallbacks, output, verbose)
         # post download
-        downloaded_files = run_prune(downloaded_files, min_resolution)
+        pruned_idx = run_prune(downloaded_files, min_resolution)
         if caption:
-            run_caption(downloaded_files, alts, verbose=verbose)
+            run_caption(downloaded_files, alts, origins, pruned_idx, verbose=verbose)
     else:
         for i in imgs:
             print(i)
