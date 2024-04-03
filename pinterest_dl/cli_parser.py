@@ -16,7 +16,7 @@ def get_parser():
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("-o", "--output", default="imgs", help="Output directory (default: imgs)")
     scrape_cmd.add_argument("-w", "--write", help="Write urls to json file")
-    scrape_cmd.add_argument("-t", "--threshold", type=int, default=20, help="Number of scroll to perform (default: 20)")
+    scrape_cmd.add_argument("-t", "--threshold", type=int, default=20, help="Number of image to scrape (default: 20)")
     scrape_cmd.add_argument("-p", "--persistence", type=int, default=120, help="Time to wait for page to load (default: 120)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")

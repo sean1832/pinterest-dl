@@ -10,8 +10,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
+from tqdm import tqdm
 
-from pinterest_dl import downloader, driver_installer, utils
+from pinterest_dl import driver_installer, utils
 
 
 def randdelay(a, b):
@@ -39,6 +40,7 @@ class Browser(object):
             if image_enable
             else "--blink-settings=imagesEnabled=false"
         )
+        chrome_options.add_argument("--log-level=3")  # Suppress most logs
         if incognito:
             chrome_options.add_argument("--incognito")
         if headless:
@@ -62,14 +64,6 @@ class Browser(object):
         browser = webdriver.Firefox(options=firefox_options)
         return browser
 
-    def _download_chrome_driver_not_exist(self, exe_path):
-        if not utils.file_exists(exe_path):
-            print("Chrome driver does not exist. Downloading...")
-
-            downloader.download_curl()
-        else:
-            print("Chrome driver exists.")
-
 
 class Pinterest(object):
     def __init__(self, browser=None):
@@ -88,17 +82,18 @@ class Pinterest(object):
     def scrape(
         self,
         url,
-        threshold=20,
+        limit=20,
         presistence=120,
         verbose=False,
     ):
-        final_results = []
+        unique_results = set()  # Use a set to store unique results
+        imgs_data = []  # Store image data
         previous_divs = []
         tries = 0
-
+        pbar = tqdm(total=limit, desc="Scraping")
         try:
             self.browser.get(url)
-            while threshold > 0:
+            while len(unique_results) < limit:
                 try:
                     divs = self.browser.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
                     if divs == previous_divs:
@@ -108,37 +103,45 @@ class Pinterest(object):
                     if tries > presistence:
                         if verbose:
                             print("Exiting: persistence exceeded")
-                        return final_results
+                        break
 
                     for div in divs:
-                        # if div is an ad, skip
-                        if self._is_div_ad(div):
+                        if self._is_div_ad(div) or len(unique_results) >= limit:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
                         for image in images:
+                            alt = image.get_attribute("alt")
                             src = image.get_attribute("src")
                             if src and "/236x/" in src:
                                 src = src.replace("/236x/", "/originals/")
-                                final_results.append(src)
-                                if verbose:
-                                    print(src)
+                                src_763 = src.replace("/originals/", "/736x/")
+                                if src not in unique_results:
+                                    unique_results.add(src)
+                                    img_data = {"src": src, "alt": alt, "fallback": src_763}
+                                    imgs_data.append(img_data)
+                                    pbar.update(1)
+                                    if verbose:
+                                        print(src, alt)
+                                    if len(unique_results) >= limit:
+                                        break
+
                     previous_divs = copy.copy(divs)  # copy to avoid reference
-                    final_results = list(set(final_results))  # remove duplicates
 
                     # Scroll down
                     dummy = self.browser.find_element(By.TAG_NAME, "a")
                     dummy.send_keys(Keys.PAGE_DOWN)
                     randdelay(1, 2)  # delay between 1 and 2 seconds
-                    threshold -= 1
 
                 except StaleElementReferenceException:
                     print("StaleElementReferenceException")
-                    threshold -= 1
+
         except (socket.error, socket.timeout):
             print("Socket Error")
-        except KeyboardInterrupt:
-            return final_results
-        return final_results
+        finally:
+            pbar.close()
+            if verbose:
+                print(f"Scraped {len(imgs_data)} images")
+            return imgs_data
 
     def _is_div_ad(self, div: WebElement):
         """Check if div is an ad.

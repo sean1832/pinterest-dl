@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pyexiv2
 from PIL import Image
 
 
@@ -39,3 +40,8 @@ def get_appdata_dir(path_under=None):
     if path_under:
         return Path.home().joinpath("AppData", "Local", "pinterest-dl", path_under)
     return Path.home().joinpath("AppData", "Local", "pinterest-dl")
+
+
+def write_img_caption(image_path, comment):
+    with pyexiv2.Image(str(image_path)) as img:
+        img.modify_exif({"Exif.Image.XPComment": comment})

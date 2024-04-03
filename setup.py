@@ -22,7 +22,7 @@ setup(
             "manifest.json",
         ]
     },
-    install_requires=["selenium>=4.9.0", "pillow>=10.1.0"],
+    install_requires=["selenium>=4.9.0", "pillow>=10.1.0", "tqdm", "pyexiv2"],
     entry_points={
         "console_scripts": [
             "pinterest-dl = pinterest_dl.main:main",
