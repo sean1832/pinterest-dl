@@ -28,7 +28,7 @@ def get_parser():
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
     download_cmd.add_argument("input", help="Input json file containing image urls")
-    download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>})")
+    download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>)")
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
 
