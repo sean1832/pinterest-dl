@@ -46,13 +46,13 @@ def run_prune(local_images: List[str | Path], min_resolution: Tuple[int, int]):
 
 def run_scrape(
     url: str,
-    threshold: int,
+    limit: int,
     output: str | Path,
     persistence: int = 120,
-    write: str | Path = None,
+    json: str | Path = None,
     firefox: bool = False,
     incognito: bool = False,
-    headless: bool = False,
+    headful: bool = True,
     dry_run: bool = False,
     verbose: bool = False,
     min_resolution: Tuple[int, int] = None,
@@ -62,31 +62,32 @@ def run_scrape(
 
     Args:
         url (str): input pinterest board url
-        threshold (int): max number of image to scrape
+        limit (int): max number of image to scrape
         output (str | Path): output directory to save images
         persistence (int, optional): time to wait for page load. Defaults to 120.
-        write (str | Path, optional): write image urls to json file. Defaults to None.
+        json (str | Path, optional): write image urls to json file. Defaults to None.
         firefox (bool, optional): use firefox browser. Defaults to False.
         incognito (bool, optional): use incognito mode. Defaults to False.
+        headful (bool, optional): run in headful mode with browser window. Defaults to True.
         dry_run (bool, optional): only print image urls. Defaults to False.
         verbose (bool, optional): print debug logs. Defaults to False.
         min_resolution (Tuple[int, int], optional): minimum resolution to keep. Defaults to None.
         caption (bool, optional): write image caption as metadata. Defaults to True.
     """
     if firefox:
-        browser = scraper.Browser().Firefox(incognito=incognito, headless=headless)
+        browser = scraper.Browser().Firefox(incognito=incognito, headful=headful)
     else:
         browser = scraper.Browser().Chrome(
             exe_path=utils.get_appdata_dir("chromedriver.exe"),
             incognito=incognito,
-            headless=headless,
+            headful=headful,
         )
 
     try:
         pin_scraper = scraper.Pinterest(browser)
         imgs = pin_scraper.scrape(
             url,
-            limit=threshold,
+            limit=limit,
             presistence=persistence,
             verbose=verbose,
         )
@@ -98,8 +99,8 @@ def run_scrape(
     finally:
         browser.close()
 
-    if write:
-        io.write_json(imgs, write, indent=4)
+    if json:
+        io.write_json(imgs, json, indent=4)
     if not dry_run:
         downloaded_files = run_download(srcs, fallbacks, output, verbose)
         # post download

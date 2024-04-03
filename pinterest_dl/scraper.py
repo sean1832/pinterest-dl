@@ -24,7 +24,7 @@ class Browser(object):
         self.browser = None
 
     def Chrome(
-        self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headless=False
+        self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
     ):
         if not os.path.exists(exe_path):
             driver_installer.install_chrome_driver(
@@ -42,14 +42,15 @@ class Browser(object):
         )
         chrome_options.add_argument("--log-level=3")  # Suppress most logs
         if incognito:
+            print("Running in incognito mode")
             chrome_options.add_argument("--incognito")
-        if headless:
+        if not headful:
             print("Running in headless mode")
             chrome_options.add_argument("--headless=new")
         browser = webdriver.Chrome(options=chrome_options, service=service)
         return browser
 
-    def Firefox(self, image_enable=False, incognito=False, headless=False):
+    def Firefox(self, image_enable=False, incognito=False, headful=False):
         firefox_options = webdriver.FirefoxOptions()
         # Disable images
         if image_enable:
@@ -58,7 +59,7 @@ class Browser(object):
             firefox_options.set_preference("permissions.default.image", 2)
         if incognito:
             firefox_options.set_preference("browser.privatebrowsing.autostart", True)
-        if headless:
+        if not headful:
             print("Running in headless mode")
             firefox_options.add_argument("--headless")
         browser = webdriver.Firefox(options=firefox_options)

@@ -8,13 +8,13 @@ def main():
     if args.cmd == "scrape":
         api.run_scrape(
             args.url,
-            args.threshold,
+            args.limit,
             args.output,
             persistence=args.persistence,
-            write=args.write,
+            json=args.json,
             firefox=args.firefox,
             incognito=args.incognito,
-            headless=args.headless,
+            headful=args.headful,
             dry_run=args.dry_run,
             verbose=args.verbose,
             min_resolution=utils.parse_resolution(args.resolution) if args.resolution else None,

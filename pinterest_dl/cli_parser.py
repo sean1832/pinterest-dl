@@ -14,16 +14,16 @@ def get_parser():
     # scrape command
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
     scrape_cmd.add_argument("url", help="URL to scrape images from")
-    scrape_cmd.add_argument("-o", "--output", default="imgs", help="Output directory (default: imgs)")
-    scrape_cmd.add_argument("-w", "--write", help="Write urls to json file")
-    scrape_cmd.add_argument("-t", "--threshold", type=int, default=20, help="Number of image to scrape (default: 20)")
-    scrape_cmd.add_argument("-p", "--persistence", type=int, default=120, help="Time to wait for page to load (default: 120)")
-    scrape_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
+    scrape_cmd.add_argument("output", help="Output directory")
+    scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    scrape_cmd.add_argument("-p", "--persistence", type=int, default=120, help="Retry count if page does not load new content (default: 120)")
+    scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
+    scrape_cmd.add_argument("--json", type=str, help="Write urls to json file")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
     scrape_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
+    scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
-    scrape_cmd.add_argument("--headless", action="store_true", help="Run in headless mode")
 
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
