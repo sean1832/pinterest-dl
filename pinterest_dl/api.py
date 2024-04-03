@@ -58,7 +58,7 @@ def run_scrape(
     limit: int,
     output: str | Path,
     persistence: int = 120,
-    json: str | Path = None,
+    json: bool = False,
     firefox: bool = False,
     incognito: bool = False,
     headful: bool = True,
@@ -109,7 +109,7 @@ def run_scrape(
         browser.close()
 
     if json:
-        io.write_json(imgs, json, indent=4)
+        io.write_json(imgs, str(Path(output).absolute().name) + ".json", indent=4)
     if not dry_run:
         downloaded_files = run_download(srcs, fallbacks, output, verbose)
         # post download

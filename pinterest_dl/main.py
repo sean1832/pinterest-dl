@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 from pinterest_dl import api, cli_parser, io, utils
 
 
@@ -21,9 +24,16 @@ def main():
         )
         print("\nDone.")
     elif args.cmd == "download":
-        img_list = io.read_json(args.url_list)
-        downloaded_files = api.run_download(img_list, args.output, args.verbose)
-        api.run_prune(downloaded_files, args.resolution)
+        img_datas = io.read_json(args.input)
+        srcs, alts, fallbacks = [], [], []
+        for img_data in img_datas:
+            srcs.append(img_data["src"])
+            alts.append(img_data["alt"])
+            fallbacks.append(img_data["fallback"])
+        output_dir = args.output or str(Path(args.input).stem)
+        downloaded_files = api.run_download(srcs, fallbacks, output_dir, args.verbose)
+        downloaded_files = api.run_prune(downloaded_files, args.resolution)
+        api.run_caption(downloaded_files, alts)
         print("\nDone.")
     else:
         parser.print_help()
