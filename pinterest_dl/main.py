@@ -23,16 +23,23 @@ def main():
         )
         print("\nDone.")
     elif args.cmd == "download":
+        # prepare image url data
         img_datas = io.read_json(args.input)
-        srcs, alts, fallbacks = [], [], []
+        srcs, alts, fallbacks, origins = [], [], [], []
         for img_data in img_datas:
             srcs.append(img_data["src"])
             alts.append(img_data["alt"])
             fallbacks.append(img_data["fallback"])
+            origins.append(img_data["origin"])
+
         output_dir = args.output or str(Path(args.input).stem)
+
+        # download images
         downloaded_files = api.run_download(srcs, fallbacks, output_dir, args.verbose)
-        downloaded_files = api.run_prune(downloaded_files, args.resolution)
-        api.run_caption(downloaded_files, alts)
+
+        # post process
+        pruned_idx = api.run_prune(downloaded_files, args.resolution)
+        api.run_caption(downloaded_files, alts, origins, pruned_idx, verbose=args.verbose)
         print("\nDone.")
     else:
         parser.print_help()
