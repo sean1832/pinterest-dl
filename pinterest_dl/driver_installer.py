@@ -6,9 +6,7 @@ from pinterest_dl import downloader, io
 
 
 def print_chrome_version():
-    command = (
-        'reg query "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon" /v version'
-    )
+    command = 'reg query "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon" /v version'
 
     # Execute the command to get Chrome version
     result = subprocess.run(
@@ -38,7 +36,7 @@ def install_chrome_driver(install_dir, version=None, platform="win64", verbose=F
     url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform}/chromedriver-{platform}.zip"
     if verbose:
         print(f"Downloading Chrome driver from {url}")
-    zip_file = downloader.download(url, install_dir, verbose=verbose)
+    zip_file = downloader.download(url, install_dir)
     io.unzip(zip_file, install_dir, "chromedriver.exe", verbose=verbose)
     print("Chrome driver installed.")
 
