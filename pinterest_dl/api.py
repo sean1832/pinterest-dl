@@ -80,6 +80,7 @@ def run_scrape(
     output: str | Path,
     timeout: int = 3,
     json: bool = False,
+    json_path: str | Path = None,
     firefox: bool = False,
     incognito: bool = False,
     headful: bool = True,
@@ -95,7 +96,8 @@ def run_scrape(
         limit (int): max number of image to scrape
         output (str | Path): output directory to save images
         persistence (int, optional): time to wait for page load. Defaults to 120.
-        json (str | Path, optional): write image urls to json file. Defaults to None.
+        json (bool): write image urls to json file. Defaults to False.
+        json_path (str | Path): path to write json file. Defaults to None.
         firefox (bool, optional): use firefox browser. Defaults to False.
         incognito (bool, optional): use incognito mode. Defaults to False.
         headful (bool, optional): run in headful mode with browser window. Defaults to True.
@@ -131,7 +133,10 @@ def run_scrape(
         browser.close()
 
     if json:
-        io.write_json(imgs, str(Path(output).absolute().name) + ".json", indent=4)
+        output_path = json_path or str(Path(output).absolute().name) + ".json"
+        if json_path:
+            output_path = json_path
+        io.write_json(imgs, output_path, indent=4)
     if not dry_run:
         downloaded_files = run_download(srcs, fallbacks, output, verbose)
         # post download
