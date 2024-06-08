@@ -27,7 +27,7 @@ def parse_resolution(resolution: str) -> tuple[int, int]:
 
 
 def prune_by_resolution(
-    input_file: str | Path, resolution: tuple[int, int], verbose: bool = False
+    input_file: str, resolution: tuple[int, int], verbose: bool = False
 ) -> bool:
     size = (0, 0)
     with Image.open(input_file) as im:
