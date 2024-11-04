@@ -53,7 +53,6 @@ class Browser:
         with open(version_file, "r") as f:
             version_str = f.read().strip()
             current_version = BrowserVersion.from_str(version_str)
-        print(f"Current Chrome driver version: {current_version}")
         if self.version.Major != current_version.Major:
             return False
         if self.version.Minor != current_version.Minor:
