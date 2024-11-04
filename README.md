@@ -23,10 +23,9 @@ This CLI (Command Line Interface) tool facilitates the scraping and downloading 
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
 
 ## 🚩 Known Issues
-- 🔲 Experimental Firefox browser support might not perform as expected.
 - 🔲 Limited functionality with Pinterest URLs requiring login.
 - 🔲 Incompatibility with Pinterest URLs that include search queries.
-- 🔲 Currently does not support MacOS and Linux platforms.
+- 🔲 Not sorely tested on Linux and Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
 
 ## 📋 Requirements
 - Python 3.10 or newer
