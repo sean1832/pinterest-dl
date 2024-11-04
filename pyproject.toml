@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
+dynamic = ["version"]
 name = "pinterest-dl"
-version = "0.0.23"
 description = "An unofficial Pinterest image downloader"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -31,8 +31,11 @@ dependencies = [
 ]
 
 [project.scripts]
-pinterest-dl = "pinterest_dl.main:main"
+pinterest-dl = "pinterest_dl.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/sean1832/pinterest-dl"
 Issues = "https://github.com/sean1832/pinterest-dl/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "pinterest_dl.__version__" }

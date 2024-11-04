@@ -1,13 +1,12 @@
 import argparse
 
-from pinterest_dl import io, utils
+from pinterest_dl import __description__, __version__
 
 
 # fmt: off
 def get_parser():
-    meta = io.read_json(utils.get_root().joinpath("manifest.json"))
-    parser = argparse.ArgumentParser(description=meta["description"] + " v" + meta["version"])
-    parser.add_argument("-v", "--version", action="version", version="v"+meta["version"])
+    parser = argparse.ArgumentParser(description=__description__ + " v" + __version__)
+    parser.add_argument("-v", "--version", action="version", version="v"+__version__)
 
     cmd = parser.add_subparsers(dest="cmd", help="Command to run")
 
