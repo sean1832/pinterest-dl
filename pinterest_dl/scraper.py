@@ -13,7 +13,8 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from tqdm import tqdm
 
-from pinterest_dl import driver_installer, utils
+from pinterest_dl import utils
+from pinterest_dl.driver_installer import ChromeDriverInstaller
 
 
 def randdelay(a, b):
@@ -67,13 +68,12 @@ class Browser:
     def Chrome(
         self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
     ):
-        self.version = BrowserVersion.from_str(driver_installer.get_chrome_version())
+        driver_installer = ChromeDriverInstaller(self.app_root)
+        self.version = BrowserVersion.from_str(driver_installer.chrome_version)
 
         if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
             print(f"Installing latest Chrome driver for version {self.version}")
-            driver_installer.install_chrome_driver(
-                self.app_root, version="latest", platform=driver_installer.get_platform()
-            )
+            driver_installer.install(self.app_root, version="latest", platform="auto")
 
         service = webdriver.chrome.service.Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
