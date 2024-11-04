@@ -1,8 +1,21 @@
 import concurrent.futures
 from pathlib import Path
+from typing import Literal
 
 import requests
 from tqdm import tqdm
+
+
+def get(url: str, response_format: Literal["json", "text"] = "text"):
+    if isinstance(url, str):
+        req = requests.get(url)
+        req.raise_for_status()
+        if response_format == "json":
+            return req.json()
+        elif response_format == "text":
+            return req.text
+    else:
+        print("URL must be a string.")
 
 
 def download(url: str, output_dir, chunk_size=2048):

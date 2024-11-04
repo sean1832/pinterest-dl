@@ -3,6 +3,7 @@ import os
 import random
 import socket
 import time
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
@@ -19,20 +20,64 @@ def randdelay(a, b):
     time.sleep(random.uniform(a, b))
 
 
+class BrowserVersion:
+    def __init__(self, major=0, minor=0, build=0, patch=0):
+        self.Major: int = major
+        self.Minor: int = minor
+        self.Build: int = build
+        self.Patch: int = patch
+
+    @staticmethod
+    def from_str(version: str) -> "BrowserVersion":
+        segs = version.split(".")
+        if len(segs) != 4:
+            raise ValueError(
+                "Invalid version string. Must be in the format 'major.minor.build.patch'"
+            )
+        return BrowserVersion(int(segs[0]), int(segs[1]), int(segs[2]), int(segs[3]))
+
+    def __str__(self):
+        return f"{self.Major}.{self.Minor}.{self.Build}.{self.Patch}"
+
+
 class Browser(object):
     def __init__(self):
-        self.browser = None
+        self.app_root = utils.get_appdata_dir()
+        self.version: BrowserVersion = None
+
+    def _validate_chrome_driver_version(self):
+        version_file = Path(self.app_root, "CHROMEDRIVER_VERSION")
+        if not version_file.exists():
+            return False
+
+        with open(version_file, "r") as f:
+            version_str = f.read().strip()
+            current_version = BrowserVersion.from_str(version_str)
+        print(f"Current Chrome driver version: {current_version}")
+        if self.version.Major != current_version.Major:
+            return False
+        if self.version.Minor != current_version.Minor:
+            return False
+        if self.version.Build != current_version.Build:
+            return False
+        # patch version can be different
+
+        return True
 
     def Chrome(
         self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
     ):
-        if not os.path.exists(exe_path):
+        self.version = BrowserVersion.from_str(driver_installer.get_chrome_version())
+
+        if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
+            print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install_chrome_driver(
-                utils.get_appdata_dir(), version="123.0.6312.86", platform="win64"
+                self.app_root, version="latest", platform=driver_installer.get_platform()
             )
 
         service = webdriver.chrome.service.Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
+
         # Disable images
         # https://scrapeops.io/selenium-web-scraping-playbook/python-selenium-disable-image-loading/
         chrome_options.add_argument(
