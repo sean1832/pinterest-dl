@@ -1,6 +1,7 @@
 import json
 import os
 import zipfile
+from typing import List
 
 
 def append_json(data, filename, indent=None):
@@ -19,6 +20,13 @@ def write_json(data, filename, indent=None):
 def read_json(filename):
     with open(filename, "r") as f:
         return json.load(f)
+
+
+def write_text(data: str | List[str], filename: str):
+    if isinstance(data, list):
+        data = "\n".join(data)
+    with open(filename, "w") as f:
+        f.write(data)
 
 
 def unzip(zip_path, extract_to, target_file=None, verbose=False):
@@ -42,12 +50,12 @@ def unzip(zip_path, extract_to, target_file=None, verbose=False):
                     # Move the file if it's within a directory
                     extracted_path = os.path.join(extract_to, file)
                     final_path = os.path.join(extract_to, os.path.basename(target_file))
+                    if os.path.exists(final_path):
+                        os.remove(final_path)
                     os.rename(extracted_path, final_path)
                     # Attempt to remove the directory structure if any
                     dir_path = os.path.dirname(extracted_path)
-                    if (
-                        dir_path != extract_to
-                    ):  # Check to avoid deleting the extract_to dir
+                    if dir_path != extract_to:  # Check to avoid deleting the extract_to dir
                         os.removedirs(dir_path)
                     if verbose:
                         print(f"{target_file} has been extracted to {final_path}")
