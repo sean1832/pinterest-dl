@@ -6,7 +6,7 @@ import requests
 from tqdm import tqdm
 
 
-def get(url: str, response_format: Literal["json", "text"] = "text"):
+def fetch(url: str, response_format: Literal["json", "text"] = "text"):
     if isinstance(url, str):
         req = requests.get(url)
         req.raise_for_status()
