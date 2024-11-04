@@ -73,7 +73,7 @@ def install_chrome_driver(
 
     Args:
         install_dir (Path | str): Directory to install Chrome driver.
-        version (str, optional): Version of Chrome driver to install. Defaults to None.
+        version (str): Version of Chrome driver to install. Defaults to 'latest'.
         platform (Literal[&quot;win64&quot;, &quot;win32&quot;], optional): Platform of Chrome driver to install. Defaults to &quot;win64&quot;.
         verbose (bool, optional): Print debug logs. Defaults to False.
 
