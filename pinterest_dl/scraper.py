@@ -4,6 +4,7 @@ import random
 import socket
 import time
 from pathlib import Path
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
@@ -62,6 +63,27 @@ class Browser:
         # patch version can be different
 
         return True
+        self.app_root = utils.get_appdata_dir()
+        self.version: BrowserVersion = None
+
+    def _validate_chrome_driver_version(self):
+        version_file = Path(self.app_root, "CHROMEDRIVER_VERSION")
+        if not version_file.exists():
+            return False
+
+        with open(version_file, "r") as f:
+            version_str = f.read().strip()
+            current_version = BrowserVersion.from_str(version_str)
+        print(f"Current Chrome driver version: {current_version}")
+        if self.version.Major != current_version.Major:
+            return False
+        if self.version.Minor != current_version.Minor:
+            return False
+        if self.version.Build != current_version.Build:
+            return False
+        # patch version can be different
+
+        return True
 
     def Chrome(
         self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
@@ -70,12 +92,18 @@ class Browser:
 
         if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
             print(f"Installing latest Chrome driver for version {self.version}")
+        self.version = BrowserVersion.from_str(driver_installer.get_chrome_version())
+
+        if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
+            print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install_chrome_driver(
+                self.app_root, version="latest", platform=driver_installer.get_platform()
                 self.app_root, version="latest", platform=driver_installer.get_platform()
             )
 
         service = webdriver.chrome.service.Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
+
 
         # Disable images
         # https://scrapeops.io/selenium-web-scraping-playbook/python-selenium-disable-image-loading/
