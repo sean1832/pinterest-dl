@@ -15,37 +15,49 @@ class ChromeDriverInstaller:
         self.platform = self.get_platform()
 
     def get_chrome_version(self) -> str:
-        try:
-            # Determine the operating system
-            os_type = platform.system()
+        # Determine the operating system
+        os_type = platform.system()
 
-            if os_type == "Windows":
+        if os_type == "Windows":
+            try:
                 # Command for Windows to read from registry
                 output = subprocess.check_output(
                     r'reg query "HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon" /v version',
                     shell=True,
+                    stderr=subprocess.STDOUT,  # Capture standard error as well
                 )
                 version = output.decode().split()[-1]
+            except subprocess.CalledProcessError:
+                raise FileNotFoundError("Chrome not found in Windows registry.")
 
-            elif os_type == "Darwin":  # macOS
+        elif os_type == "Darwin":  # macOS
+            try:
                 # Command for macOS to get version from Chrome app
                 output = subprocess.check_output(
-                    ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"]
+                    [
+                        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                        "--version",
+                    ],
+                    stderr=subprocess.STDOUT,
                 )
                 version = output.decode("utf-8").strip().split()[-1]
+            except FileNotFoundError:
+                raise FileNotFoundError("Chrome not found in /Applications.")
 
-            elif os_type == "Linux":
+        elif os_type == "Linux":
+            try:
                 # Command for Linux to get version from installed Chrome
-                output = subprocess.check_output(["google-chrome", "--version"])
+                output = subprocess.check_output(
+                    ["google-chrome", "--version"], stderr=subprocess.STDOUT
+                )
                 version = output.decode("utf-8").strip().split()[-1]
+            except FileNotFoundError:
+                raise FileNotFoundError("Chrome not found in PATH.")
 
-            else:
-                return "Unsupported operating system."
+        else:
+            return "Unsupported operating system."
 
-            return version
-
-        except Exception as e:
-            return f"Error retrieving Chrome version: {e}"
+        return version
 
     def get_platform(self) -> str:
         os_name = platform.system()
