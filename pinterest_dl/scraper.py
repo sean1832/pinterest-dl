@@ -73,7 +73,7 @@ class Browser:
 
         if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
             print(f"Installing latest Chrome driver for version {self.version}")
-            driver_installer.install(self.app_root, version="latest", platform="auto")
+            driver_installer.install(version="latest", platform="auto")
 
         service = webdriver.chrome.service.Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
