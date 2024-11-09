@@ -11,10 +11,10 @@ from pinterest_dl import downloader, io
 class ChromeDriverInstaller:
     def __init__(self, install_dir: Path | str):
         self.install_dir = Path(install_dir)
-        self.chrome_version = self.get_chrome_version()
-        self.platform = self.get_platform()
+        self.chrome_version = self._get_chrome_version()
+        self.platform = self._get_platform()
 
-    def get_chrome_version(self) -> str:
+    def _get_chrome_version(self) -> str:
         # Determine the operating system
         os_type = platform.system()
 
@@ -59,7 +59,7 @@ class ChromeDriverInstaller:
 
         return version
 
-    def get_platform(self) -> str:
+    def _get_platform(self) -> str:
         os_name = platform.system()
         arch = platform.machine()
 
