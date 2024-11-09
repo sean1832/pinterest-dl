@@ -7,6 +7,7 @@ from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -44,7 +45,7 @@ class BrowserVersion:
 class Browser:
     def __init__(self):
         self.app_root = utils.get_appdata_dir()
-        self.version: BrowserVersion = None
+        self.version: BrowserVersion = BrowserVersion()  # Default version 0.0.0.0
 
     def _validate_chrome_driver_version(self):
         version_file = Path(self.app_root, "CHROMEDRIVER_VERSION")
@@ -66,7 +67,11 @@ class Browser:
         return True
 
     def Chrome(
-        self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
+        self,
+        image_enable=False,
+        incognito=False,
+        exe_path: Path | str = "chromedriver.exe",
+        headful=False,
     ):
         driver_installer = ChromeDriverInstaller(self.app_root)
         self.version = BrowserVersion.from_str(driver_installer.chrome_version)
@@ -75,7 +80,7 @@ class Browser:
             print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install(version="latest", platform="auto")
 
-        service = webdriver.chrome.service.Service(exe_path)
+        service = Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
 
         # Disable images
@@ -112,7 +117,7 @@ class Browser:
 
 
 class Pinterest:
-    def __init__(self, browser=None):
+    def __init__(self, browser: WebDriver):
         self.browser: WebDriver = browser
 
     # currently not used
@@ -129,7 +134,7 @@ class Pinterest:
         self,
         url,
         limit=20,
-        timeout=3,
+        timeout: float = 3,
         verbose=False,
     ):
         unique_results = set()  # Use a set to store unique results
@@ -205,5 +210,6 @@ class Pinterest:
         ads_svg_path = "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M3 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6m18 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6"
         svg_elements = div.find_elements(By.TAG_NAME, "svg")
         for svg in svg_elements:
-            if ads_svg_path in svg.get_attribute("innerHTML"):
+            inner_html = svg.get_attribute("innerHTML")
+            if inner_html and ads_svg_path in inner_html:
                 return True

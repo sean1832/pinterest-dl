@@ -7,3 +7,4 @@ venv
 *.log
 dist
 output
+.vscode
