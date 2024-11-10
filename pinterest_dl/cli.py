@@ -87,6 +87,7 @@ def main() -> None:
         )
 
         io.write_json(cookies, args.output)
+        print(f"\nCookies saved to {args.output}")
         print("\nDone.")
     elif args.cmd == "scrape":
         PinterestDL.with_browser(
