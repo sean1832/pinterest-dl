@@ -5,16 +5,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-def append_json(data: Dict[str, Any], filename: str, indent: int | None = None) -> None:
-    with open(filename, "r+") as f:
+def append_json(data: Dict[str, Any], file_path: str | Path, indent: int | None = None) -> None:
+    with open(file_path, "r+") as f:
         file_data = json.load(f)
         file_data.update(data)
         f.seek(0)
         json.dump(file_data, f, indent=indent)
 
 
-def write_json(data: Dict[str, Any], filename: str, indent: int | None = None) -> None:
-    with open(filename, "w") as f:
+def write_json(
+    data: Dict[str, Any] | List[Dict[str, Any]], file_path: str | Path, indent: int | None = None
+) -> None:
+    with open(file_path, "w") as f:
         json.dump(data, f, indent=indent)
 
 

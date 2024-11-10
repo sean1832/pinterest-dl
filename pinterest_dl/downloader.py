@@ -20,7 +20,7 @@ def fetch(
         raise ValueError("URL must be a string.")
 
 
-def download(url: str, output_dir: Path, chunk_size: int = 2048):
+def download(url: str, output_dir: Path, chunk_size: int = 2048) -> Path:
     if isinstance(url, str):
         req = requests.get(url)
         req.raise_for_status()
@@ -37,11 +37,19 @@ def download(url: str, output_dir: Path, chunk_size: int = 2048):
         print("URL must be a string.")
 
 
-def download_with_fallback(url: str, output_dir: Path, fallback_url: str, chunk_size: int = 2048):
+def download_with_fallback(
+    url: str, output_dir: Path, fallback_url: List[str], chunk_size: int = 2048
+) -> Path:
     try:
         return download(url, output_dir, chunk_size)
     except requests.exceptions.HTTPError:
-        return download(fallback_url, output_dir, chunk_size)
+        for fallback in fallback_url:
+            try:
+                return download(fallback, output_dir, chunk_size)
+            except requests.exceptions.HTTPError:
+                continue
+
+    raise requests.exceptions.HTTPError("All download attempts failed.")
 
 
 def download_concurrent(
@@ -69,7 +77,7 @@ def download_concurrent(
 def download_concurrent_with_fallback(
     urls: List[str],
     output_dir: Path,
-    fallback_urls: List[str],
+    fallback_urls: List[List[str]],
     chunk_size: int = 2048,
     verbose: bool = False,
 ) -> List[Path]:
