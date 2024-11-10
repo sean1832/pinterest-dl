@@ -22,17 +22,13 @@ class PinterestDL:
         browser (Optional[WebDriver]): Selenium browser instance for scraping.
     """
 
-    def __init__(
-        self, output_dir: Union[str, Path], verbose: bool = False, timeout: float = 3
-    ) -> None:
+    def __init__(self, verbose: bool = False, timeout: float = 3) -> None:
         """Initializes an instance of PinterestDL.
 
         Args:
-            output_dir (Union[str, Path]): Directory to store downloaded images.
             verbose (bool): Enable verbose logging.
             timeout (float): Timeout in seconds for various operations.
         """
-        self.output_dir = Path(output_dir)
         self.verbose = verbose
         self.timeout = timeout
         self.browser: Optional[WebDriver] = None
@@ -40,7 +36,6 @@ class PinterestDL:
     @classmethod
     def with_browser(
         cls,
-        output_dir: Union[str, Path],
         browser_type: Literal["chrome", "firefox"],
         timout: float = 3,
         headless: bool = True,
@@ -50,7 +45,6 @@ class PinterestDL:
         """Create an instance of PinterestDL with an initialized browser.
 
         Args:
-            output_dir (Union[str, Path]): Directory to store downloaded images.
             browser_type (Literal["chrome", "firefox"]): Browser type to use ('chrome' or 'firefox').
             timout (float): Timeout in seconds for browser operations.
             headless (bool): Run browser in headless mode.
@@ -60,22 +54,25 @@ class PinterestDL:
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
-        instance = cls(output_dir, verbose, timout)
+        instance = cls(verbose, timout)
         instance.browser = instance._initialize_browser(browser_type, headless, incognito)
         return instance
 
-    def download_images(self, urls: List[str], fallback_urls: List[List[str]]) -> List[Path]:
+    def download_images(
+        self, urls: List[str], fallback_urls: List[List[str]], output_dir: Union[str, Path]
+    ) -> List[Path]:
         """Download images from Pinterest using given URLs and fallbacks.
 
         Args:
             urls (List[str]): URL(s) of images to download.
             fallback_urls (List[List[str]]): URL(s) of fallback images.
+            output_dir (Union[str, Path]): Directory to store downloaded images.
 
         Returns:
             List[Path]: List of paths to downloaded images.
         """
         return downloader.download_concurrent_with_fallback(
-            urls, self.output_dir, verbose=self.verbose, fallback_urls=fallback_urls
+            urls, Path(output_dir), verbose=self.verbose, fallback_urls=fallback_urls
         )
 
     def add_captions(
@@ -134,9 +131,10 @@ class PinterestDL:
 
         return valid_indices
 
-    def scrape_pins(
+    def scrape(
         self,
         url: str,
+        output_dir: Union[str, Path],
         limit: int,
         min_resolution: Optional[Tuple[int, int]] = None,
         json_output: Optional[Union[str, Path]] = None,
@@ -147,6 +145,7 @@ class PinterestDL:
 
         Args:
             url (str): Pinterest URL to scrape.
+            output_dir (Union[str, Path]): Directory to store downloaded images.
             limit (int): Maximum number of images to scrape.
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
@@ -183,7 +182,7 @@ class PinterestDL:
             origins = [img.origin for img in scraped_imgs]
             fallback_urls = [img.fallback_urls for img in scraped_imgs]
 
-            downloaded_files = self.download_images(srcs, fallback_urls)
+            downloaded_files = self.download_images(srcs, fallback_urls, output_dir)
             valid_indices = self.prune_images(downloaded_files, min_resolution or (0, 0))
 
             if add_captions:

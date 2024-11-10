@@ -13,15 +13,15 @@ def main():
 
     if args.cmd == "scrape":
         pdl = PinterestDL.with_browser(
-            args.output,
             browser_type="firefox" if args.firefox else "chrome",
             timout=args.timeout,
             headless=not args.headful,
             incognito=args.incognito,
             verbose=args.verbose,
         )
-        pdl.scrape_pins(
+        pdl.scrape(
             args.url,
+            args.output,
             args.limit,
             min_resolution=utils.parse_resolution(args.resolution) if args.resolution else None,
             json_output=construct_json_output(args.output) if args.json else None,
@@ -31,7 +31,7 @@ def main():
         print("\nDone.")
     elif args.cmd == "download":
         output_dir = args.output or str(Path(args.input).stem)
-        pdl = PinterestDL(output_dir, verbose=args.verbose, timeout=args.timeout)
+        pdl = PinterestDL(verbose=args.verbose, timeout=args.timeout)
 
         # prepare image url data
         img_datas = io.read_json(args.input)
@@ -42,10 +42,8 @@ def main():
             fallbacks.append(img_data["fallback"])
             origins.append(img_data["origin"])
 
-        pdl.output_dir = Path(output_dir)  # update output directory
-
         # download images
-        downloaded_files = pdl.download_images(srcs, fallbacks)
+        downloaded_files = pdl.download_images(srcs, fallbacks, output_dir)
 
         # post process
         pruned_idx = pdl.prune_images(downloaded_files, args.resolution)
