@@ -89,16 +89,16 @@ class PinterestDL:
 
     @staticmethod
     def add_captions(
-        images: List[PinterestImage], indicies: List[int], verbose: bool = False
+        images: List[PinterestImage], indices: List[int], verbose: bool = False
     ) -> None:
         """Add captions and origin information to downloaded images.
 
         Args:
             images (List[PinterestImage]): List of PinterestImage objects to add captions to.
-            indicies (List[int]): Specific indices to add captions for.
+            indices (List[int]): Specific indices to add captions for.
             verbose (bool): Enable verbose logging.
         """
-        for index in indicies:
+        for index in indices:
             try:
                 img = images[index]
                 if img.origin:
