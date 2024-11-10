@@ -5,6 +5,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+def get_appdata_dir(path_under: Optional[str] = None) -> Path:
+    if path_under:
+        return Path.home().joinpath("AppData", "Local", "pinterest-dl", path_under)
+    return Path.home().joinpath("AppData", "Local", "pinterest-dl")
+
+
 def append_json(data: Dict[str, Any], file_path: str | Path, indent: int | None = None) -> None:
     with open(file_path, "r+") as f:
         file_data = json.load(f)

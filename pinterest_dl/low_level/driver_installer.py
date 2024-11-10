@@ -5,11 +5,12 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from pinterest_dl import downloader, io
+from pinterest_dl.low_level.ops import io
+from pinterest_dl.low_level.ops import downloader
 
 
 class ChromeDriverInstaller:
-    def __init__(self, install_dir: Path | str):
+    def __init__(self, install_dir: Path | str) -> None:
         self.install_dir = Path(install_dir)
         self.chrome_version = self._get_chrome_version()
         self.platform: Literal["win32", "win64", "mac-x64", "mac-arm64", "linux64"] = (
