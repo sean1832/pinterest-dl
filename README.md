@@ -138,33 +138,29 @@ Use this example if you need more granular control over scraping and downloading
 ```python
 from pinterest_dl import PinterestDL
 
-# 1. Initialize PinterestDL with browser settings
-pinterest = PinterestDL.with_browser("chrome")
-
-# 2. Scrape Images
-# Specify Pinterest URL and maximum number of images to scrape
-scraped_images = pinterest.scrape(
+# 1. Initialize PinterestDL with browser settings and scrape images
+scraped_images = PinterestDL.with_browser("chrome").scrape(
     url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
     limit=30,  # Maximum number of images to scrape
 )
 
-# 3. Save Scraped Data to JSON
+# 2. Save Scraped Data to JSON
 # Convert scraped data into a dictionary and save it to a JSON file for future access
 images_data = [img.to_dict() for img in scraped_images]
 PinterestDL.write_json(images_data, "art.json", indent=4)
 
-# 4. Download Images
+# 3. Download Images
 # Download images to a specified directory
-downloaded_imgs = pinterest.download_images(images=scraped_images, output_dir="images/art")
+downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir="images/art")
 
-# 5. Prune Images by Resolution
+# 4. Prune Images by Resolution
 # Remove images that do not meet the minimum resolution requirements
 min_resolution = (512, 512)
-valid_indices = pinterest.prune_images(downloaded_imgs, min_resolution)
+valid_indices = PinterestDL.prune_images(downloaded_imgs, min_resolution)
 
-# 6. Add Alt Text as Metadata
+# 5. Add Alt Text as Metadata
 # Extract `alt` text from images and set it as metadata in the downloaded files
-pinterest.add_captions(files=downloaded_imgs, indices=valid_indices)
+PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
 ```
 
 ## 📜 License
