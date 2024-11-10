@@ -8,6 +8,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from tqdm import tqdm
 
 from pinterest_dl import downloader, io, scraper, utils
+from pinterest_dl.scraper import PinterestImage
 
 
 class PinterestDL:
@@ -37,7 +38,7 @@ class PinterestDL:
     def with_browser(
         cls,
         browser_type: Literal["chrome", "firefox"],
-        timout: float = 3,
+        timeout: float = 3,
         headless: bool = True,
         incognito: bool = False,
         verbose: bool = False,
@@ -46,7 +47,7 @@ class PinterestDL:
 
         Args:
             browser_type (Literal["chrome", "firefox"]): Browser type to use ('chrome' or 'firefox').
-            timout (float): Timeout in seconds for browser operations.
+            timeout (float): Timeout in seconds for browser operations.
             headless (bool): Run browser in headless mode.
             incognito (bool): Use incognito mode in the browser.
             verbose (bool): Enable verbose logging.
@@ -54,33 +55,39 @@ class PinterestDL:
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
-        instance = cls(verbose, timout)
+        instance = cls(verbose, timeout)
         instance.browser = instance._initialize_browser(browser_type, headless, incognito)
         return instance
 
+    @staticmethod
     def download_images(
-        self, urls: List[str], fallback_urls: List[List[str]], output_dir: Union[str, Path]
+        images: List[PinterestImage],
+        output_dir: Union[str, Path],
+        verbose: bool = False,
     ) -> List[Path]:
         """Download images from Pinterest using given URLs and fallbacks.
 
         Args:
-            urls (List[str]): URL(s) of images to download.
-            fallback_urls (List[List[str]]): URL(s) of fallback images.
+            images (List[PinterestImage]): List of PinterestImage objects to download.
             output_dir (Union[str, Path]): Directory to store downloaded images.
+            verbose (bool): Enable verbose logging.
 
         Returns:
             List[Path]: List of paths to downloaded images.
         """
+        urls = [img.src for img in images]
+        fallback_urls = [img.fallback_urls for img in images]
         return downloader.download_concurrent_with_fallback(
-            urls, Path(output_dir), verbose=self.verbose, fallback_urls=fallback_urls
+            urls, Path(output_dir), verbose=verbose, fallback_urls=fallback_urls
         )
 
+    @staticmethod
     def add_captions(
-        self,
         files: List[Path],
         captions: List[Optional[str]],
         origins: List[Optional[str]],
         indices: List[int],
+        verbose: bool = False,
     ) -> None:
         """Add captions and origin information to downloaded images.
 
@@ -89,6 +96,7 @@ class PinterestDL:
             captions (List[Optional[str]]): Caption(s) to be added.
             origins (List[Optional[str]]): Origin URL(s) to be added.
             indices (List[int]): Specific indices to add captions for.
+            verbose (bool): Enable verbose logging.
         """
         for index in indices or range(len(files)):
             try:
@@ -97,41 +105,56 @@ class PinterestDL:
                 origin = origins[index]
                 if origin:
                     utils.write_img_comment(file, origin)
-                    if self.verbose:
+                    if verbose:
                         print(f"Origin added to {file}: '{origin}'")
                 if caption:
                     utils.write_img_subject(file, caption)
-                    if self.verbose:
+                    if verbose:
                         print(f"Caption added to {file}: '{caption}'")
 
             except Exception as e:
                 print(f"Error captioning {file}: {e}")
 
-    def prune_images(self, images: List[Path], min_resolution: Tuple[int, int]) -> List[int]:
+    @staticmethod
+    def prune_images(
+        images: List[Path], min_resolution: Tuple[int, int], verbose: bool = False
+    ) -> List[int]:
         """Prune images that do not meet minimum resolution requirements.
 
         Args:
             images (List[Path]): List of image paths to prune.
             min_resolution (Tuple[int, int]): Minimum resolution requirement (width, height).
+            verbose (bool): Enable verbose logging.
 
         Returns:
             List[int]: List of indices of images that meet the resolution requirements.
         """
         valid_indices = []
         for index, img in tqdm(enumerate(images), desc="Pruning"):
-            if utils.prune_by_resolution(img, min_resolution, verbose=self.verbose):
+            if utils.prune_by_resolution(img, min_resolution, verbose=verbose):
                 continue
             valid_indices.append(index)
 
         pruned_count = len(images) - len(valid_indices)
         print(f"Pruned ({pruned_count}) images")
 
-        if self.verbose:
+        if verbose:
             print("Pruned images index:", valid_indices)
 
         return valid_indices
 
-    def scrape(
+    @staticmethod
+    def write_json(data: Union[dict, List[dict]], output_path: Union[str, Path], indent=4) -> None:
+        """Write JSON data to a file.
+
+        Args:
+            data (Union[dict, List[dict]]): JSON data to write.
+            output_path (Union[str, Path]): Output file path.
+            indent (int): Indentation level for JSON output. Defaults to 4.
+        """
+        io.write_json(data, output_path, indent=indent)
+
+    def scrape_and_download(
         self,
         url: str,
         output_dir: Union[str, Path],
@@ -139,7 +162,7 @@ class PinterestDL:
         min_resolution: Optional[Tuple[int, int]] = None,
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
-        add_captions: bool = True,
+        add_captions: bool = False,
     ) -> Optional[List[Path]]:
         """Scrape pins from Pinterest and download images.
 
@@ -160,36 +183,50 @@ class PinterestDL:
                 "Browser is not initialized. Use 'with_browser' to create an instance with a browser."
             )
 
-        try:
-            pin_scraper = scraper.Pinterest(self.browser)
-            scraped_imgs = pin_scraper.scrape(
-                url, limit=limit, verbose=self.verbose, timeout=self.timeout
+        scraped_imgs = self.scrape(url, limit)
+
+        if json_output:
+            output_path = Path(json_output)
+            imgs_dict = [img.to_dict() for img in scraped_imgs]
+            PinterestDL.write_json(imgs_dict, output_path, indent=4)
+
+        if dry_run:
+            if self.verbose:
+                print("Scraped data (dry run):", imgs_dict)
+            return None
+
+        captions = [img.alt for img in scraped_imgs]
+        origins = [img.origin for img in scraped_imgs]
+
+        downloaded_files = PinterestDL.download_images(scraped_imgs, output_dir, self.verbose)
+        valid_indices = PinterestDL.prune_images(
+            downloaded_files, min_resolution or (0, 0), self.verbose
+        )
+
+        if add_captions:
+            PinterestDL.add_captions(
+                downloaded_files, captions, origins, valid_indices, self.verbose
             )
 
-            imgs_dict = [img.to_dict() for img in scraped_imgs]
+        return downloaded_files
 
-            if json_output:
-                output_path = Path(json_output)
-                io.write_json(imgs_dict, output_path, indent=4)
+    def scrape(self, url: str, limit: int) -> List[PinterestImage]:
+        """Scrape pins from Pinterest.
 
-            if dry_run:
-                if self.verbose:
-                    print("Scraped data (dry run):", imgs_dict)
-                return None
+        Args:
+            url (str): Pinterest URL to scrape.
+            limit (int): Maximum number of images to scrape.
 
-            srcs = [img.src for img in scraped_imgs]
-            captions = [img.alt for img in scraped_imgs]
-            origins = [img.origin for img in scraped_imgs]
-            fallback_urls = [img.fallback_urls for img in scraped_imgs]
-
-            downloaded_files = self.download_images(srcs, fallback_urls, output_dir)
-            valid_indices = self.prune_images(downloaded_files, min_resolution or (0, 0))
-
-            if add_captions:
-                self.add_captions(downloaded_files, captions, origins, valid_indices)
-
-            return downloaded_files
-
+        Returns:
+            List[PinterestImage]: List of scraped PinterestImage objects.
+        """
+        if self.browser is None:
+            raise RuntimeError(
+                "Browser is not initialized. Use 'with_browser' to create an instance with a browser."
+            )
+        try:
+            pin_scraper = scraper.Pinterest(self.browser)
+            return pin_scraper.scrape(url, limit=limit, verbose=self.verbose, timeout=self.timeout)
         finally:
             self.browser.close()
             self.browser = None

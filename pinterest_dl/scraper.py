@@ -154,7 +154,8 @@ class PinterestImage:
             "fallback_urls": self.fallback_urls,
         }
 
-    def from_dict(self, data: Dict[str, Any]) -> "PinterestImage":
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> "PinterestImage":
         return PinterestImage(data["src"], data["alt"], data["origin"], data["fallback_urls"])
 
     def __str__(self) -> str:
