@@ -1,9 +1,7 @@
 import copy
-import json
 import random
 import socket
 import time
-from pathlib import Path
 from typing import List
 
 from selenium.common.exceptions import StaleElementReferenceException
@@ -47,7 +45,7 @@ class Pinterest:
         print("Login Successful")
         return self
 
-    def capture_cookies(self, out_path: str | Path = "cookies.json", after_sec: float = 5) -> None:
+    def get_cookies(self, after_sec: float = 5) -> List[dict]:
         """Capture cookies to a file.
 
         Args:
@@ -55,10 +53,7 @@ class Pinterest:
             after_sec (float, optional): time in second to wait before capturing cookies. Defaults to 5.
         """
         time.sleep(after_sec)
-        cookies = self.browser.get_cookies()
-        with open(out_path, "w") as f:
-            json.dump(cookies, f)
-        print("Cookies Captured")
+        return self.browser.get_cookies()
 
     def scrape(
         self,

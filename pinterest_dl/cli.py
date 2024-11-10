@@ -75,12 +75,18 @@ def main() -> None:
     if args.cmd == "login":
         email = input("Enter Pinterest email: ")
         password = getpass("Enter Pinterest password: ")
-        PinterestDL.with_browser(
-            browser_type="firefox" if args.firefox else "chrome",
-            headless=not args.headful,
-            incognito=args.incognito,
-            verbose=args.verbose,
-        ).login(email, password).capture_cookies(after_sec=7, out_path=args.output)
+        cookies = (
+            PinterestDL.with_browser(
+                browser_type="firefox" if args.firefox else "chrome",
+                headless=not args.headful,
+                incognito=args.incognito,
+                verbose=args.verbose,
+            )
+            .login(email, password)
+            .get_cookies(after_sec=7)
+        )
+
+        io.write_json(cookies, args.output)
         print("\nDone.")
     elif args.cmd == "scrape":
         PinterestDL.with_browser(
