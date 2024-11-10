@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
-from tqdm import tqdm
 
 from pinterest_dl.low_level.browser import Browser
 from pinterest_dl.low_level.ops import downloader, io
@@ -183,7 +182,7 @@ class PinterestDL:
             List[int]: List of indices of images that meet the resolution requirements.
         """
         valid_indices = []
-        for index, img in tqdm(enumerate(images), desc="Pruning"):
+        for index, img in enumerate(images):
             if img.prune_local(min_resolution, verbose):
                 continue
             valid_indices.append(index)
