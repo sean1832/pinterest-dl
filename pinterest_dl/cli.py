@@ -1,9 +1,10 @@
 import argparse
+from getpass import getpass
 from pathlib import Path
 
 from pinterest_dl import PinterestDL, __description__, __version__
+from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import io
-from pinterest_dl.low_level.pinterest import PinterestImage
 
 
 def construct_json_output(output_dir: Path) -> Path:
@@ -33,10 +34,18 @@ def get_parser() -> argparse.ArgumentParser:
 
     cmd = parser.add_subparsers(dest="cmd", help="Command to run")
 
+    # login command
+    login_cmd = cmd.add_parser("login", help="Login to Pinterest and capture cookies")
+    login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
+    login_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
+    login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
+    login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+
     # scrape command
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("output", help="Output directory")
+    scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=3, help="Timeout in seconds for requests (default: 3)")
@@ -62,14 +71,24 @@ def main() -> None:
     parser = get_parser()
     args = parser.parse_args()
 
-    if args.cmd == "scrape":
+    if args.cmd == "login":
+        email = input("Enter Pinterest email: ")
+        password = getpass("Enter Pinterest password: ")
+        PinterestDL.with_browser(
+            browser_type="firefox" if args.firefox else "chrome",
+            headless=not args.headful,
+            incognito=True,
+            verbose=args.verbose,
+        ).login(email, password).capture_cookies(after_sec=7, out_path=args.output)
+        print("\nDone.")
+    elif args.cmd == "scrape":
         PinterestDL.with_browser(
             browser_type="firefox" if args.firefox else "chrome",
             timeout=args.timeout,
             headless=not args.headful,
             incognito=args.incognito,
             verbose=args.verbose,
-        ).scrape_and_download(
+        ).with_cookies(args.cookies).scrape_and_download(
             args.url,
             args.output,
             args.limit,

@@ -26,7 +26,7 @@ def write_json(
         json.dump(data, f, indent=indent)
 
 
-def read_json(filename: str) -> Dict[str, Any] | List[Dict[str, Any]]:
+def read_json(filename: str | Path) -> Dict[str, Any] | List[Dict[str, Any]]:
     with open(filename, "r") as f:
         return json.load(f)
 

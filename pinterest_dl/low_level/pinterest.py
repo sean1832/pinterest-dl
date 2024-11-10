@@ -1,7 +1,9 @@
 import copy
+import json
 import random
 import socket
 import time
+from pathlib import Path
 from typing import List
 
 from selenium.common.exceptions import StaleElementReferenceException
@@ -22,15 +24,41 @@ class Pinterest:
     def randdelay(a, b) -> None:
         time.sleep(random.uniform(a, b))
 
-    # currently not used
-    def login(self, email: str, password: str) -> None:
-        self.browser.get("https://www.pinterest.com.au/login/")
+    def login(
+        self, email: str, password: str, url: str = "https://www.pinterest.com/login/"
+    ) -> "Pinterest":
+        """Login to Pinterest.
+
+        Args:
+            email (str): Pinterest email.
+            password (str): Pinterest password.
+            url (str): Pinterest login page url. Defaults to "https://www.pinterest.com/login/".
+
+        Returns:
+            Pinterest: Pinterest object.
+        """
+        self.browser.get(url)
         email_field = self.browser.find_element(By.ID, "email")
         email_field.send_keys(email)
         password_field = self.browser.find_element(By.ID, "password")
         password_field.send_keys(password)
         self.randdelay(1, 2)  # delay between 1 and 2 seconds
         password_field.send_keys(Keys.RETURN)
+        print("Login Successful")
+        return self
+
+    def capture_cookies(self, out_path: str | Path = "cookies.json", after_sec: float = 5) -> None:
+        """Capture cookies to a file.
+
+        Args:
+            out_path (str | Path, optional): output file path. Defaults to "cookies.json".
+            after_sec (float, optional): time in second to wait before capturing cookies. Defaults to 5.
+        """
+        time.sleep(after_sec)
+        cookies = self.browser.get_cookies()
+        with open(out_path, "w") as f:
+            json.dump(cookies, f)
+        print("Cookies Captured")
 
     def scrape(
         self,

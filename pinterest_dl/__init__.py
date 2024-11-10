@@ -1,6 +1,7 @@
 __version__ = "0.0.28"
 __description__ = "An unofficial Pinterest image downloader"
 
+import time
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
@@ -56,9 +57,63 @@ class PinterestDL:
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
-        instance = cls(verbose, timeout)
+        instance = cls(verbose=verbose, timeout=timeout)
         instance.browser = instance._initialize_browser(browser_type, headless, incognito)
         return instance
+
+    def with_cookies(
+        self, cookies_path: Optional[Union[str, Path]], wait_sec: float = 1
+    ) -> "PinterestDL":
+        """Load cookies from a file to the current browser session.
+
+        Args:
+            cookies_path (Optional[Union[str, Path]]): Path to cookies file.
+            wait_sec (float): Time in seconds to wait after loading cookies.
+
+        Returns:
+            PinterestDL: Instance of PinterestDL with cookies loaded.
+        """
+        if cookies_path is None:
+            return self
+
+        if self.browser is None:
+            raise RuntimeError(
+                "Browser is not initialized. Use 'with_browser' to create an instance with a browser."
+            )
+        if not Path(cookies_path).exists():
+            raise FileNotFoundError(f"Cookies file not found: {cookies_path}")
+
+        cookies = io.read_json(cookies_path)
+        if not isinstance(cookies, list):
+            raise ValueError("Invalid cookies file format. Expected a list of cookies.")
+
+        if self.verbose:
+            print("Navigate to Pinterest homepage before loading cookies.")
+        # Navigate to Pinterest homepage to load cookies
+        self.browser.get("https://www.pinterest.com")
+
+        cookies = PinterestDL._clean_cookies(cookies)
+        for cookie in cookies:
+            self.browser.add_cookie(cookie)
+        print(f"Loaded cookies from {cookies_path}")
+
+        time.sleep(wait_sec)
+        return self
+
+    @staticmethod
+    def _clean_cookies(cookies: List[dict]) -> List[dict]:
+        """Clean cookies to ensure they are compatible with Pinterest.
+
+        Args:
+            cookies (List[dict]): List of cookies to clean.
+
+        Returns:
+            List[dict]: Cleaned list of cookies.
+        """
+        for cookie in cookies:
+            if cookie.get("domain") != ".pinterest.com":
+                cookie["domain"] = ".pinterest.com"
+        return cookies
 
     @staticmethod
     def download_images(
@@ -223,6 +278,25 @@ class PinterestDL:
         finally:
             self.browser.close()
             self.browser = None
+
+    def login(self, email: str, password: str) -> Pinterest:
+        """Login to Pinterest using the given credentials.
+
+        Args:
+            email (str): Pinterest email.
+            password (str): Pinterest password.
+
+        Returns:
+            Pinterest: Pinterest object.
+        """
+        try:
+            if self.browser is None:
+                raise RuntimeError(
+                    "Browser is not initialized. Use 'with_browser' to create an instance with a browser."
+                )
+            return Pinterest(self.browser).login(email, password)
+        except Exception as e:
+            raise RuntimeError("Failed to login to Pinterest.") from e
 
     def _initialize_browser(
         self, browser_type: Literal["chrome", "firefox"], headless: bool, incognito: bool
