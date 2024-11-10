@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pinterest-dl = "pinterest_dl.main:main"
+pinterest-dl = "pinterest_dl.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/sean1832/pinterest-dl"
