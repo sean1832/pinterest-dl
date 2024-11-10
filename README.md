@@ -45,7 +45,7 @@ cd pinterest-dl
 pip install .
 ```
 
-## 🛠 Usage
+## 🚀 CLI-Usage
 
 ### General Command Structure
 ```bash
@@ -104,6 +104,70 @@ pinterest-dl download [url_list] [options]
 - `--verbose`: Enable verbose output.
 
 
+## 🛠️ Python Usage
+You can also use the `PinterestDL` class directly in your Python code to scrape and download images programmatically.
+
+### 1. Quick Scrape and Download
+The following example shows how to scrape and download images from a Pinterest URL in one step.
+
+```python
+from pinterest_dl import PinterestDL
+
+# Initialize and run the Pinterest image downloader with specified settings
+image_paths = PinterestDL.with_browser(
+    "chrome",  # Browser type to use for scraping (choose "chrome" or "firefox")
+    timeout=3,  # Timeout in seconds for each request (default is 3)
+    headless=True,  # Run browser in headless mode (no UI window)
+    incognito=False,  # Enable incognito mode to avoid saving browsing data
+    verbose=False,  # Enable detailed logging for debugging (default is False)
+).scrape_and_download(
+    url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
+    output_dir="images/art",  # Directory to save downloaded images
+    limit=30,  # Max number of images to download
+    min_resolution=(512, 512),  # Minimum resolution for images (width, height)
+    json_output="art.json",  # File to save URLs of scraped images (optional)
+    dry_run=False,  # If True, performs a scrape without downloading
+    add_captions=True,  # Adds image `alt` text as metadata to images
+)
+```
+
+### 2. Detailed Scraping with Lower-Level Control
+
+Use this example if you need more granular control over scraping and downloading images.
+
+```python
+from pinterest_dl import PinterestDL
+
+# 1. Initialize PinterestDL with browser settings
+pinterest = PinterestDL.with_browser("chrome")
+
+# 2. Scrape Images
+# Specify Pinterest URL and maximum number of images to scrape
+scraped_images = pinterest.scrape(
+    url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
+    limit=30,  # Maximum number of images to scrape
+)
+
+# 3. Save Scraped Data to JSON
+# Convert scraped data into a dictionary and save it to a JSON file for future access
+images_data = [img.to_dict() for img in scraped_images]
+PinterestDL.write_json(images_data, "art.json", indent=4)
+
+# 4. Download Images
+# Download images to a specified directory
+downloaded_files = pinterest.download_images(images=scraped_images, output_dir="images/art")
+
+# 5. Prune Images by Resolution
+# Remove images that do not meet the minimum resolution requirements
+min_resolution = (512, 512)
+valid_indices = pinterest.prune_images(downloaded_files, min_resolution)
+
+# 6. Add Alt Text as Metadata
+# Extract `alt` text from images and set it as metadata in the downloaded files
+alts = [img.alt for img in scraped_images]  # Alt text for each image
+origins = [img.origin for img in scraped_images]  # Original Pinterest URL for each image
+pinterest.add_captions(files=downloaded_files, captions=alts, origins=origins, indices=valid_indices)
+```
 
 ## 📜 License
 [Apache License 2.0](LICENSE)
