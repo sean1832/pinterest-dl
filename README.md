@@ -155,18 +155,16 @@ PinterestDL.write_json(images_data, "art.json", indent=4)
 
 # 4. Download Images
 # Download images to a specified directory
-downloaded_files = pinterest.download_images(images=scraped_images, output_dir="images/art")
+downloaded_imgs = pinterest.download_images(images=scraped_images, output_dir="images/art")
 
 # 5. Prune Images by Resolution
 # Remove images that do not meet the minimum resolution requirements
 min_resolution = (512, 512)
-valid_indices = pinterest.prune_images(downloaded_files, min_resolution)
+valid_indices = pinterest.prune_images(downloaded_imgs, min_resolution)
 
 # 6. Add Alt Text as Metadata
 # Extract `alt` text from images and set it as metadata in the downloaded files
-alts = [img.alt for img in scraped_images]  # Alt text for each image
-origins = [img.origin for img in scraped_images]  # Original Pinterest URL for each image
-pinterest.add_captions(files=downloaded_files, captions=alts, origins=origins, indices=valid_indices)
+pinterest.add_captions(files=downloaded_imgs, indices=valid_indices)
 ```
 
 ## 📜 License
