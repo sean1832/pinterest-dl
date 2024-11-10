@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from pinterest_dl import api, cli_parser, io, utils
+from pinterest_dl import PinterestDL, cli_parser, io, utils
+from pinterest_dl.scraper import PinterestImage
+
+
+def construct_json_output(output_dir: Path) -> Path:
+    return Path(f"{Path(output_dir).absolute().name}.json")
 
 
 def main():
@@ -8,38 +13,39 @@ def main():
     args = parser.parse_args()
 
     if args.cmd == "scrape":
-        api.run_scrape(
-            args.url,
-            args.limit,
-            args.output,
+        PinterestDL.with_browser(
+            browser_type="firefox" if args.firefox else "chrome",
             timeout=args.timeout,
-            json=args.json,
-            firefox=args.firefox,
+            headless=not args.headful,
             incognito=args.incognito,
-            headful=args.headful,
-            dry_run=args.dry_run,
             verbose=args.verbose,
+        ).scrape_and_download(
+            args.url,
+            args.output,
+            args.limit,
             min_resolution=utils.parse_resolution(args.resolution) if args.resolution else None,
+            json_output=construct_json_output(args.output) if args.json else None,
+            dry_run=args.dry_run,
+            add_captions=True,
         )
         print("\nDone.")
     elif args.cmd == "download":
         # prepare image url data
         img_datas = io.read_json(args.input)
-        srcs, alts, fallbacks, origins = [], [], [], []
-        for img_data in img_datas:
-            srcs.append(img_data["src"])
-            alts.append(img_data["alt"])
-            fallbacks.append(img_data["fallback"])
-            origins.append(img_data["origin"])
-
-        output_dir = args.output or str(Path(args.input).stem)
+        # srcs, alts, fallbacks, origins = [], [], [], []
+        images = []
+        for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
+            images.append(PinterestImage.from_dict(img_data))
 
         # download images
-        downloaded_files = api.run_download(srcs, fallbacks, output_dir, args.verbose)
+        output_dir = args.output or str(Path(args.input).stem)
+        downloaded_files = PinterestDL.download_images(images, output_dir, args.verbose)
 
         # post process
-        pruned_idx = api.run_prune(downloaded_files, args.resolution)
-        api.run_caption(downloaded_files, alts, origins, pruned_idx, verbose=args.verbose)
+        alts = [img.alt for img in images]
+        origins = [img.origin for img in images]
+        pruned_idx = PinterestDL.prune_images(downloaded_files, args.resolution, args.verbose)
+        PinterestDL.add_captions(downloaded_files, alts, origins, pruned_idx, args.verbose)
         print("\nDone.")
     else:
         parser.print_help()

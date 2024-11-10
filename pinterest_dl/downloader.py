@@ -1,30 +1,32 @@
 import concurrent.futures
 from pathlib import Path
-from typing import Literal
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import requests
 from tqdm import tqdm
 
 
-def fetch(url: str, response_format: Literal["json", "text"] = "text"):
+def fetch(
+    url: str, response_format: Literal["json", "text"] = "text"
+) -> Union[Dict[str, Any], str]:
     if isinstance(url, str):
         req = requests.get(url)
         req.raise_for_status()
         if response_format == "json":
-            return req.json()
+            return req.json()  # JSON response may contain more complex structures
         elif response_format == "text":
             return req.text
     else:
-        print("URL must be a string.")
+        raise ValueError("URL must be a string.")
 
 
-def download(url: str, output_dir, chunk_size=2048):
+def download(url: str, output_dir: Path, chunk_size: int = 2048) -> Path:
     if isinstance(url, str):
         req = requests.get(url)
         req.raise_for_status()
 
         filename = Path(url).name
-        outfile = Path.joinpath(Path(output_dir), filename)
+        outfile = Path.joinpath(output_dir, filename)
         # create directory if not exist
         outfile.parent.mkdir(parents=True, exist_ok=True)
         with open(outfile, "wb") as payload:
@@ -35,15 +37,27 @@ def download(url: str, output_dir, chunk_size=2048):
         print("URL must be a string.")
 
 
-def download_with_fallback(url: str, output_dir, fallback_url, chunk_size=2048):
+def download_with_fallback(
+    url: str, output_dir: Path, fallback_url: List[str], chunk_size: int = 2048
+) -> Path:
     try:
         return download(url, output_dir, chunk_size)
     except requests.exceptions.HTTPError:
-        return download(fallback_url, output_dir, chunk_size)
+        for fallback in fallback_url:
+            try:
+                return download(fallback, output_dir, chunk_size)
+            except requests.exceptions.HTTPError:
+                continue
+
+    raise requests.exceptions.HTTPError("All download attempts failed.")
 
 
-def download_concurrent(urls: list, output_dir, chunk_size=2048, verbose=False):
-    results = [None] * len(urls)  # Initialize a list to hold the results in order
+def download_concurrent(
+    urls: List[str], output_dir: Path, chunk_size: int = 2048, verbose: bool = False
+) -> List[Path]:
+    results: List[Optional[Path]] = [None] * len(
+        urls
+    )  # Initialize a list to hold the results in order
     with concurrent.futures.ThreadPoolExecutor() as executor, tqdm(
         total=len(urls), desc="Downloading"
     ) as pbar:
@@ -56,13 +70,20 @@ def download_concurrent(urls: list, output_dir, chunk_size=2048, verbose=False):
             outfile = future.result()
             results[result_index] = outfile  # Place the result in the corresponding position
             pbar.update(1)
-    return results
+    # Filter out None values
+    return [result for result in results if result is not None]
 
 
 def download_concurrent_with_fallback(
-    urls: list, output_dir, fallback_urls, chunk_size=2048, verbose=False
-):
-    results = [None] * len(urls)  # Initialize a list to hold the results in order
+    urls: List[str],
+    output_dir: Path,
+    fallback_urls: List[List[str]],
+    chunk_size: int = 2048,
+    verbose: bool = False,
+) -> List[Path]:
+    results: List[Optional[Path]] = [None] * len(
+        urls
+    )  # Initialize a list to hold the results in order
     with concurrent.futures.ThreadPoolExecutor() as executor, tqdm(
         total=len(urls), desc="Downloading"
     ) as pbar:
@@ -75,4 +96,5 @@ def download_concurrent_with_fallback(
             outfile = future.result()
             results[result_index] = outfile  # Place the result in the corresponding position
             pbar.update(1)
-    return results
+    # Filter out None values
+    return [result for result in results if result is not None]

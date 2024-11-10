@@ -4,9 +4,11 @@ import random
 import socket
 import time
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -17,12 +19,12 @@ from pinterest_dl import utils
 from pinterest_dl.driver_installer import ChromeDriverInstaller
 
 
-def randdelay(a, b):
+def randdelay(a, b) -> None:
     time.sleep(random.uniform(a, b))
 
 
 class BrowserVersion:
-    def __init__(self, major=0, minor=0, build=0, patch=0):
+    def __init__(self, major: int = 0, minor: int = 0, build: int = 0, patch: int = 0) -> None:
         self.Major: int = major
         self.Minor: int = minor
         self.Build: int = build
@@ -37,16 +39,16 @@ class BrowserVersion:
             )
         return BrowserVersion(int(segs[0]), int(segs[1]), int(segs[2]), int(segs[3]))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.Major}.{self.Minor}.{self.Build}.{self.Patch}"
 
 
 class Browser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.app_root = utils.get_appdata_dir()
-        self.version: BrowserVersion = None
+        self.version: BrowserVersion = BrowserVersion()  # Default version 0.0.0.0
 
-    def _validate_chrome_driver_version(self):
+    def _validate_chrome_driver_version(self) -> bool:
         version_file = Path(self.app_root, "CHROMEDRIVER_VERSION")
         if not version_file.exists():
             return False
@@ -66,8 +68,12 @@ class Browser:
         return True
 
     def Chrome(
-        self, image_enable=False, incognito=False, exe_path="chromedriver.exe", headful=False
-    ):
+        self,
+        image_enable: bool = False,
+        incognito: bool = False,
+        exe_path: Path | str = "chromedriver.exe",
+        headful: bool = False,
+    ) -> WebDriver:
         driver_installer = ChromeDriverInstaller(self.app_root)
         self.version = BrowserVersion.from_str(driver_installer.chrome_version)
 
@@ -75,7 +81,7 @@ class Browser:
             print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install(version="latest", platform="auto")
 
-        service = webdriver.chrome.service.Service(exe_path)
+        service = Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
 
         # Disable images
@@ -95,7 +101,7 @@ class Browser:
         browser = webdriver.Chrome(options=chrome_options, service=service)
         return browser
 
-    def Firefox(self, image_enable=False, incognito=False, headful=False):
+    def Firefox(self, image_enable=False, incognito=False, headful=False) -> WebDriver:
         firefox_options = webdriver.FirefoxOptions()
         # Disable images
         if image_enable:
@@ -111,12 +117,57 @@ class Browser:
         return browser
 
 
+class PinterestImage:
+    def __init__(
+        self,
+        src: str,
+        alt: Optional[str],
+        origin: Optional[str],
+        fallback_urls: Optional[str | List[str]] = None,
+    ) -> None:
+        """Pinterest Image data.
+
+        Args:
+            src (str): Image source url.
+            alt (Optional[str]): Image alt text.
+            origin (Optional[str]): Pinterest pin url.
+            fallback_urls (Optional[str  |  List[str]], optional): Fallback image urls. Defaults to None.
+        """
+        self.src = src
+        self.alt = alt
+        self.origin = origin
+        self.fallback_urls: List[str] = self._set_fallback(fallback_urls) if fallback_urls else []
+
+    def _set_fallback(self, urls: str | List[str]) -> List[str]:
+        if isinstance(urls, str):
+            return [urls]
+        elif isinstance(urls, list):
+            return urls
+        else:
+            raise ValueError("Invalid fallback urls")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "src": self.src,
+            "alt": self.alt,
+            "origin": self.origin,
+            "fallback_urls": self.fallback_urls,
+        }
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> "PinterestImage":
+        return PinterestImage(data["src"], data["alt"], data["origin"], data["fallback_urls"])
+
+    def __str__(self) -> str:
+        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, fallback_urls: {self.fallback_urls})"
+
+
 class Pinterest:
-    def __init__(self, browser=None):
+    def __init__(self, browser: WebDriver) -> None:
         self.browser: WebDriver = browser
 
     # currently not used
-    def login(self, email, password):
+    def login(self, email: str, password: str) -> None:
         self.browser.get("https://www.pinterest.com.au/login/")
         email_field = self.browser.find_element(By.ID, "email")
         email_field.send_keys(email)
@@ -127,13 +178,13 @@ class Pinterest:
 
     def scrape(
         self,
-        url,
-        limit=20,
-        timeout=3,
-        verbose=False,
-    ):
+        url: str,
+        limit: int = 20,
+        timeout: float = 3,
+        verbose: bool = False,
+    ) -> List[PinterestImage]:
         unique_results = set()  # Use a set to store unique results
-        imgs_data = []  # Store image data
+        imgs_data: List[PinterestImage] = []  # Store image data
         previous_divs = []
         tries = 0
         pbar = tqdm(total=limit, desc="Scraping")
@@ -164,12 +215,7 @@ class Pinterest:
                                 src_736 = src.replace("/originals/", "/736x/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = {
-                                        "src": src,
-                                        "alt": alt,
-                                        "fallback": src_736,
-                                        "origin": href,
-                                    }
+                                    img_data = PinterestImage(src, alt, href, [src_736])
                                     imgs_data.append(img_data)
                                     pbar.update(1)
                                     if verbose:
@@ -196,7 +242,7 @@ class Pinterest:
                 print(f"Scraped {len(imgs_data)} images")
             return imgs_data
 
-    def _is_div_ad(self, div: WebElement):
+    def _is_div_ad(self, div: WebElement) -> bool:
         """Check if div is an ad.
 
         Args:
@@ -205,5 +251,7 @@ class Pinterest:
         ads_svg_path = "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M3 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6m18 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6"
         svg_elements = div.find_elements(By.TAG_NAME, "svg")
         for svg in svg_elements:
-            if ads_svg_path in svg.get_attribute("innerHTML"):
+            inner_html = svg.get_attribute("innerHTML")
+            if inner_html and ads_svg_path in inner_html:
                 return True
+        return False

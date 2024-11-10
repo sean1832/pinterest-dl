@@ -1,43 +1,48 @@
 import json
 import os
 import zipfile
-from typing import List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
-def append_json(data, filename, indent=None):
-    with open(filename, "r+") as f:
+def append_json(data: Dict[str, Any], file_path: str | Path, indent: int | None = None) -> None:
+    with open(file_path, "r+") as f:
         file_data = json.load(f)
         file_data.update(data)
         f.seek(0)
         json.dump(file_data, f, indent=indent)
 
 
-def write_json(data, filename, indent=None):
-    with open(filename, "w") as f:
+def write_json(
+    data: Dict[str, Any] | List[Dict[str, Any]], file_path: str | Path, indent: int | None = None
+) -> None:
+    with open(file_path, "w") as f:
         json.dump(data, f, indent=indent)
 
 
-def read_json(filename):
+def read_json(filename: str) -> Dict[str, Any] | List[Dict[str, Any]]:
     with open(filename, "r") as f:
         return json.load(f)
 
 
-def write_text(data: str | List[str], filename: str):
+def write_text(data: str | List[str], filename: str) -> None:
     if isinstance(data, list):
         data = "\n".join(data)
     with open(filename, "w") as f:
         f.write(data)
 
 
-def unzip(zip_path, extract_to, target_file=None, verbose=False):
+def unzip(
+    zip_path: Path, extract_to: Path, target_file: Optional[str] = None, verbose: bool = False
+) -> None:
     """
     Extract a specific file from a zip file if target_file is specified.
     Extracts everything otherwise.
 
-    Parameters:
-    zip_path (str): Path to the zip file.
-    extract_to (str): Directory where the files should be extracted to.
-    target_file (str, optional): Specific file to extract. If None, everything is extracted.
+    Args:
+        zip_path (str): Path to the zip file.
+        extract_to (str): Directory where the files should be extracted to.
+        target_file (str, optional): Specific file to extract. If None, everything is extracted.
     """
     if not zip_path or not str(zip_path).endswith(".zip"):
         raise ValueError(f"Invalid zip file. [{zip_path}]")

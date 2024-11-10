@@ -11,10 +11,12 @@ from pinterest_dl import downloader, io
 class ChromeDriverInstaller:
     def __init__(self, install_dir: Path | str):
         self.install_dir = Path(install_dir)
-        self.chrome_version = self.get_chrome_version()
-        self.platform = self.get_platform()
+        self.chrome_version = self._get_chrome_version()
+        self.platform: Literal["win32", "win64", "mac-x64", "mac-arm64", "linux64"] = (
+            self._get_platform()
+        )
 
-    def get_chrome_version(self) -> str:
+    def _get_chrome_version(self) -> str:
         # Determine the operating system
         os_type = platform.system()
 
@@ -59,7 +61,9 @@ class ChromeDriverInstaller:
 
         return version
 
-    def get_platform(self) -> str:
+    def _get_platform(
+        self,
+    ) -> Literal["win32", "win64", "mac-x64", "mac-arm64", "linux64"]:
         os_name = platform.system()
         arch = platform.machine()
 
@@ -76,8 +80,7 @@ class ChromeDriverInstaller:
         elif os_name == "Linux":
             if arch in ("x86_64", "amd64"):
                 return "linux64"  # 64-bit Linux
-
-        return None
+        raise ValueError("Unsupported platform.")
 
     def install(
         self,
@@ -101,7 +104,10 @@ class ChromeDriverInstaller:
                 "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json",
                 response_format="json",
             )
-            version = response["channels"]["Stable"]["version"]
+            if isinstance(response, dict):
+                version = response["channels"]["Stable"]["version"]
+            else:
+                raise ValueError("Failed to fetch latest Chrome driver version.")
         version.strip()
 
         if platform == "auto":
@@ -122,7 +128,7 @@ class ChromeDriverInstaller:
             print(f"Downloading Chrome driver from {url}")
         zip_file = downloader.download(url, self.install_dir)
         io.unzip(zip_file, self.install_dir, "chromedriver.exe", verbose=verbose)
-        io.write_text(version, self.install_dir / "CHROMEDRIVER_VERSION")
+        io.write_text(version, f"{str(self.install_dir)}/CHROMEDRIVER_VERSION")
         print("Chrome driver installed.")
 
         os.unlink(zip_file)
