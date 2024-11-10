@@ -39,6 +39,7 @@ def get_parser() -> argparse.ArgumentParser:
     login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
     login_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
+    login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
 
     # scrape command
@@ -77,7 +78,7 @@ def main() -> None:
         PinterestDL.with_browser(
             browser_type="firefox" if args.firefox else "chrome",
             headless=not args.headful,
-            incognito=True,
+            incognito=args.incognito,
             verbose=args.verbose,
         ).login(email, password).capture_cookies(after_sec=7, out_path=args.output)
         print("\nDone.")
