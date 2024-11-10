@@ -116,18 +116,18 @@ from pinterest_dl import PinterestDL
 # Initialize and run the Pinterest image downloader with specified settings
 image_paths = PinterestDL.with_browser(
     "chrome",  # Browser type to use for scraping (choose "chrome" or "firefox")
-    timeout=3,  # Timeout in seconds for each request (default is 3)
-    headless=True,  # Run browser in headless mode (no UI window)
-    incognito=False,  # Enable incognito mode to avoid saving browsing data
-    verbose=False,  # Enable detailed logging for debugging (default is False)
+    timeout=3,  # Timeout in seconds for each request (default: 3)
+    headless=True,  # Run browser in headless mode (default: True)
+    incognito=False,  # Enable incognito mode to avoid saving browsing data (default: False)
+    verbose=False,  # Enable detailed logging for debugging (default: False)
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
-    limit=30,  # Max number of images to download
-    min_resolution=(512, 512),  # Minimum resolution for images (width, height)
-    json_output="art.json",  # File to save URLs of scraped images (optional)
-    dry_run=False,  # If True, performs a scrape without downloading
-    add_captions=True,  # Adds image `alt` text as metadata to images
+    limit=30,  # Max number of images to download 
+    min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
+    json_output="art.json",  # File to save URLs of scraped images (default: None)
+    dry_run=False,  # If True, performs a scrape without downloading images (default: False)
+    add_captions=True,  # Adds image `alt` text as metadata to images (default: False)
 )
 ```
 
@@ -155,18 +155,16 @@ PinterestDL.write_json(images_data, "art.json", indent=4)
 
 # 4. Download Images
 # Download images to a specified directory
-downloaded_files = pinterest.download_images(images=scraped_images, output_dir="images/art")
+downloaded_imgs = pinterest.download_images(images=scraped_images, output_dir="images/art")
 
 # 5. Prune Images by Resolution
 # Remove images that do not meet the minimum resolution requirements
 min_resolution = (512, 512)
-valid_indices = pinterest.prune_images(downloaded_files, min_resolution)
+valid_indices = pinterest.prune_images(downloaded_imgs, min_resolution)
 
 # 6. Add Alt Text as Metadata
 # Extract `alt` text from images and set it as metadata in the downloaded files
-alts = [img.alt for img in scraped_images]  # Alt text for each image
-origins = [img.origin for img in scraped_images]  # Original Pinterest URL for each image
-pinterest.add_captions(files=downloaded_files, captions=alts, origins=origins, indices=valid_indices)
+pinterest.add_captions(files=downloaded_imgs, indices=valid_indices)
 ```
 
 ## 📜 License
