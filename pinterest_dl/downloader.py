@@ -20,13 +20,13 @@ def fetch(
         raise ValueError("URL must be a string.")
 
 
-def download(url: str, output_dir, chunk_size=2048):
+def download(url: str, output_dir: Path, chunk_size: int = 2048):
     if isinstance(url, str):
         req = requests.get(url)
         req.raise_for_status()
 
         filename = Path(url).name
-        outfile = Path.joinpath(Path(output_dir), filename)
+        outfile = Path.joinpath(output_dir, filename)
         # create directory if not exist
         outfile.parent.mkdir(parents=True, exist_ok=True)
         with open(outfile, "wb") as payload:
@@ -37,14 +37,16 @@ def download(url: str, output_dir, chunk_size=2048):
         print("URL must be a string.")
 
 
-def download_with_fallback(url: str, output_dir, fallback_url, chunk_size=2048):
+def download_with_fallback(url: str, output_dir: Path, fallback_url: str, chunk_size: int = 2048):
     try:
         return download(url, output_dir, chunk_size)
     except requests.exceptions.HTTPError:
         return download(fallback_url, output_dir, chunk_size)
 
 
-def download_concurrent(urls: list, output_dir, chunk_size=2048, verbose=False) -> List[Path]:
+def download_concurrent(
+    urls: List[str], output_dir: Path, chunk_size: int = 2048, verbose: bool = False
+) -> List[Path]:
     results: List[Optional[Path]] = [None] * len(
         urls
     )  # Initialize a list to hold the results in order
@@ -65,7 +67,11 @@ def download_concurrent(urls: list, output_dir, chunk_size=2048, verbose=False) 
 
 
 def download_concurrent_with_fallback(
-    urls: list, output_dir, fallback_urls, chunk_size=2048, verbose=False
+    urls: List[str],
+    output_dir: Path,
+    fallback_urls: List[str],
+    chunk_size: int = 2048,
+    verbose: bool = False,
 ) -> List[Path]:
     results: List[Optional[Path]] = [None] * len(
         urls

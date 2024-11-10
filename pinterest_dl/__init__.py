@@ -66,6 +66,7 @@ class PinterestDL:
                 incognito=False,
                 verbose=True,
             )
+            pdl.scrape_pins(...)
             ```
         """
         instance = cls(output_dir, verbose, timout)
@@ -86,7 +87,7 @@ class PinterestDL:
             List[Path]: List of paths to downloaded images.
         """
         if isinstance(urls, str):
-            return [downloader.download_with_fallback(urls, self.output_dir, fallback_urls)]
+            return [downloader.download_with_fallback(urls, self.output_dir, fallback_urls[0])]
         return downloader.download_concurrent(urls, self.output_dir, verbose=self.verbose)
 
     def add_captions(
@@ -95,7 +96,7 @@ class PinterestDL:
         captions: Union[str, List[str]],
         origins: Union[str, List[str]],
         indices: Optional[Union[int, List[int]]] = None,
-    ):
+    ) -> None:
         """
         Add captions and origin information to downloaded images.
 

@@ -36,7 +36,7 @@ def main():
         # prepare image url data
         img_datas = io.read_json(args.input)
         srcs, alts, fallbacks, origins = [], [], [], []
-        for img_data in img_datas:
+        for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
             srcs.append(img_data["src"])
             alts.append(img_data["alt"])
             fallbacks.append(img_data["fallback"])
