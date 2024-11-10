@@ -55,11 +55,27 @@ pinterest-dl [command] [options]
 ---
 ### Examples
 
-**Scraping Images:**
+**Scraping Images in anonymous mode:**
 
-Scrape images to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a limit of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
+Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a limit of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
 ```bash
 pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -l 30 -r 512x512 --json
+```
+
+**Get Browser Cookies:**
+
+Get browser cookies for Pinterest login and save them to the `cookies.json` file in headful mode (with browser window).
+```bash
+pinterest-dl login -o cookies.json --headful
+```
+> [!TIP]
+> You will be prompted to enter your Pinterest email and password. The tool will save the browser cookies to the specified file for future use.
+
+**Scraping Private Boards:**
+
+Scrape images from a private Pinterest board using the cookies saved in the `cookies.json` file.
+```bash
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -l 30 -c cookies.json
 ```
 
 **Downloading Images:**
