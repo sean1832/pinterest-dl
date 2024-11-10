@@ -22,15 +22,38 @@ class Pinterest:
     def randdelay(a, b) -> None:
         time.sleep(random.uniform(a, b))
 
-    # currently not used
-    def login(self, email: str, password: str) -> None:
-        self.browser.get("https://www.pinterest.com.au/login/")
+    def login(
+        self, email: str, password: str, url: str = "https://www.pinterest.com/login/"
+    ) -> "Pinterest":
+        """Login to Pinterest.
+
+        Args:
+            email (str): Pinterest email.
+            password (str): Pinterest password.
+            url (str): Pinterest login page url. Defaults to "https://www.pinterest.com/login/".
+
+        Returns:
+            Pinterest: Pinterest object.
+        """
+        self.browser.get(url)
         email_field = self.browser.find_element(By.ID, "email")
         email_field.send_keys(email)
         password_field = self.browser.find_element(By.ID, "password")
         password_field.send_keys(password)
         self.randdelay(1, 2)  # delay between 1 and 2 seconds
         password_field.send_keys(Keys.RETURN)
+        print("Login Successful")
+        return self
+
+    def get_cookies(self, after_sec: float = 5) -> List[dict]:
+        """Capture cookies to a file.
+
+        Args:
+            out_path (str | Path, optional): output file path. Defaults to "cookies.json".
+            after_sec (float, optional): time in second to wait before capturing cookies. Defaults to 5.
+        """
+        time.sleep(after_sec)
+        return self.browser.get_cookies()
 
     def scrape(
         self,

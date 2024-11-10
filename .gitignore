@@ -8,3 +8,7 @@ venv
 dist
 output
 .vscode
+
+cookies.json
+test_output/
+.examples/
