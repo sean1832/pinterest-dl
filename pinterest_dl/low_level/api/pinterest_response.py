@@ -12,7 +12,13 @@ class PinResponse:
 
         self.resource_response: dict = self.raw_response.get("resource_response", None)
         if self.resource_response is None:
-            raise ValueError("resource_response is None.")
+            # All pinterest responses should have a resource_response key regardless of success or failure
+            raise ValueError("resource_response is None. Invalid pinterest response.")
+
+        # validate network error
+        self.error_info = self.resource_response.get("error", None)
+        if self.error_info is not None:
+            self._handle_failed_request_response()
 
         self.resource: dict = self.raw_response.get("resource", None)
         if self.resource is None:
@@ -21,11 +27,6 @@ class PinResponse:
         self.data: Optional[dict | List[dict]] = self.resource_response.get("data", None)
         if self.data is None:
             raise ValueError("data is None.")
-
-        # validate network error
-        self.error_info = self.resource_response.get("error", None)
-        if self.error_info is not None:
-            self._handle_failed_request_response()
 
         # endpoint name
         self.endpoint_name = self.resource_response.get("endpoint_name", None)

@@ -1,6 +1,7 @@
 import argparse
 from getpass import getpass
 from pathlib import Path
+from traceback import print_exc
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
@@ -73,86 +74,93 @@ def main() -> None:
     parser = get_parser()
     args = parser.parse_args()
 
-    if args.cmd == "login":
-        email = input("Enter Pinterest email: ")
-        password = getpass("Enter Pinterest password: ")
-        cookies = (
-            PinterestDL.with_browser(
-                browser_type=args.client,
-                headless=not args.headful,
-                incognito=args.incognito,
-                verbose=args.verbose,
+    try:
+        if args.cmd == "login":
+            email = input("Enter Pinterest email: ")
+            password = getpass("Enter Pinterest password: ")
+            cookies = (
+                PinterestDL.with_browser(
+                    browser_type=args.client,
+                    headless=not args.headful,
+                    incognito=args.incognito,
+                    verbose=args.verbose,
+                )
+                .login(email, password)
+                .get_cookies(after_sec=7)
             )
-            .login(email, password)
-            .get_cookies(after_sec=7)
-        )
 
-        # save cookies
-        io.write_json(cookies, args.output, 4)
-        print(f"Cookies saved to '{args.output}'")
+            # save cookies
+            io.write_json(cookies, args.output, 4)
+            print(f"Cookies saved to '{args.output}'")
 
-        # print instructions
-        print("\nNote:")
-        print("Please keep your cookies file safe and do not share it with anyone.")
-        print(
-            "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
-        )
-        print("Example:")
-        print(
-            r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -l 10 --cookies .\cookies.json'
-        )
-        print("\nDone.")
-    elif args.cmd == "scrape":
-        if args.client in ["chrome", "firefox"]:
-            PinterestDL.with_browser(
-                browser_type=args.client,
-                timeout=args.timeout,
-                headless=not args.headful,
-                incognito=args.incognito,
-                verbose=args.verbose,
-            ).with_cookies(args.cookies).scrape_and_download(
-                args.url,
-                args.output,
-                args.limit,
-                min_resolution=parse_resolution(args.resolution) if args.resolution else None,
-                json_output=construct_json_output(args.output) if args.json else None,
-                dry_run=args.dry_run,
-                add_captions=True,
+            # print instructions
+            print("\nNote:")
+            print("Please keep your cookies file safe and do not share it with anyone.")
+            print(
+                "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
             )
+            print("Example:")
+            print(
+                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -l 10 --cookies .\cookies.json'
+            )
+            print("\nDone.")
+        elif args.cmd == "scrape":
+            if args.client in ["chrome", "firefox"]:
+                PinterestDL.with_browser(
+                    browser_type=args.client,
+                    timeout=args.timeout,
+                    headless=not args.headful,
+                    incognito=args.incognito,
+                    verbose=args.verbose,
+                ).with_cookies(args.cookies).scrape_and_download(
+                    args.url,
+                    args.output,
+                    args.limit,
+                    min_resolution=parse_resolution(args.resolution) if args.resolution else None,
+                    json_output=construct_json_output(args.output) if args.json else None,
+                    dry_run=args.dry_run,
+                    add_captions=True,
+                )
+            else:
+                if args.incognito or args.headful:
+                    print(
+                        "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                    )
+
+                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
+                    args.cookies
+                ).scrape_and_download(
+                    args.url,
+                    args.output,
+                    args.limit,
+                    min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+                    json_output=construct_json_output(args.output) if args.json else None,
+                    dry_run=args.dry_run,
+                    add_captions=True,
+                )
+
+            print("\nDone.")
+        elif args.cmd == "download":
+            # prepare image url data
+            img_datas = io.read_json(args.input)
+            images = []
+            for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
+                images.append(PinterestImage.from_dict(img_data))
+
+            # download images
+            output_dir = args.output or str(Path(args.input).stem)
+            downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
+
+            # post process
+            pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
+            PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
+            print("\nDone.")
         else:
-            if args.incognito or args.headful:
-                print("Warning: Incognito and headful mode is only available for Chrome/Firefox.")
-
-            PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
-                args.cookies
-            ).scrape_and_download(
-                args.url,
-                args.output,
-                args.limit,
-                min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
-                json_output=construct_json_output(args.output) if args.json else None,
-                dry_run=args.dry_run,
-                add_captions=True,
-            )
-
-        print("\nDone.")
-    elif args.cmd == "download":
-        # prepare image url data
-        img_datas = io.read_json(args.input)
-        images = []
-        for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-            images.append(PinterestImage.from_dict(img_data))
-
-        # download images
-        output_dir = args.output or str(Path(args.input).stem)
-        downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
-
-        # post process
-        pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
-        PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
-        print("\nDone.")
-    else:
-        parser.print_help()
+            parser.print_help()
+    except Exception as e:
+        print(f"Error: {e}")
+        if args.verbose:
+            print_exc()
 
 
 if __name__ == "__main__":
