@@ -2,6 +2,7 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 
+import pinterest_dl.utils as utils
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import io
@@ -15,7 +16,7 @@ def parse_resolution(resolution: str) -> tuple[int, int]:
     """Parse resolution string to tuple of integers.
 
     Args:
-        resolution (str): Resolution string in the format 'width x height'.
+        resolution (str): Resolution string in the format '`width` x `height`'. (e.g. `'512x512'`)
 
     Returns:
         tuple[int, int]: Tuple of integers representing the resolution.
@@ -46,6 +47,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("output", help="Output directory")
+    scrape_cmd.add_argument("--use-webdriver", action="store_true", help="Use webdriver to scrape images")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
@@ -86,25 +88,51 @@ def main() -> None:
             .get_cookies(after_sec=7)
         )
 
-        io.write_json(cookies, args.output)
-        print(f"\nCookies saved to {args.output}")
+        # save cookies
+        io.write_json(cookies, args.output, 4)
+        print(f"Cookies saved to '{args.output}'")
+
+        # print instructions
+        print("\nNote:")
+        print("Please keep your cookies file safe and do not share it with anyone.")
+        print(
+            "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
+        )
+        print("Example:")
+        print(
+            r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -l 10 --cookies .\cookies.json'
+        )
         print("\nDone.")
     elif args.cmd == "scrape":
-        PinterestDL.with_browser(
-            browser_type="firefox" if args.firefox else "chrome",
-            timeout=args.timeout,
-            headless=not args.headful,
-            incognito=args.incognito,
-            verbose=args.verbose,
-        ).with_cookies(args.cookies).scrape_and_download(
-            args.url,
-            args.output,
-            args.limit,
-            min_resolution=parse_resolution(args.resolution) if args.resolution else None,
-            json_output=construct_json_output(args.output) if args.json else None,
-            dry_run=args.dry_run,
-            add_captions=True,
-        )
+        if args.use_webdriver:
+            PinterestDL.with_browser(
+                browser_type="firefox" if args.firefox else "chrome",
+                timeout=args.timeout,
+                headless=not args.headful,
+                incognito=args.incognito,
+                verbose=args.verbose,
+            ).with_cookies(args.cookies).scrape_and_download(
+                args.url,
+                args.output,
+                args.limit,
+                min_resolution=parse_resolution(args.resolution) if args.resolution else None,
+                json_output=construct_json_output(args.output) if args.json else None,
+                dry_run=args.dry_run,
+                add_captions=True,
+            )
+        else:
+            PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
+                args.cookies
+            ).scrape_and_download(
+                args.url,
+                args.output,
+                args.limit,
+                min_resolution=parse_resolution(args.resolution) if args.resolution else None,
+                json_output=construct_json_output(args.output) if args.json else None,
+                dry_run=args.dry_run,
+                add_captions=True,
+            )
+
         print("\nDone.")
     elif args.cmd == "download":
         # prepare image url data
@@ -115,11 +143,11 @@ def main() -> None:
 
         # download images
         output_dir = args.output or str(Path(args.input).stem)
-        downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
+        downloaded_imgs = utils.download_images(images, output_dir, args.verbose)
 
         # post process
-        pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
-        PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
+        pruned_idx = utils.prune_images(downloaded_imgs, args.resolution, args.verbose)
+        utils.add_captions(downloaded_imgs, pruned_idx, args.verbose)
         print("\nDone.")
     else:
         parser.print_help()

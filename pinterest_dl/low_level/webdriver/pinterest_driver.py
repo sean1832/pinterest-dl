@@ -14,9 +14,9 @@ from tqdm import tqdm
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 
 
-class Pinterest:
-    def __init__(self, browser: WebDriver) -> None:
-        self.browser: WebDriver = browser
+class PinterestDriver:
+    def __init__(self, webdriver: WebDriver) -> None:
+        self.webdriver: WebDriver = webdriver
 
     @staticmethod
     def randdelay(a, b) -> None:
@@ -24,7 +24,7 @@ class Pinterest:
 
     def login(
         self, email: str, password: str, url: str = "https://www.pinterest.com/login/"
-    ) -> "Pinterest":
+    ) -> "PinterestDriver":
         """Login to Pinterest.
 
         Args:
@@ -35,10 +35,10 @@ class Pinterest:
         Returns:
             Pinterest: Pinterest object.
         """
-        self.browser.get(url)
-        email_field = self.browser.find_element(By.ID, "email")
+        self.webdriver.get(url)
+        email_field = self.webdriver.find_element(By.ID, "email")
         email_field.send_keys(email)
-        password_field = self.browser.find_element(By.ID, "password")
+        password_field = self.webdriver.find_element(By.ID, "password")
         password_field.send_keys(password)
         self.randdelay(1, 2)  # delay between 1 and 2 seconds
         password_field.send_keys(Keys.RETURN)
@@ -52,8 +52,11 @@ class Pinterest:
             out_path (str | Path, optional): output file path. Defaults to "cookies.json".
             after_sec (float, optional): time in second to wait before capturing cookies. Defaults to 5.
         """
+        print(f"Waiting for {after_sec} seconds before capturing cookies...")
         time.sleep(after_sec)
-        return self.browser.get_cookies()
+        cookies = self.webdriver.get_cookies()
+        print("Cookies Captured")
+        return cookies
 
     def scrape(
         self,
@@ -68,10 +71,10 @@ class Pinterest:
         tries = 0
         pbar = tqdm(total=limit, desc="Scraping")
         try:
-            self.browser.get(url)
+            self.webdriver.get(url)
             while len(unique_results) < limit:
                 try:
-                    divs = self.browser.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
+                    divs = self.webdriver.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
                     if divs == previous_divs:
                         tries += 1
                         time.sleep(1)  # delay 1 second
@@ -105,7 +108,7 @@ class Pinterest:
                     previous_divs = copy.copy(divs)  # copy to avoid reference
 
                     # Scroll down
-                    dummy = self.browser.find_element(By.TAG_NAME, "a")
+                    dummy = self.webdriver.find_element(By.TAG_NAME, "a")
                     dummy.send_keys(Keys.PAGE_DOWN)
                     self.randdelay(1, 2)  # delay between 1 and 2 seconds
 

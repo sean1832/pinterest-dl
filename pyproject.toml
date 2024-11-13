@@ -28,6 +28,7 @@ dependencies = [
     "tqdm",
     "pyexiv2",
     "requests",
+    "deprecated"
 ]
 
 [project.scripts]

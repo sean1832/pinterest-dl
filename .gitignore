@@ -12,3 +12,4 @@ output
 cookies.json
 test_output/
 .examples/
+*.json
