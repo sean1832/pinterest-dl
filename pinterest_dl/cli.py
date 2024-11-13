@@ -2,7 +2,6 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 
-import pinterest_dl.utils as utils
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import io
@@ -127,7 +126,7 @@ def main() -> None:
                 args.url,
                 args.output,
                 args.limit,
-                min_resolution=parse_resolution(args.resolution) if args.resolution else None,
+                min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                 json_output=construct_json_output(args.output) if args.json else None,
                 dry_run=args.dry_run,
                 add_captions=True,
@@ -143,11 +142,11 @@ def main() -> None:
 
         # download images
         output_dir = args.output or str(Path(args.input).stem)
-        downloaded_imgs = utils.download_images(images, output_dir, args.verbose)
+        downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
 
         # post process
-        pruned_idx = utils.prune_images(downloaded_imgs, args.resolution, args.verbose)
-        utils.add_captions(downloaded_imgs, pruned_idx, args.verbose)
+        pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
+        PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
         print("\nDone.")
     else:
         parser.print_help()

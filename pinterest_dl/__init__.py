@@ -3,18 +3,17 @@ __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
 
-from pinterest_dl._pinterest_dl_api import _PinterestDLAPI
-from pinterest_dl._pinterest_dl_webdriver import _PinterestDLWebdriver
+from pinterest_dl.scrapers import _ScraperAPI, _ScraperBase, _ScraperWebdriver
 
 
-class PinterestDL:
+class PinterestDL(_ScraperBase):
     """PinterestDL is a class for scraping, downloading, and managing images from Pinterest.
     Users can scrape pins, download images, add captions, and prune by resolution.
     """
 
     @staticmethod
-    def with_api(timeout: float = 3, verbose: bool = False) -> "_PinterestDLAPI":
-        """Scrape pinterest using unofficial API. This is faster than using a browser but may be less reliable.
+    def with_api(timeout: float = 3, verbose: bool = False) -> "_ScraperAPI":
+        """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:
             timeout (float): Timeout in seconds for requests.
@@ -23,7 +22,7 @@ class PinterestDL:
         Returns:
             PinterestDL: Instance of PinterestDL with the requests library.
         """
-        return _PinterestDLAPI(verbose=verbose, timeout=timeout)
+        return _ScraperAPI(verbose=verbose, timeout=timeout)
 
     @staticmethod
     def with_browser(
@@ -32,7 +31,7 @@ class PinterestDL:
         headless: bool = True,
         incognito: bool = True,
         verbose: bool = False,
-    ) -> "_PinterestDLWebdriver":
+    ) -> "_ScraperWebdriver":
         """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
 
         Args:
@@ -45,5 +44,5 @@ class PinterestDL:
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
-        webdriver = _PinterestDLWebdriver._initialize_webdriver(browser_type, headless, incognito)
-        return _PinterestDLWebdriver(webdriver, timeout, verbose)
+        webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
+        return _ScraperWebdriver(webdriver, timeout, verbose)

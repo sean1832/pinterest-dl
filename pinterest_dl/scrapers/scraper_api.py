@@ -4,21 +4,22 @@ from typing import List, Optional, Tuple, Union
 
 from tqdm import tqdm
 
-import pinterest_dl.utils as utils
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.ops.bookmark_manager import BookmarkManager
 
+from .scraper_base import _ScraperBase
 
-class _PinterestDLAPI:
+
+class _ScraperAPI(_ScraperBase):
     def __init__(self, timeout: float = 3, verbose: bool = False) -> None:
         self.timeout = timeout
         self.verbose = verbose
         self.cookies = None
 
-    def with_cookies(self, cookies_path: Optional[Union[str, Path]]) -> "_PinterestDLAPI":
+    def with_cookies(self, cookies_path: Optional[Union[str, Path]]) -> "_ScraperAPI":
         """Load cookies from a file to the current session.
 
         Args:
@@ -43,7 +44,7 @@ class _PinterestDLAPI:
         return self
 
     def scrape(
-        self, url: str, limit: int, min_resolution: Tuple[int, int], delay: float = 0.2
+        self, url: str, limit: int, min_resolution: Tuple[int, int] = (0, 0), delay: float = 0.2
     ) -> List[PinterestImage]:
         """Scrape pins from Pinterest using the API.
 
@@ -211,7 +212,7 @@ class _PinterestDLAPI:
         url: str,
         output_dir: Union[str, Path],
         limit: int,
-        min_resolution: Optional[Tuple[int, int]] = None,
+        min_resolution: Tuple[int, int] = (0, 0),
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
         add_captions: bool = False,
@@ -222,7 +223,7 @@ class _PinterestDLAPI:
             url (str): Pinterest URL to scrape.
             output_dir (Union[str, Path]): Directory to store downloaded images.
             limit (int): Maximum number of images to scrape.
-            min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
+            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
             add_captions (bool): Add captions to downloaded images.
@@ -230,7 +231,6 @@ class _PinterestDLAPI:
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        min_resolution = min_resolution or (0, 0)
         scraped_imgs = self.scrape(url, limit, min_resolution)
 
         if json_output:
@@ -243,11 +243,11 @@ class _PinterestDLAPI:
                 print("Scraped data (dry run):", imgs_dict)
             return None
 
-        downloaded_imgs = utils.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
 
         valid_indices = []
 
         if add_captions:
-            utils.add_captions(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
 
         return downloaded_imgs

@@ -4,13 +4,14 @@ from typing import List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-import pinterest_dl.utils as utils
 from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.webdriver.browser import Browser
 from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestImage
 
+from .scraper_base import _ScraperBase
 
-class _PinterestDLWebdriver:
+
+class _ScraperWebdriver(_ScraperBase):
     def __init__(self, webdriver: WebDriver, timeout: float = 3, verbose: bool = False) -> None:
         self.timeout = timeout
         self.verbose = verbose
@@ -18,7 +19,7 @@ class _PinterestDLWebdriver:
 
     def with_cookies(
         self, cookies_path: Optional[Union[str, Path]], wait_sec: float = 1
-    ) -> "_PinterestDLWebdriver":
+    ) -> "_ScraperWebdriver":
         """Load cookies from a file to the current browser session.
 
         Args:
@@ -45,7 +46,7 @@ class _PinterestDLWebdriver:
         # Navigate to Pinterest homepage to load cookies
         self.webdriver.get("https://www.pinterest.com")
 
-        cookies = _PinterestDLWebdriver._sanitize_cookies(cookies)
+        cookies = _ScraperWebdriver._sanitize_cookies(cookies)
         for cookie in cookies:
             self.webdriver.add_cookie(cookie)
         print(f"Loaded cookies from {cookies_path}")
@@ -106,12 +107,12 @@ class _PinterestDLWebdriver:
                 print("Scraped data (dry run):", imgs_dict)
             return None
 
-        downloaded_imgs = utils.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
 
-        valid_indices = utils.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
+        valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if add_captions:
-            utils.add_captions(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
 
         return downloaded_imgs
 
