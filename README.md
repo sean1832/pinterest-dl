@@ -24,6 +24,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Support for the Firefox browser.
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
 - ✅ Scrape private boards and pins with browser cookies. ([see pull request](https://github.com/sean1832/pinterest-dl/pull/20))
+- ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([see pull request](https://github.com/sean1832/pinterest-dl/pull/21)
 
 ## 🚩 Known Issues
 - 🔲 Incompatibility with Pinterest URLs that include search queries.
@@ -80,6 +81,10 @@ Scrape images from a private Pinterest board using the cookies saved in the `coo
 pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -l 30 -c cookies.json
 ```
 
+> [!TIP]
+> You can use the `--client` option to use `chrome` or `firefox` Webdriver for scraping. This is slower but more reliable.
+> It will open a browser in headless mode to scrape images. You can also use the `--headful` flag to run the browser in windowed mode.
+
 **Downloading Images:**
 
 Download images from the `art.json` file to the `./downloaded_imgs` directory with a minimum resolution of `1024x1024`.
@@ -99,7 +104,7 @@ pinterest-dl login [options]
 
 **Options:**
 - `-o`, `--output [file]`: File to save browser cookies for future use. (default: `cookies.json`)
-- `--firefox`: Opt for Firefox as the scraping browser.
+- `--client`: Choose the scraping client (`chrome` / `firefox`). (default: `chrome`)
 - `--headful`: Run in headful mode with browser window.
 - `--verbose`: Enable detailed output for debugging.
 - `--incognito`: Activate incognito mode for scraping.
@@ -117,16 +122,17 @@ pinterest-dl scrape [url] [output_dir] [options]
 ```
 
 **Options:**
+
 - `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
 - `-l`, `--limit [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
-- `--incognito`: Activate incognito mode for scraping.
 - `--json`: Save scraped URLs to a JSON file.
 - `--dry-run`: Execute scrape without downloading images.
-- `--firefox`: Opt for Firefox as the scraping browser.
-- `--headful`: Run in headful mode with browser window.
 - `--verbose`: Enable detailed output for debugging.
+- `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
+- `--incognito`: Activate incognito mode for scraping. (*chrome / firefox only*)
+- `--headful`: Run in headful mode with browser window. (*chrome / firefox only*)
 
 #### 3. Download
 Download images from a list of URLs provided in a file.
@@ -152,11 +158,8 @@ The following example shows how to scrape and download images from a Pinterest U
 from pinterest_dl import PinterestDL
 
 # Initialize and run the Pinterest image downloader with specified settings
-images = PinterestDL.with_browser(
-    "chrome",  # Browser type to use for scraping (choose "chrome" or "firefox")
+images = PinterestDL.with_api(
     timeout=3,  # Timeout in seconds for each request (default: 3)
-    headless=True,  # Run browser in headless mode (default: True)
-    incognito=False,  # Enable incognito mode to avoid saving browsing data (default: False)
     verbose=False,  # Enable detailed logging for debugging (default: False)
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
@@ -202,12 +205,9 @@ from pinterest_dl import PinterestDL
 
 # Initialize and run the Pinterest image downloader with specified settings
 images = (
-    PinterestDL.with_browser(
-        "chrome",  # Browser type to use for scraping (choose "chrome" or "firefox")
-    )
+    PinterestDL.with_api()
     .with_cookies(
         "cookies.json",  # Path to cookies file
-        wait_sec=1,  # Time to wait after go to homepage. Default 1 second
     )
     .scrape_and_download(
         url="https://www.pinterest.com/pin/1234567",  # Assume this is a private board URL
@@ -221,11 +221,47 @@ images = (
 
 Use this example if you need more granular control over scraping and downloading images.
 
+#### 3a. With API
 ```python
+import json
+
 from pinterest_dl import PinterestDL
 
-# 1. Initialize PinterestDL with browser settings and scrape images
-scraped_images = PinterestDL.with_browser("chrome").scrape(
+# 1. Initialize PinterestDL with API.
+scraped_images = PinterestDL.with_api().scrape(
+    url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
+    limit=30,  # Maximum number of images to scrape
+    min_resolution=(512, 512),  # <- Only available to set in the API. Browser mode will have to pruned after download.
+)
+
+# 2. Save Scraped Data to JSON
+# Convert scraped data into a dictionary and save it to a JSON file for future access
+images_data = [img.to_dict() for img in scraped_images]
+with open("art.json", "w") as f:
+    json.dump(images_data, f, indent=4)
+
+# 3. Download Images
+# Download images to a specified directory
+downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir="images/art")
+
+valid_indices = list(range(len(downloaded_imgs)))  # All images are valid to add captions
+
+# 4. Add Alt Text as Metadata
+# Extract `alt` text from images and set it as metadata in the downloaded files
+PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
+```
+
+#### 3b. With Browser
+```python
+import json
+
+from pinterest_dl import PinterestDL
+
+# 1. Initialize PinterestDL with API.
+scraped_images = PinterestDL.with_browser(
+    browser_type="chrome",  # Browser type to use ('chrome' or 'firefox')
+    headless=True,  # Run browser in headless mode
+).scrape(
     url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
     limit=30,  # Maximum number of images to scrape
 )
@@ -233,16 +269,16 @@ scraped_images = PinterestDL.with_browser("chrome").scrape(
 # 2. Save Scraped Data to JSON
 # Convert scraped data into a dictionary and save it to a JSON file for future access
 images_data = [img.to_dict() for img in scraped_images]
-PinterestDL.write_json(images_data, "art.json", indent=4)
+with open("art.json", "w") as f:
+    json.dump(images_data, f, indent=4)
 
 # 3. Download Images
 # Download images to a specified directory
 downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir="images/art")
 
 # 4. Prune Images by Resolution
-# Remove images that do not meet the minimum resolution requirements
-min_resolution = (512, 512)
-valid_indices = PinterestDL.prune_images(downloaded_imgs, min_resolution)
+# Remove images that do not meet the minimum resolution criteria
+valid_indices = PinterestDL.prune_images(images=downloaded_imgs, min_resolution=(200, 200))
 
 # 5. Add Alt Text as Metadata
 # Extract `alt` text from images and set it as metadata in the downloaded files
