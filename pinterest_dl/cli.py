@@ -37,7 +37,7 @@ def get_parser() -> argparse.ArgumentParser:
     # login command
     login_cmd = cmd.add_parser("login", help="Login to Pinterest and capture cookies")
     login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
-    login_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
+    login_cmd.add_argument("--client", default="chrome", choices=["chrome", "firefox"], help="Browser client to login")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
@@ -46,17 +46,17 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("output", help="Output directory")
-    scrape_cmd.add_argument("--use-webdriver", action="store_true", help="Use webdriver to scrape images")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=3, help="Timeout in seconds for requests (default: 3)")
-    scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
-    scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
-    scrape_cmd.add_argument("--firefox", action="store_true", help="Use Firefox browser")
-    scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
+
+    scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
+    scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
+    scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
 
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
@@ -78,7 +78,7 @@ def main() -> None:
         password = getpass("Enter Pinterest password: ")
         cookies = (
             PinterestDL.with_browser(
-                browser_type="firefox" if args.firefox else "chrome",
+                browser_type=args.client,
                 headless=not args.headful,
                 incognito=args.incognito,
                 verbose=args.verbose,
@@ -103,9 +103,9 @@ def main() -> None:
         )
         print("\nDone.")
     elif args.cmd == "scrape":
-        if args.use_webdriver:
+        if args.client in ["chrome", "firefox"]:
             PinterestDL.with_browser(
-                browser_type="firefox" if args.firefox else "chrome",
+                browser_type=args.client,
                 timeout=args.timeout,
                 headless=not args.headful,
                 incognito=args.incognito,
@@ -120,6 +120,9 @@ def main() -> None:
                 add_captions=True,
             )
         else:
+            if args.incognito or args.headful:
+                print("Warning: Incognito and headful mode is only available for Chrome/Firefox.")
+
             PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
                 args.cookies
             ).scrape_and_download(

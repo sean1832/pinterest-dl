@@ -44,7 +44,7 @@ class _ScraperBase:
 
         Args:
             images (List[PinterestImage]): List of PinterestImage objects to add captions to.
-            indices (List[int]): Specific indices to add captions for.
+            indices (List[int]): Specific indices to add captions for. Default is all images.
             verbose (bool): Enable verbose logging.
         """
         if not indices:

@@ -1,6 +1,6 @@
 import json
-import time
-from typing import List, NoReturn, Optional
+import time  # noqa: F401
+from typing import List, NoReturn, Optional  # noqa: F401
 
 from pinterest_dl.low_level.ops.request_builder import RequestBuilder
 
@@ -12,22 +12,20 @@ class PinResponse:
 
         self.resource_response: dict = self.raw_response.get("resource_response", None)
         if self.resource_response is None:
-            self._handle_parsing_error(
-                "resource_response", ValueError("resource_response is None.")
-            )
+            raise ValueError("resource_response is None.")
 
         self.resource: dict = self.raw_response.get("resource", None)
         if self.resource is None:
-            self._handle_parsing_error("resource", ValueError("resource is None."))
+            raise ValueError("resource is None.")
 
         self.data: Optional[dict | List[dict]] = self.resource_response.get("data", None)
         if self.data is None:
-            self._handle_parsing_error("data", ValueError("data is None."))
+            raise ValueError("data is None.")
 
         # validate network error
         self.error_info = self.resource_response.get("error", None)
         if self.error_info is not None:
-            self._handle_failed_request_response(self.error_info)
+            self._handle_failed_request_response()
 
         # endpoint name
         self.endpoint_name = self.resource_response.get("endpoint_name", None)
@@ -48,10 +46,10 @@ class PinResponse:
             board_id = self.data.get("id", None)
             return board_id
         except KeyError or ValueError:
-            self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
+            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
             raise KeyError("Failed to parse board id from response")
         except Exception as e:
-            self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
+            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
             raise e
 
     def get_pin_count(self) -> int:
@@ -64,47 +62,47 @@ class PinResponse:
             pin_count = self.data.get("pin_count", None)
             return pin_count
         except KeyError or ValueError:
-            self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
+            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
             raise KeyError("Failed to parse pin count from response")
         except Exception as e:
-            self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
+            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
             raise e
 
-    def _handle_failed_request_response(self, error_info: Optional[dict]) -> None:
+    def _handle_failed_request_response(self) -> None:
         self.http_status = self.error_info.get("http_status", None)
         self.code = self.error_info.get("code", None)
         self.message: str = self.error_info.get("message", None)
         self.status = self.error_info.get("status", None)
 
-        # clean message for file name
-        message_name = self.message.lower().replace(" ", "-").replace(".", "")
-        dump_file = f"failure_{message_name}_{time.time()}.json"
+        # # clean message for file name
+        # message_name = self.message.lower().replace(" ", "-").replace(".", "")
+        # dump_file = f"failure_{message_name}_{time.time()}.json"
 
-        data = {
-            "error": self.error_info,
-            "request_url": self.request_url,
-            "response_raw": self.raw_response,
-        }
+        # data = {
+        #     "error": self.error_info,
+        #     "request_url": self.request_url,
+        #     "response_raw": self.raw_response,
+        # }
 
-        self._dump_data_at(dump_file, data)
+        # self._dump_data_at(dump_file, data)
         raise ValueError(
-            f'Invalid response (http_status: {self.http_status}, message: {self.message}), detail see dumped at "./{dump_file}"'
+            f"Invalid response (http_status: {self.http_status}, message: {self.message})"
         )
 
-    def _handle_parsing_error(self, field: str, error: Exception) -> NoReturn:
-        data = {
-            "error": {
-                "message": f"{str(error)}",
-                "field": field,
-            },
-            "request_url": self.request_url,
-            "response_raw": self.raw_response,
-        }
-        filename = f"failed_parsing-error_{field}_{time.time()}.json"
-        self._dump_data_at(filename, data)
-        raise AttributeError(
-            f"Failed to parse '{field}' in response. See dumped file for details at './{filename}'"
-        )
+    # def _handle_parsing_error(self, field: str, error: Exception) -> NoReturn:
+    #     data = {
+    #         "error": {
+    #             "message": f"{str(error)}",
+    #             "field": field,
+    #         },
+    #         "request_url": self.request_url,
+    #         "response_raw": self.raw_response,
+    #     }
+    #     filename = f"failed_parsing-error_{field}_{time.time()}.json"
+    #     self._dump_data_at(filename, data)
+    #     raise AttributeError(
+    #         f"Failed to parse '{field}' in response. See dumped file for details at './{filename}'"
+    #     )
 
     def _get_status(self) -> dict:
         return {
