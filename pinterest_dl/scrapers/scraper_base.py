@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
+import tqdm
+
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import downloader
 
@@ -52,7 +54,7 @@ class _ScraperBase:
         else:
             indices_list = indices
 
-        for index in indices_list:
+        for index in tqdm.tqdm(indices_list, desc="Captioning", disable=verbose):
             try:
                 img = images[index]
                 if img.origin:

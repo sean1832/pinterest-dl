@@ -120,7 +120,7 @@ class _ScraperAPI(_ScraperBase):
         downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
 
         valid_indices = []
-
+        
         if add_captions:
             self.add_captions(downloaded_imgs, valid_indices, self.verbose)
 

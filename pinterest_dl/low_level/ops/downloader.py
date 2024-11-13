@@ -85,7 +85,7 @@ def download_concurrent_with_fallback(
         urls
     )  # Initialize a list to hold the results in order
     with concurrent.futures.ThreadPoolExecutor() as executor, tqdm(
-        total=len(urls), desc="Downloading"
+        total=len(urls), desc="Downloading", disable=verbose
     ) as pbar:
         futures = {
             executor.submit(download_with_fallback, url, output_dir, fallback_url, chunk_size): idx
