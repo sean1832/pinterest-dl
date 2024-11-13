@@ -12,7 +12,7 @@ class PinterestDL(_ScraperBase):
     """
 
     @staticmethod
-    def with_api(timeout: float = 3, verbose: bool = False) -> "_ScraperAPI":
+    def with_api(timeout: float = 5, verbose: bool = False) -> "_ScraperAPI":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:

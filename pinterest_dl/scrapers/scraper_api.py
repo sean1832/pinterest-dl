@@ -16,7 +16,7 @@ from .scraper_base import _ScraperBase
 class _ScraperAPI(_ScraperBase):
     """Pinterest scraper using the unofficial Pinterest API."""
 
-    def __init__(self, timeout: float = 3, verbose: bool = False) -> None:
+    def __init__(self, timeout: float = 5, verbose: bool = False) -> None:
         """Initialize PinterestDL with API.
 
         Args:
@@ -66,7 +66,7 @@ class _ScraperAPI(_ScraperBase):
         """
 
         images: List[PinterestImage] = []
-        api = PinterestAPI(url, self.cookies)
+        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(2)
 
         if api.is_pin:

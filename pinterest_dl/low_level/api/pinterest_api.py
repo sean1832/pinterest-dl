@@ -5,8 +5,8 @@ import requests
 from git import Optional
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
-from pinterest_dl.low_level.api.pinterest_response import PinResponse
 from pinterest_dl.low_level.api.endpoints import Endpoint
+from pinterest_dl.low_level.api.pinterest_response import PinResponse
 from pinterest_dl.low_level.ops.request_builder import RequestBuilder
 
 
@@ -16,8 +16,18 @@ class PinterestAPI:
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
     )
 
-    def __init__(self, url: str, cookies: Optional[PinterestCookieJar] = None) -> None:
+    def __init__(
+        self, url: str, cookies: Optional[PinterestCookieJar] = None, timeout: float = 5
+    ) -> None:
+        """Pinterest API client.
+
+        Args:
+            url (str): Pinterest URL. (e.g. "https://www.pinterest.com/pin/123456789/")
+            cookies (Optional[PinterestCookieJar], optional): Pinterest cookies. Defaults to None.
+            timeout (float, optional): Request timeout in seconds. Defaults to 5.
+        """
         self.url = url
+        self.timeout = timeout
         try:
             self.pin_id = self._parse_pin_id(self.url)
         except ValueError:
@@ -31,6 +41,8 @@ class PinterestAPI:
 
         self.endpoint = Endpoint()
         self.cookies = cookies if cookies else self._get_default_cookies(self.endpoint._BASE)
+
+        # Initialize session
         self._session = requests.Session()
         self._session.cookies.update(self.cookies)  # Update session cookies
         self._session.headers.update({"User-Agent": self.USER_AGENT})
@@ -60,7 +72,7 @@ class PinterestAPI:
         }
         try:
             request_url = self._req_builder.build_get(endpoint, options, source_url)
-            response_raw = self._session.get(request_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request related images: {e}")
 
@@ -88,7 +100,7 @@ class PinterestAPI:
 
         try:
             request_url = self._req_builder.build_get(endpoint, options, source_url)
-            response_raw = self._session.get(request_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request main image: {e}")
 
@@ -111,7 +123,7 @@ class PinterestAPI:
 
         try:
             request_url = self._req_builder.build_get(endpoint, options, source_url)
-            response_raw = self._session.get(request_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request board: {e}")
 
@@ -142,7 +154,7 @@ class PinterestAPI:
 
         try:
             request_url = self._req_builder.build_get(endpoint, options, source_url)
-            response_raw = self._session.get(request_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request board feed: {e}")
 
