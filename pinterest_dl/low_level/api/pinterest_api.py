@@ -185,7 +185,7 @@ class PinterestAPI:
         Returns:
             result (str, str): (username, boardname)
         """
-        result = re.search(r"https://www.pinterest.com/(\w+)/(\w+)/", url)
+        result = re.search(r"https://www.pinterest.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?", url)
         if not result:
             raise ValueError(f"Invalid Pinterest board URL: {url}")
         return result.group(1), result.group(2)
