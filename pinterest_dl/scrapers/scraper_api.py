@@ -14,7 +14,15 @@ from .scraper_base import _ScraperBase
 
 
 class _ScraperAPI(_ScraperBase):
+    """Pinterest scraper using the unofficial Pinterest API."""
+
     def __init__(self, timeout: float = 3, verbose: bool = False) -> None:
+        """Initialize PinterestDL with API.
+
+        Args:
+            timeout (float, optional): timeout in seconds. Defaults to 3.
+            verbose (bool, optional): show detail messages. Defaults to False.
+        """
         self.timeout = timeout
         self.verbose = verbose
         self.cookies = None
@@ -26,7 +34,7 @@ class _ScraperAPI(_ScraperBase):
             cookies_path (Optional[Union[str, Path]]): Path to cookies file.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with cookies loaded.
+            _ScraperAPI: Instance of ScraperAPI with cookies loaded.
         """
         if cookies_path is None:
             return self
@@ -72,6 +80,51 @@ class _ScraperAPI(_ScraperBase):
         if self.verbose:
             self._display_images(images)
         return images
+
+    def scrape_and_download(
+        self,
+        url: str,
+        output_dir: Union[str, Path],
+        limit: int,
+        min_resolution: Tuple[int, int] = (0, 0),
+        json_output: Optional[Union[str, Path]] = None,
+        dry_run: bool = False,
+        add_captions: bool = False,
+    ) -> Optional[List[PinterestImage]]:
+        """Scrape pins from Pinterest and download images.
+
+        Args:
+            url (str): Pinterest URL to scrape.
+            output_dir (Union[str, Path]): Directory to store downloaded images.
+            limit (int): Maximum number of images to scrape.
+            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
+            json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
+            dry_run (bool): Only scrape URLs without downloading images.
+            add_captions (bool): Add captions to downloaded images.
+
+        Returns:
+            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
+        """
+        scraped_imgs = self.scrape(url, limit, min_resolution)
+
+        if json_output:
+            output_path = Path(json_output)
+            imgs_dict = [img.to_dict() for img in scraped_imgs]
+            io.write_json(imgs_dict, output_path, indent=4)
+
+        if dry_run:
+            if self.verbose:
+                print("Scraped data (dry run):", imgs_dict)
+            return None
+
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+
+        valid_indices = []
+
+        if add_captions:
+            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+
+        return downloaded_imgs
 
     def _scrape_pins(
         self,
@@ -206,48 +259,3 @@ class _ScraperAPI(_ScraperBase):
         """Print scraped image URLs if verbosity is enabled."""
         for i, img in enumerate(images):
             print(f"({i + 1}) {img.src}")
-
-    def scrape_and_download(
-        self,
-        url: str,
-        output_dir: Union[str, Path],
-        limit: int,
-        min_resolution: Tuple[int, int] = (0, 0),
-        json_output: Optional[Union[str, Path]] = None,
-        dry_run: bool = False,
-        add_captions: bool = False,
-    ) -> Optional[List[PinterestImage]]:
-        """Scrape pins from Pinterest and download images.
-
-        Args:
-            url (str): Pinterest URL to scrape.
-            output_dir (Union[str, Path]): Directory to store downloaded images.
-            limit (int): Maximum number of images to scrape.
-            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
-            json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
-            dry_run (bool): Only scrape URLs without downloading images.
-            add_captions (bool): Add captions to downloaded images.
-
-        Returns:
-            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
-        """
-        scraped_imgs = self.scrape(url, limit, min_resolution)
-
-        if json_output:
-            output_path = Path(json_output)
-            imgs_dict = [img.to_dict() for img in scraped_imgs]
-            io.write_json(imgs_dict, output_path, indent=4)
-
-        if dry_run:
-            if self.verbose:
-                print("Scraped data (dry run):", imgs_dict)
-            return None
-
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
-
-        valid_indices = []
-
-        if add_captions:
-            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
-
-        return downloaded_imgs

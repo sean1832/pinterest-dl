@@ -27,7 +27,7 @@ class _ScraperWebdriver(_ScraperBase):
             wait_sec (float): Time in seconds to wait after loading cookies.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with cookies loaded.
+            _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
         """
         if cookies_path is None:
             return self
@@ -42,8 +42,8 @@ class _ScraperWebdriver(_ScraperBase):
         if self.verbose:
             print("Navigate to Pinterest homepage before loading cookies.")
 
-        # TODO: redundant get cookies if provided
         # Navigate to Pinterest homepage to load cookies
+        # Selenium requires the page to be loaded before adding cookies
         self.webdriver.get("https://www.pinterest.com")
 
         cookies = _ScraperWebdriver._sanitize_cookies(cookies)
