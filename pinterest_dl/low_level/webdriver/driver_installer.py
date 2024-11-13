@@ -5,8 +5,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from pinterest_dl.low_level.ops import io
-from pinterest_dl.low_level.ops import downloader
+from pinterest_dl.low_level.ops import downloader, io
 
 
 class ChromeDriverInstaller:

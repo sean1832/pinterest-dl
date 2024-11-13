@@ -28,6 +28,7 @@ dependencies = [
     "tqdm",
     "pyexiv2",
     "requests",
+    "deprecated",
 ]
 
 [project.scripts]
@@ -39,3 +40,6 @@ Issues = "https://github.com/sean1832/pinterest-dl/issues"
 
 [tool.setuptools.dynamic]
 version = { attr = "pinterest_dl.__version__" }
+
+[tool.setuptools]
+packages = { find = { include = ["pinterest_dl*"] } }
