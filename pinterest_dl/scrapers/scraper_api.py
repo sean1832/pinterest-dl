@@ -194,7 +194,7 @@ class _ScraperAPI(_ScraperBase):
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
 
         api = PinterestAPI(url, self.cookies, timeout=self.timeout)
-        bookmarks = BookmarkManager(2)
+        bookmarks = BookmarkManager(1)
 
         scraped_imgs = self.search(query, api, limit, min_resolution, 0.2, bookmarks)
 
