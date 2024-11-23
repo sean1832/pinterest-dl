@@ -17,17 +17,17 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 
 ## 🌟 Features
 - ✅ Scrape images directly from a Pinterest URL.
-- ✅ Asynchronously download images from a list of URLs. ([see pull request](https://github.com/sean1832/pinterest-dl/pull/1))
+- ✅ Asynchronously download images from a list of URLs. ([#1](https://github.com/sean1832/pinterest-dl/pull/1))
 - ✅ Save scraped URLs to a JSON file for future access.
 - ✅ Incognito mode to keep your scraping discreet.
 - ✅ Access detailed output for effective debugging.
 - ✅ Support for the Firefox browser.
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
-- ✅ Scrape private boards and pins with browser cookies. ([see pull request](https://github.com/sean1832/pinterest-dl/pull/20))
-- ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([see pull request](https://github.com/sean1832/pinterest-dl/pull/21)
+- ✅ Scrape private boards and pins with browser cookies. ([#20](https://github.com/sean1832/pinterest-dl/pull/20))
+- ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([#21](https://github.com/sean1832/pinterest-dl/pull/21))
 
 ## 🚩 Known Issues
-- 🔲 Incompatibility with Pinterest URLs that include search queries.
+- ~~🔲 Incompatibility with Pinterest URLs that include search queries.~~ Implemented `search` command since `v0.3.0`. ([#23](https://github.com/sean1832/pinterest-dl/pull/23))
 - 🔲 Not sorely tested on Linux and Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
 
 ## 📋 Requirements
