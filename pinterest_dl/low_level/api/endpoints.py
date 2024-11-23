@@ -12,3 +12,7 @@ class Endpoint:
 
     GET_BOARD_FEED_RESOURCE = f"{_BASE}/resource/BoardFeedResource/get/"
     """Get board feed. This can be used to get board images. Requires `board_id`."""
+
+    GET_SEARCH_RESOURCE = f"{_BASE}/resource/BaseSearchResource/get/"
+    """Get search results. This can be used to search images based text queries."""
+

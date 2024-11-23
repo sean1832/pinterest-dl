@@ -4,8 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import pyexiv2
 from PIL import Image
 
-from pinterest_dl.low_level.api.pinterest_response import PinResponse
-
 
 class PinterestImage:
     def __init__(
@@ -80,18 +78,15 @@ class PinterestImage:
         return PinterestImage(data["src"], data["alt"], data["origin"], data["fallback_urls"])
 
     @staticmethod
-    def from_response(response: PinResponse, resolution: Tuple[int, int]) -> List["PinterestImage"]:
-        data_raws = response.resource_response["data"]
+    def from_response(response_data: list, resolution: Tuple[int, int]) -> List["PinterestImage"]:
+        if response_data is None or not response_data:
+            raise ValueError("No data found in response.")
 
-        if data_raws is None or not data_raws:
-            response.dump_at("no_data.json")
-            raise ValueError(f"No data found in response. {response.request_url}")
-
-        if not isinstance(data_raws, list):
+        if not isinstance(response_data, list):
             raise ValueError("Invalid response data")
 
         images_data = []
-        for data_raw in data_raws:
+        for data_raw in response_data:
             try:
                 image = data_raw["images"]["orig"]
                 if int(image["width"]) < resolution[0] or int(image["height"]) < resolution[1]:

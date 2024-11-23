@@ -17,7 +17,10 @@ class PinterestAPI:
     )
 
     def __init__(
-        self, url: str, cookies: Optional[PinterestCookieJar] = None, timeout: float = 5
+        self,
+        url: str,
+        cookies: Optional[PinterestCookieJar] = None,
+        timeout: float = 5,
     ) -> None:
         """Pinterest API client.
 
@@ -32,6 +35,7 @@ class PinterestAPI:
             self.pin_id = self._parse_pin_id(self.url)
         except ValueError:
             self.pin_id = None
+            self.query = self._parse_search_query(self.url)
 
         try:
             self.username, self.boardname = self._parse_board_url(self.url)
@@ -130,10 +134,7 @@ class PinterestAPI:
         return PinResponse(request_url, response_raw.json())
 
     def get_board_feed(self, board_id: str, num: int, bookmark: List[str]) -> PinResponse:
-        if num < 1:
-            raise ValueError("Number of images must be greater than 0")
-        if num > 50:
-            raise ValueError("Number of images must not exceed 50 per request")
+        self._validate_num(num)
 
         board_url = f"/{self.username}/{self.boardname}/"
 
@@ -160,6 +161,40 @@ class PinterestAPI:
 
         return PinResponse(request_url, response_raw.json())
 
+    def get_search(self, num: int, bookmark: List[str]) -> PinResponse:
+        if not self.query:
+            raise ValueError("Invalid Pinterest search URL")
+        self._validate_num(num)
+
+        source_url = f"/search/pins/?q={self.query}rs=typed"
+
+        endpoint = self.endpoint.GET_SEARCH_RESOURCE
+        options = {
+            "appliedProductFilters": "---",
+            "auto_correction_disabled": False,
+            "bookmarks": bookmark,
+            "page_size": num,
+            "query": self.query,
+            "redux_normalize_feed": True,
+            "rs": "typed",  # is user typed or not
+            "scope": "pins",
+            "source_url": source_url,
+        }
+
+        try:
+            request_url = self._req_builder.build_get(endpoint, options, source_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
+        except requests.exceptions.RequestException as e:
+            raise requests.RequestException(f"Failed to request search: {e}")
+
+        return PinResponse(request_url, response_raw.json())
+
+    def _validate_num(self, num: int) -> None:
+        if num < 1:
+            raise ValueError("Number of images must be greater than 0")
+        if num > 50:
+            raise ValueError("Number of images must not exceed 50 per request")
+
     @staticmethod
     def _get_default_cookies(url: str) -> dict:
         try:
@@ -173,6 +208,14 @@ class PinterestAPI:
         result = re.search(r"pin/(\d+)/", url)
         if not result:
             raise ValueError(f"Invalid Pinterest URL: {url}")
+        return result.group(1)
+
+    @staticmethod
+    def _parse_search_query(url: str) -> str:
+        # /search/pins/?q={query}%26rs=typed
+        result = re.search(r"/search/pins/\?q=([A-Za-z0-9%]+)&rs=typed", url)
+        if not result:
+            raise ValueError(f"Invalid Pinterest search URL: {url}")
         return result.group(1)
 
     @staticmethod
