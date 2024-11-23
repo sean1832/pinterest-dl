@@ -50,7 +50,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
-    scrape_cmd.add_argument("--timeout", type=int, default=3, help="Timeout in seconds for requests (default: 3)")
+    scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
@@ -58,6 +58,22 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
     scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
+
+    # seach command
+    search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
+    search_cmd.add_argument("query", help="Search query")
+    search_cmd.add_argument("output", help="Output directory")
+    search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
+    search_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
+    search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    search_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
+    search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    search_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
+
+    search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
+    search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
+    search_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
 
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
@@ -131,6 +147,28 @@ def main() -> None:
                     args.cookies
                 ).scrape_and_download(
                     args.url,
+                    args.output,
+                    args.limit,
+                    min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+                    json_output=construct_json_output(args.output) if args.json else None,
+                    dry_run=args.dry_run,
+                    add_captions=True,
+                )
+
+            print("\nDone.")
+        elif args.cmd == "search":
+            if args.client in ["chrome", "firefox"]:
+                raise NotImplementedError("Search is currently not available for browser clients.")
+            else:
+                if args.incognito or args.headful:
+                    print(
+                        "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                    )
+
+                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
+                    args.cookies
+                ).search_and_download(
+                    args.query,
                     args.output,
                     args.limit,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),

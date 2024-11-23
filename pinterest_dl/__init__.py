@@ -1,4 +1,4 @@
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
@@ -12,7 +12,7 @@ class PinterestDL(_ScraperBase):
     """
 
     @staticmethod
-    def with_api(timeout: float = 5, verbose: bool = False) -> "_ScraperAPI":
+    def with_api(timeout: float = 10, verbose: bool = False) -> "_ScraperAPI":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:

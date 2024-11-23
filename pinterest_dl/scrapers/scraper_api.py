@@ -120,7 +120,98 @@ class _ScraperAPI(_ScraperBase):
         downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
 
         valid_indices = []
-        
+
+        if add_captions:
+            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+
+        return downloaded_imgs
+
+    def search(
+        self,
+        query: str,
+        api: PinterestAPI,
+        limit: int,
+        min_resolution: Tuple[int, int],
+        delay: float,
+        bookmarks: BookmarkManager,
+    ) -> List[PinterestImage]:
+        """Scrape pins from a Pinterest search URL."""
+        images = []
+        remains = limit
+        batch_count = 0
+
+        with tqdm(total=limit, desc="Scraping Search", disable=self.verbose) as pbar:
+            while remains > 0:
+                batch_size = min(50, remains)
+                current_img_batch, bookmarks = self._search_images(
+                    api, batch_size, bookmarks, min_resolution, query
+                )
+
+                images.extend(current_img_batch)
+                remains -= len(current_img_batch)
+                pbar.update(len(current_img_batch))
+
+                if "-end-" in bookmarks.get():
+                    break
+
+                if self.verbose:
+                    for img in current_img_batch:
+                        print(f"[Batch {batch_count}] ({img.src})")
+                    print(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
+
+                time.sleep(delay)
+                remains = self._handle_missing_images(
+                    api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
+                )
+                batch_count += 1
+
+        return images
+
+    def search_and_download(
+        self,
+        query: str,
+        output_dir: Union[str, Path],
+        limit: int,
+        min_resolution: Tuple[int, int] = (0, 0),
+        json_output: Optional[Union[str, Path]] = None,
+        dry_run: bool = False,
+        add_captions: bool = False,
+    ) -> Optional[List[PinterestImage]]:
+        """Search for images on Pinterest and download them.
+
+        Args:
+            url (str): Pinterest URL to scrape.
+            output_dir (Union[str, Path]): Directory to store downloaded images.
+            limit (int): Maximum number of images to scrape.
+            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
+            json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
+            dry_run (bool): Only scrape URLs without downloading images.
+            add_captions (bool): Add captions to downloaded images.
+
+        Returns:
+            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
+        """
+        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+
+        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
+        bookmarks = BookmarkManager(2)
+
+        scraped_imgs = self.search(query, api, limit, min_resolution, 0.2, bookmarks)
+
+        if json_output:
+            output_path = Path(json_output)
+            imgs_dict = [img.to_dict() for img in scraped_imgs]
+            io.write_json(imgs_dict, output_path, indent=4)
+
+        if dry_run:
+            # if self.verbose:
+            #     print("Scraped data (dry run):", imgs_dict)
+            return None
+
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+
+        valid_indices = []
+
         if add_captions:
             self.add_captions(downloaded_imgs, valid_indices, self.verbose)
 
@@ -151,7 +242,8 @@ class _ScraperAPI(_ScraperBase):
 
                 if "-end-" in bookmarks.get():
                     break
-
+                if self.verbose:
+                    print(f"bookmarks: {bookmarks.get()}")
                 time.sleep(delay)
                 remains = self._handle_missing_images(
                     api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
@@ -221,7 +313,29 @@ class _ScraperAPI(_ScraperBase):
             if not board_id
             else api.get_board_feed(board_id, batch_size, bookmarks.get())
         )
-        current_img_batch = PinterestImage.from_response(response, min_resolution)
+
+        # parse response data
+        response_data = response.resource_response.get("data", [])
+
+        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
+        bookmarks.add_all(response.get_bookmarks())
+        return current_img_batch, bookmarks
+
+    def _search_images(
+        self,
+        api: PinterestAPI,
+        batch_size: int,
+        bookmarks: BookmarkManager,
+        min_resolution: Tuple[int, int],
+        query: str,
+    ) -> Tuple[List[PinterestImage], BookmarkManager]:
+        """Fetch images based on API response, either from a pin or a board."""
+        response = api.get_search(batch_size, bookmarks.get())
+
+        # parse response data
+        response_data = response.resource_response.get("data", {}).get("results", [])
+
+        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
         bookmarks.add_all(response.get_bookmarks())
         return current_img_batch, bookmarks
 
@@ -245,7 +359,8 @@ class _ScraperAPI(_ScraperBase):
                 if not board_id
                 else api.get_board_feed(board_id, difference, bookmarks.get())
             )
-            additional_images = PinterestImage.from_response(next_response, min_resolution)
+            next_response_data = next_response.resource_response.get("data", [])
+            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
