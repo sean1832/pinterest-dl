@@ -57,6 +57,12 @@ class _ScraperBase:
         for index in tqdm.tqdm(indices_list, desc="Captioning", disable=verbose):
             try:
                 img = images[index]
+                if not img.local_path:
+                    continue
+                if img.local_path.suffix == ".gif":
+                    if verbose:
+                        print(f"Skipping captioning for {img.local_path} (GIF)")
+                    continue
                 if img.origin:
                     img.write_comment(img.origin)
                     if verbose:

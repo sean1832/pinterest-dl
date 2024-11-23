@@ -9,6 +9,7 @@ from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.ops.bookmark_manager import BookmarkManager
+from pinterest_dl.low_level.ops.request_builder import RequestBuilder
 
 from .scraper_base import _ScraperBase
 
@@ -160,7 +161,7 @@ class _ScraperAPI(_ScraperBase):
                     print(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
 
                 time.sleep(delay)
-                remains = self._handle_missing_images(
+                remains = self._handle_missing_search_images(
                     api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
                 )
                 batch_count += 1
@@ -191,10 +192,15 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
+        if " " in query:
+            query = RequestBuilder.url_encode(query)
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
 
+        if self.verbose:
+            print(f"Scraping URL: {url}")
+
         api = PinterestAPI(url, self.cookies, timeout=self.timeout)
-        bookmarks = BookmarkManager(2)
+        bookmarks = BookmarkManager(1)
 
         scraped_imgs = self.search(query, api, limit, min_resolution, 0.2, bookmarks)
 
@@ -245,7 +251,7 @@ class _ScraperAPI(_ScraperBase):
                 if self.verbose:
                     print(f"bookmarks: {bookmarks.get()}")
                 time.sleep(delay)
-                remains = self._handle_missing_images(
+                remains = self._handle_missing_related_images(
                     api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
                 )
 
@@ -285,7 +291,7 @@ class _ScraperAPI(_ScraperBase):
                     break
 
                 time.sleep(delay)
-                remains = self._handle_missing_images(
+                remains = self._handle_missing_related_images(
                     api,
                     batch_size,
                     remains,
@@ -339,7 +345,33 @@ class _ScraperAPI(_ScraperBase):
         bookmarks.add_all(response.get_bookmarks())
         return current_img_batch, bookmarks
 
-    def _handle_missing_images(
+    def _handle_missing_search_images(
+        self,
+        api: PinterestAPI,
+        batch_size: int,
+        remains: int,
+        bookmarks: BookmarkManager,
+        min_resolution: Tuple[int, int],
+        images: List[PinterestImage],
+        pbar,
+        delay: float,
+    ) -> int:
+        """Handle cases where a batch does not return enough images."""
+        difference = batch_size - len(images[-batch_size:])
+        while difference > 0 and remains > 0:
+            next_response = api.get_search(difference, bookmarks.get())
+            next_response_data = next_response.resource_response.get("data", {}).get("results", [])
+            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
+            images.extend(additional_images)
+            bookmarks.add_all(next_response.get_bookmarks())
+            remains -= len(additional_images)
+            difference -= len(additional_images)
+            pbar.update(len(additional_images))
+            time.sleep(delay)
+
+        return remains
+
+    def _handle_missing_related_images(
         self,
         api: PinterestAPI,
         batch_size: int,

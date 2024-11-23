@@ -54,7 +54,7 @@ class PinterestImage:
             if verbose:
                 print(f"Local path or size not set for {self.src}")
             return False
-        if self.local_size and self.local_size < resolution:
+        if self.local_size is not None and resolution is not None and self.local_size < resolution:
             self.local_path.unlink()
             if verbose:
                 print(f"Removed {self.local_path}, resolution: {self.local_size} < {resolution}")

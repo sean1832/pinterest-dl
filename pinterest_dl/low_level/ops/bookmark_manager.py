@@ -20,7 +20,7 @@ class BookmarkManager:
     def get(self) -> List[str]:
         if len(self.bookmarks) < self.last:
             return self.bookmarks
-        return self.bookmarks[self.last :]
+        return self.bookmarks[-self.last :]
 
     def get_all(self) -> List[str]:
         return self.bookmarks
