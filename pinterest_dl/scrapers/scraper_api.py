@@ -9,6 +9,7 @@ from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.ops.bookmark_manager import BookmarkManager
+from pinterest_dl.low_level.ops.request_builder import RequestBuilder
 
 from .scraper_base import _ScraperBase
 
@@ -191,7 +192,12 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
+        if " " in query:
+            query = RequestBuilder.url_encode(query)
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+
+        if self.verbose:
+            print(f"Scraping URL: {url}")
 
         api = PinterestAPI(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(1)
