@@ -102,6 +102,8 @@ Login to Pinterest using your credentials to obtain browser cookies for scraping
 pinterest-dl login [options]
 ```
 
+![login](/doc/images/pinterest-dl-0.2.0-login.gif)
+
 **Options:**
 - `-o`, `--output [file]`: File to save browser cookies for future use. (default: `cookies.json`)
 - `--client`: Choose the scraping client (`chrome` / `firefox`). (default: `chrome`)
@@ -120,6 +122,8 @@ Extract images from a specified Pinterest URL.
 ```bash
 pinterest-dl scrape [url] [output_dir] [options]
 ```
+
+![scrape](/doc/images/pinterest-dl-0.2.0-scrape.gif)
 
 **Options:**
 
