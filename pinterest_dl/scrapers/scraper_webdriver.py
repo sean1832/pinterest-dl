@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -17,7 +17,28 @@ class _ScraperWebdriver(_ScraperBase):
         self.verbose = verbose
         self.webdriver: WebDriver = webdriver
 
-    def with_cookies(
+    def with_cookies(self, cookies: list[dict[str, Any]], wait_sec: float = 1) -> "_ScraperWebdriver":
+        """Load cookies to the current browser session.
+
+        Args:
+            cookies (list[dict]): List of cookies to load.
+            wait_sec (float): Time in seconds to wait after loading cookies.
+
+        Returns:
+            _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
+        """
+        if isinstance(cookies, str) or isinstance(cookies, Path):
+            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
+                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+        if not isinstance(cookies, list):
+            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+        cookies = self._sanitize_cookies(cookies)
+        for cookie in cookies:
+            self.webdriver.add_cookie(cookie)
+        time.sleep(wait_sec)
+        return self
+
+    def with_cookies_path(
         self, cookies_path: Optional[Union[str, Path]], wait_sec: float = 1
     ) -> "_ScraperWebdriver":
         """Load cookies from a file to the current browser session.
@@ -46,7 +67,7 @@ class _ScraperWebdriver(_ScraperBase):
         # Selenium requires the page to be loaded before adding cookies
         self.webdriver.get("https://www.pinterest.com")
 
-        cookies = _ScraperWebdriver._sanitize_cookies(cookies)
+        cookies = self._sanitize_cookies(cookies)
         for cookie in cookies:
             self.webdriver.add_cookie(cookie)
         print(f"Loaded cookies from {cookies_path}")

@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 
 from tqdm import tqdm
 
@@ -28,7 +28,24 @@ class _ScraperAPI(_ScraperBase):
         self.verbose = verbose
         self.cookies = None
 
-    def with_cookies(self, cookies_path: Optional[Union[str, Path]]) -> "_ScraperAPI":
+    def with_cookies(self, cookies:list[dict[str, Any]]) -> "_ScraperAPI":
+        """Load cookies to the current session.
+
+        Args:
+            cookies (list[dict]): List of cookies in Selenium format.
+
+        Returns:
+            _ScraperAPI: Instance of ScraperAPI with cookies loaded.
+        """
+        if isinstance(cookies, str) or isinstance(cookies, Path):
+            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
+                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+        if not isinstance(cookies, list):
+            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+        self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
+        return self
+
+    def with_cookies_path(self, cookies_path: Optional[Union[str, Path]]) -> "_ScraperAPI":
         """Load cookies from a file to the current session.
 
         Args:
