@@ -123,12 +123,12 @@ def main() -> None:
         elif args.cmd == "scrape":
             if args.client in ["chrome", "firefox"]:
                 PinterestDL.with_browser(
-                    browser_type=args.client,
+                    browser_type=args.client,  # type: ignore
                     timeout=args.timeout,
                     headless=not args.headful,
                     incognito=args.incognito,
                     verbose=args.verbose,
-                ).with_cookies(args.cookies).scrape_and_download(
+                ).with_cookies_path(args.cookies).scrape_and_download(
                     args.url,
                     args.output,
                     args.limit,
@@ -143,7 +143,7 @@ def main() -> None:
                         "Warning: Incognito and headful mode is only available for Chrome/Firefox."
                     )
 
-                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
+                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies_path(
                     args.cookies
                 ).scrape_and_download(
                     args.url,
@@ -165,7 +165,7 @@ def main() -> None:
                         "Warning: Incognito and headful mode is only available for Chrome/Firefox."
                     )
 
-                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies(
+                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies_path(
                     args.cookies
                 ).search_and_download(
                     args.query,

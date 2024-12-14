@@ -228,11 +228,15 @@ After obtaining cookies, you can use them to scrape private boards and pins.
 ```python
 from pinterest_dl import PinterestDL
 
+# Load cookies from a file
+with open("cookies.json", "r") as f:
+    cookies = json.load(f)
+
 # Initialize and run the Pinterest image downloader with specified settings
 images = (
     PinterestDL.with_api()
     .with_cookies(
-        "cookies.json",  # Path to cookies file
+        cookies,  # cookies in selenium format
     )
     .scrape_and_download(
         url="https://www.pinterest.com/pin/1234567",  # Assume this is a private board URL
