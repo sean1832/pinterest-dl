@@ -226,6 +226,7 @@ with open("cookies.json", "w") as f:
 **2b. Scrape with cookies**
 After obtaining cookies, you can use them to scrape private boards and pins.
 ```python
+import json
 from pinterest_dl import PinterestDL
 
 # Load cookies from a file
