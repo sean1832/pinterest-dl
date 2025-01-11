@@ -29,6 +29,7 @@ dependencies = [
     "pyexiv2",
     "requests",
     "deprecated",
+    "GitPython"
 ]
 
 [project.scripts]
