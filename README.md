@@ -177,7 +177,7 @@ pinterest-dl download [url_list] [options]
 You can also use the `PinterestDL` class directly in your Python code to scrape and download images programmatically.
 
 ### 1. Quick Scrape and Download
-The following example shows how to scrape and download images from a Pinterest URL in one step.
+This example shows how to **scrape** and download images from a Pinterest URL in one step.
 
 ```python
 from pinterest_dl import PinterestDL
@@ -188,6 +188,27 @@ images = PinterestDL.with_api(
     verbose=False,  # Enable detailed logging for debugging (default: False)
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
+    output_dir="images/art",  # Directory to save downloaded images
+    limit=30,  # Max number of images to download 
+    min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
+    json_output="art.json",  # File to save URLs of scraped images (default: None)
+    dry_run=False,  # If True, performs a scrape without downloading images (default: False)
+    add_captions=True,  # Adds image `alt` text as metadata to images (default: False)
+)
+```
+
+This example shows how to **search** with query and download images from a Pinterest URL in one step.
+
+```python
+from pinterest_dl import PinterestDL
+
+# Initialize and run the Pinterest image downloader with specified settings
+# `search_and_download` is only available in API mode
+images = PinterestDL.with_api( 
+    timeout=3,  # Timeout in seconds for each request (default: 3)
+    verbose=False,  # Enable detailed logging for debugging (default: False)
+).search_and_download(
+    query="art",  # Pinterest search query
     output_dir="images/art",  # Directory to save downloaded images
     limit=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
@@ -252,6 +273,8 @@ images = (
 Use this example if you need more granular control over scraping and downloading images.
 
 #### 3a. With API
+
+##### Scrape Images
 ```python
 import json
 
@@ -279,6 +302,21 @@ valid_indices = list(range(len(downloaded_imgs)))  # All images are valid to add
 # 4. Add Alt Text as Metadata
 # Extract `alt` text from images and set it as metadata in the downloaded files
 PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
+```
+
+##### Search Images
+```python
+import json
+from pinterest_dl import PinterestDL
+
+# 1. Initialize PinterestDL with API.
+scraped_images = PinterestDL.with_api().search(
+    query="art",  # Search query for Pinterest
+    limit=30,  # Maximum number of images to scrape
+    min_resolution=(512, 512),  # Minimum resolution for images
+    delay=0.4, # Delay between requests (default: 0.2)
+)
+# ... (Same as above)
 ```
 
 #### 3b. With Browser
