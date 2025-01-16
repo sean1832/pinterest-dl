@@ -147,16 +147,35 @@ class _ScraperAPI(_ScraperBase):
     def search(
         self,
         query: str,
-        api: PinterestAPI,
         limit: int,
         min_resolution: Tuple[int, int],
-        delay: float,
-        bookmarks: BookmarkManager,
+        delay: float = 0.2,
+        bookmarksCount: int = 1,
     ) -> List[PinterestImage]:
-        """Scrape pins from a Pinterest search URL."""
+        """Scrape pins from a Pinterest search query using the API.
+
+        Args:
+            query (str): query to search.
+            limit (int): Maximum number of images to scrape.
+            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
+            delay (float): Delay in seconds between requests in second. Defaults to 0.2.
+            bookmarksCount (int, optional): Number of bookmarks to keep. Defaults to 1.
+
+        Returns:
+            List[PinterestImage]: List of scraped PinterestImage objects.
+        """
         images = []
         remains = limit
         batch_count = 0
+
+        if " " in query:
+            query = RequestBuilder.url_encode(query)
+        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+
+        if self.verbose:
+            print(f"Scraping URL: {url}")
+        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
+        bookmarks = BookmarkManager(bookmarksCount)
 
         with tqdm(total=limit, desc="Scraping Search", disable=self.verbose) as pbar:
             while remains > 0:
@@ -209,17 +228,7 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        if " " in query:
-            query = RequestBuilder.url_encode(query)
-        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
-
-        if self.verbose:
-            print(f"Scraping URL: {url}")
-
-        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
-        bookmarks = BookmarkManager(1)
-
-        scraped_imgs = self.search(query, api, limit, min_resolution, 0.2, bookmarks)
+        scraped_imgs = self.search(query, limit, min_resolution)
 
         if json_output:
             output_path = Path(json_output)
