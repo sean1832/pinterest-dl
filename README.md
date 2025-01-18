@@ -11,10 +11,14 @@ This library facilitates the scraping and downloading of images from [Pinterest]
 
 It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python-api) for programmatic access. The tool supports scraping images from public and private boards and pins using browser cookies. It also allows users to save scraped URLs to a JSON file for future access.
 
-> **⚠️ Disclaimer:**  
+> [!TIP]
+> If you are looking for a GUI version of this tool, check out [pinterest-dl-gui](https://github.com/sean1832/pinterest-dl-gui).
+> It provides a user-friendly interface for scraping and downloading images from Pinterest using the same underlying library. It could also serve as a reference for integrating the library into your own GUI application.
+
+> [!WARNING] 
 > This project is independent and not affiliated with Pinterest. It's designed solely for educational purposes. Please be aware that automating the scraping of websites might conflict with their [Terms of Service](https://developers.pinterest.com/terms/). The repository owner disclaims any liability for misuse of this tool. Use it responsibly and at your own legal risk.
 
-> **🗒️ Note:**  
+> [!NOTE]
 > This project draws inspiration from [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
 
 ## 🌟 Features
