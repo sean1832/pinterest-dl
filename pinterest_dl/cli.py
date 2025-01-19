@@ -59,7 +59,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
     scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
 
-    # seach command
+    # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
     search_cmd.add_argument("query", help="Search query")
     search_cmd.add_argument("output", help="Output directory")
