@@ -35,7 +35,10 @@ class PinterestAPI:
             self.pin_id = self._parse_pin_id(self.url)
         except ValueError:
             self.pin_id = None
-            self.query = self._parse_search_query(self.url)
+            try:
+                self.query = self._parse_search_query(self.url)
+            except ValueError:
+                pass
 
         try:
             self.username, self.boardname = self._parse_board_url(self.url)
