@@ -24,7 +24,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Scrape images directly from a Pinterest URL.
 - ✅ Asynchronously download images from a list of URLs. ([#1](https://github.com/sean1832/pinterest-dl/pull/1))
 - ✅ Save scraped URLs to a JSON file for future access.
-- ✅ Incognito mode to keep your scraping discreet.
+- ✅ Incognito mode to keep your scraping discrete.
 - ✅ Access detailed output for effective debugging.
 - ✅ Support for the Firefox browser.
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
