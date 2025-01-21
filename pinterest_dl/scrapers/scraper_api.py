@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, Any
+from typing import Any, List, Optional, Tuple, Union
 
 from tqdm import tqdm
 
@@ -28,7 +28,7 @@ class _ScraperAPI(_ScraperBase):
         self.verbose = verbose
         self.cookies = None
 
-    def with_cookies(self, cookies:list[dict[str, Any]]) -> "_ScraperAPI":
+    def with_cookies(self, cookies: list[dict[str, Any]]) -> "_ScraperAPI":
         """Load cookies to the current session.
 
         Args:
@@ -38,10 +38,14 @@ class _ScraperAPI(_ScraperBase):
             _ScraperAPI: Instance of ScraperAPI with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
-                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+                + "If you want to load cookies from a file, use `with_cookies_path` method instead."
+            )
         if not isinstance(cookies, list):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+            )
         self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
         return self
 
@@ -93,10 +97,7 @@ class _ScraperAPI(_ScraperBase):
             images = self._scrape_board(api, limit, min_resolution, delay, bookmarks)
 
         if self.verbose:
-            self._display_images(images)
-
-        if self.verbose:
-            self._display_images(images)
+            self._print_images(images)
         return images
 
     def scrape_and_download(
@@ -428,7 +429,7 @@ class _ScraperAPI(_ScraperBase):
 
         return remains
 
-    def _display_images(self, images: List[PinterestImage]):
+    def _print_images(self, images: List[PinterestImage]):
         """Print scraped image URLs if verbosity is enabled."""
         for i, img in enumerate(images):
             print(f"({i + 1}) {img.src}")
