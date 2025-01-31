@@ -12,7 +12,7 @@ Thank you for your interest in contributing to this project! Here’s how you ca
 1. Fork the repository.
 2. Create a new branch for your changes.
 3. Make your changes.
-4. Submit a pull request (PR) to the main repository.
+4. Submit a pull request (PR) to the main branch.
 
 ## Commit Message Guidelines
 
