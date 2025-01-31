@@ -20,6 +20,35 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 > [!NOTE]
 > This project draws inspiration from [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
 
+
+## Table of Contents
+- [Pinterest Image Downloader (pinterest-dl)](#pinterest-image-downloader-pinterest-dl)
+  - [Table of Contents](#table-of-contents)
+  - [🌟 Features](#-features)
+  - [🚩 Known Issues](#-known-issues)
+  - [📋 Requirements](#-requirements)
+  - [📥 Installation](#-installation)
+    - [Using pip (Recommended)](#using-pip-recommended)
+    - [Cloning from GitHub](#cloning-from-github)
+  - [🚀 CLI-Usage](#-cli-usage)
+    - [General Command Structure](#general-command-structure)
+    - [Examples](#examples)
+    - [Commands](#commands)
+      - [1. Login](#1-login)
+      - [2. Scrape](#2-scrape)
+      - [3. Search](#3-search)
+      - [4. Download](#4-download)
+  - [🛠️ Python API](#️-python-api)
+    - [1. Quick Scrape and Download](#1-quick-scrape-and-download)
+    - [2. Scrape with Cookies for Private Boards](#2-scrape-with-cookies-for-private-boards)
+    - [3. Detailed Scraping with Lower-Level Control](#3-detailed-scraping-with-lower-level-control)
+      - [3a. With API](#3a-with-api)
+        - [Scrape Images](#scrape-images)
+        - [Search Images](#search-images)
+      - [3b. With Browser](#3b-with-browser)
+  - [🤝 Contributing](#-contributing)
+  - [📜 License](#-license)
+
 ## 🌟 Features
 - ✅ Scrape images directly from a Pinterest URL.
 - ✅ Asynchronously download images from a list of URLs. ([#1](https://github.com/sean1832/pinterest-dl/pull/1))
