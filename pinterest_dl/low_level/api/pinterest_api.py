@@ -53,6 +53,7 @@ class PinterestAPI:
         self._session = requests.Session()
         self._session.cookies.update(self.cookies)  # Update session cookies
         self._session.headers.update({"User-Agent": self.USER_AGENT})
+        self._session.headers.update({"x-pinterest-pws-handler": "www/pin/[id].js"}) # required since 2025-03-07. See https://github.com/sean1832/pinterest-dl/issues/30
         self.is_pin = bool(self.pin_id)
 
     def get_related_images(self, num: int, bookmark: List[str]) -> PinResponse:
