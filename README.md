@@ -21,9 +21,9 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 > This project draws inspiration from [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
 
 
-## Table of Contents
+# Table of Contents
 - [Pinterest Image Downloader (pinterest-dl)](#pinterest-image-downloader-pinterest-dl)
-  - [Table of Contents](#table-of-contents)
+- [Table of Contents](#table-of-contents)
   - [🌟 Features](#-features)
   - [🚩 Known Issues](#-known-issues)
   - [📋 Requirements](#-requirements)
