@@ -20,6 +20,35 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 > [!NOTE]
 > This project draws inspiration from [pinterest-image-scraper](https://github.com/xjdeng/pinterest-image-scraper).
 
+
+# Table of Contents
+- [Pinterest Image Downloader (pinterest-dl)](#pinterest-image-downloader-pinterest-dl)
+- [Table of Contents](#table-of-contents)
+  - [🌟 Features](#-features)
+  - [🚩 Known Issues](#-known-issues)
+  - [📋 Requirements](#-requirements)
+  - [📥 Installation](#-installation)
+    - [Using pip (Recommended)](#using-pip-recommended)
+    - [Cloning from GitHub](#cloning-from-github)
+  - [🚀 CLI-Usage](#-cli-usage)
+    - [General Command Structure](#general-command-structure)
+    - [Examples](#examples)
+    - [Commands](#commands)
+      - [1. Login](#1-login)
+      - [2. Scrape](#2-scrape)
+      - [3. Search](#3-search)
+      - [4. Download](#4-download)
+  - [🛠️ Python API](#️-python-api)
+    - [1. Quick Scrape and Download](#1-quick-scrape-and-download)
+    - [2. Scrape with Cookies for Private Boards](#2-scrape-with-cookies-for-private-boards)
+    - [3. Detailed Scraping with Lower-Level Control](#3-detailed-scraping-with-lower-level-control)
+      - [3a. With API](#3a-with-api)
+        - [Scrape Images](#scrape-images)
+        - [Search Images](#search-images)
+      - [3b. With Browser](#3b-with-browser)
+  - [🤝 Contributing](#-contributing)
+  - [📜 License](#-license)
+
 ## 🌟 Features
 - ✅ Scrape images directly from a Pinterest URL.
 - ✅ Asynchronously download images from a list of URLs. ([#1](https://github.com/sean1832/pinterest-dl/pull/1))
@@ -30,9 +59,10 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
 - ✅ Scrape private boards and pins with browser cookies. ([#20](https://github.com/sean1832/pinterest-dl/pull/20))
 - ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([#21](https://github.com/sean1832/pinterest-dl/pull/21))
+- ✅ Search for images on Pinterest using a query. ([#23](https://github.com/sean1832/pinterest-dl/pull/23))
 
 ## 🚩 Known Issues
-- ~~🔲 Incompatibility with Pinterest URLs that include search queries.~~ Implemented `search` command since `v0.3.0`. ([#23](https://github.com/sean1832/pinterest-dl/pull/23))
+- 🔲 Not yet implement testing.
 - 🔲 Not sorely tested on Linux and Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
 
 ## 📋 Requirements
@@ -59,6 +89,14 @@ pip install .
 ```bash
 pinterest-dl [command] [options]
 ```
+
+| Command | Description |
+| --- | --- |
+| [`login`](#1-login) | Login to Pinterest to obtain browser cookies for scraping private boards and pins. |
+| [`scrape`](#2-scrape) | Scrape images from a Pinterest URL. |
+| [`search`](#3-search) | Search for images on Pinterest using a query. |
+| [`download`](#4-download) | Download images from a list of URLs provided in a JSON file. |
+
 
 ---
 ### Examples
@@ -357,6 +395,9 @@ valid_indices = PinterestDL.prune_images(images=downloaded_imgs, min_resolution=
 # Extract `alt` text from images and set it as metadata in the downloaded files
 PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
 ```
+
+## 🤝 Contributing
+Contributions are welcome! Please check the [Contribution Guidelines](CONTRIBUTING.md) before submitting a pull request.
 
 ## 📜 License
 [Apache License 2.0](LICENSE)
