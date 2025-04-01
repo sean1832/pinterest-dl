@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple, Union, Any
+from typing import Any, List, Optional, Tuple, Union
 
 from tqdm import tqdm
 
@@ -28,7 +28,7 @@ class _ScraperAPI(_ScraperBase):
         self.verbose = verbose
         self.cookies = None
 
-    def with_cookies(self, cookies:list[dict[str, Any]]) -> "_ScraperAPI":
+    def with_cookies(self, cookies: list[dict[str, Any]]) -> "_ScraperAPI":
         """Load cookies to the current session.
 
         Args:
@@ -38,10 +38,14 @@ class _ScraperAPI(_ScraperBase):
             _ScraperAPI: Instance of ScraperAPI with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
-                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+                + "If you want to load cookies from a file, use `with_cookies_path` method instead."
+            )
         if not isinstance(cookies, list):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+            )
         self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
         return self
 
@@ -108,6 +112,7 @@ class _ScraperAPI(_ScraperBase):
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
         add_captions: bool = False,
+        delay: float = 0.2,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -119,14 +124,15 @@ class _ScraperAPI(_ScraperBase):
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
             add_captions (bool): Add captions to downloaded images.
+            delay (float): Delay in seconds between requests.
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.scrape(url, num, min_resolution)
+        scraped_imgs = self.scrape(url, num, min_resolution, delay)
 
         imgs_dict = [img.to_dict() for img in scraped_imgs]
-        
+
         if json_output:
             output_path = Path(json_output)
             io.write_json(imgs_dict, output_path, indent=4)
@@ -214,6 +220,7 @@ class _ScraperAPI(_ScraperBase):
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
         add_captions: bool = False,
+        delay: float = 0.2,
     ) -> Optional[List[PinterestImage]]:
         """Search for images on Pinterest and download them.
 
@@ -225,11 +232,12 @@ class _ScraperAPI(_ScraperBase):
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
             add_captions (bool): Add captions to downloaded images.
+            delay (float): Delay in seconds between requests.
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.search(query, num, min_resolution)
+        scraped_imgs = self.search(query, num, min_resolution, delay)
 
         if json_output:
             output_path = Path(json_output)

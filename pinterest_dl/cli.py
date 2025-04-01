@@ -51,6 +51,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
@@ -67,6 +68,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     search_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
@@ -153,6 +155,7 @@ def main() -> None:
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
                     add_captions=True,
+                    delay=args.delay,
                 )
 
             print("\nDone.")
@@ -175,6 +178,7 @@ def main() -> None:
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
                     add_captions=True,
+                    delay=args.delay,
                 )
 
             print("\nDone.")
