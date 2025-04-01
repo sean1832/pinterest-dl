@@ -118,9 +118,9 @@ class _ScraperWebdriver(_ScraperBase):
         min_resolution = min_resolution or (0, 0)
         scraped_imgs = self.scrape(url, limit)
 
+        imgs_dict = [img.to_dict() for img in scraped_imgs]
         if json_output:
             output_path = Path(json_output)
-            imgs_dict = [img.to_dict() for img in scraped_imgs]
             io.write_json(imgs_dict, output_path, indent=4)
 
         if dry_run:
