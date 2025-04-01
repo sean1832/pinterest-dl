@@ -55,6 +55,7 @@ class _ScraperBase:
             indices_list = indices
 
         for index in tqdm.tqdm(indices_list, desc="Captioning", disable=verbose):
+            img = None
             try:
                 img = images[index]
                 if not img.local_path:
@@ -73,7 +74,10 @@ class _ScraperBase:
                         print(f"Caption added to {img.local_path}: '{img.alt}'")
 
             except Exception as e:
-                print(f"Error captioning {img.local_path}: {e}")
+                if img:
+                    print(f"Error captioning {img.local_path}: {e}")
+                else:
+                    print(f"Error captioning image at index {index}: {e}")
 
     @staticmethod
     def prune_images(
