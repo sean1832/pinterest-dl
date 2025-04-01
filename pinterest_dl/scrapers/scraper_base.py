@@ -65,11 +65,11 @@ class _ScraperBase:
                         print(f"Skipping captioning for {img.local_path} (GIF)")
                     continue
                 if img.origin:
-                    img.write_comment(img.origin)
+                    img.meta_write_comment(img.origin)
                     if verbose:
                         print(f"Origin added to {img.local_path}: '{img.origin}'")
                 if img.alt:
-                    img.write_subject(img.alt)
+                    img.meta_write_subject(img.alt)
                     if verbose:
                         print(f"Caption added to {img.local_path}: '{img.alt}'")
 
