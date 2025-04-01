@@ -1,5 +1,6 @@
+import json
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
@@ -39,7 +40,7 @@ class _ScraperBase:
         return images
 
     @staticmethod
-    def add_captions(
+    def add_captions_to_meta(
         images: List[PinterestImage], indices: Optional[List[int]] = None, verbose: bool = False
     ) -> None:
         """Add captions and origin information to downloaded images.

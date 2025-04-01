@@ -147,7 +147,7 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if add_captions:
-            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
 
         return downloaded_imgs
 
@@ -254,7 +254,7 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if add_captions:
-            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
 
         return downloaded_imgs
 

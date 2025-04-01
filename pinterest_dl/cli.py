@@ -195,7 +195,7 @@ def main() -> None:
 
             # post process
             pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
-            PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
+            PinterestDL.add_captions_to_meta(downloaded_imgs, pruned_idx, args.verbose)
             print("\nDone.")
         else:
             parser.print_help()

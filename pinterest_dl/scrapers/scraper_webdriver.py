@@ -17,7 +17,9 @@ class _ScraperWebdriver(_ScraperBase):
         self.verbose = verbose
         self.webdriver: WebDriver = webdriver
 
-    def with_cookies(self, cookies: list[dict[str, Any]], wait_sec: float = 1) -> "_ScraperWebdriver":
+    def with_cookies(
+        self, cookies: list[dict[str, Any]], wait_sec: float = 1
+    ) -> "_ScraperWebdriver":
         """Load cookies to the current browser session.
 
         Args:
@@ -28,10 +30,14 @@ class _ScraperWebdriver(_ScraperBase):
             _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
-                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+                + "If you want to load cookies from a file, use `with_cookies_path` method instead."
+            )
         if not isinstance(cookies, list):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+            )
         cookies = self._sanitize_cookies(cookies)
         for cookie in cookies:
             self.webdriver.add_cookie(cookie)
@@ -133,7 +139,7 @@ class _ScraperWebdriver(_ScraperBase):
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if add_captions:
-            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
 
         return downloaded_imgs
 
