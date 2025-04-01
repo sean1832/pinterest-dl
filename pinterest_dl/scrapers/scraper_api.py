@@ -125,9 +125,10 @@ class _ScraperAPI(_ScraperBase):
         """
         scraped_imgs = self.scrape(url, limit, min_resolution)
 
+        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        
         if json_output:
             output_path = Path(json_output)
-            imgs_dict = [img.to_dict() for img in scraped_imgs]
             io.write_json(imgs_dict, output_path, indent=4)
 
         if dry_run:
