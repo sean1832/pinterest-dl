@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from tqdm import tqdm
 
@@ -111,7 +111,7 @@ class _ScraperAPI(_ScraperBase):
         min_resolution: Tuple[int, int] = (0, 0),
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
-        add_captions: bool = False,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
@@ -123,7 +123,11 @@ class _ScraperAPI(_ScraperBase):
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
-            add_captions (bool): Add captions to downloaded images.
+            caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
+                'txt' for alt text in separate files, 
+                'json' for full image data, 
+                'metadata' embeds in image files, 
+                'none' skips captions
             delay (float): Delay in seconds between requests.
 
         Returns:
@@ -146,8 +150,12 @@ class _ScraperAPI(_ScraperBase):
 
         valid_indices = []
 
-        if add_captions:
+        if caption == "txt" or caption == "json":
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+        elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+        elif caption != "none":
+            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
         return downloaded_imgs
 
@@ -219,7 +227,7 @@ class _ScraperAPI(_ScraperBase):
         min_resolution: Tuple[int, int] = (0, 0),
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
-        add_captions: bool = False,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
     ) -> Optional[List[PinterestImage]]:
         """Search for images on Pinterest and download them.
@@ -231,7 +239,11 @@ class _ScraperAPI(_ScraperBase):
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
-            add_captions (bool): Add captions to downloaded images.
+            caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
+                'txt' for alt text in separate files, 
+                'json' for full image data, 
+                'metadata' embeds in image files, 
+                'none' skips captions
             delay (float): Delay in seconds between requests.
 
         Returns:
@@ -253,8 +265,12 @@ class _ScraperAPI(_ScraperBase):
 
         valid_indices = []
 
-        if add_captions:
+        if caption == "txt" or caption == "json":
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+        elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+        elif caption != "none":
+            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
         return downloaded_imgs
 

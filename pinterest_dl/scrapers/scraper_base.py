@@ -40,6 +40,53 @@ class _ScraperBase:
         return images
 
     @staticmethod
+    def add_captions_to_file(
+        images: List[PinterestImage],
+        output_dir: Union[str, Path],
+        extension: Literal["txt", "json"] = "txt",
+        verbose: bool = False,
+    ) -> None:
+        """Add captions to downloaded images and save them to a file.
+
+        Args:
+            images (List[PinterestImage]): List of PinterestImage objects to add captions to.
+            output_dir (Union[str, Path]): Directory to save image captions.
+            extension (Literal["txt","json"]): File extension for the captions.
+                'txt' for alt text in separate files,
+                'json' for full image data.
+            verbose (bool): Enable verbose logging.
+        """
+        if not isinstance(output_dir, Path):
+            output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        if verbose:
+            print(f"Saving captions to {output_dir}...")
+        images_no_alt = []
+        for img in tqdm.tqdm(images, desc="Captioning to file", disable=verbose):
+            if not img.local_path:
+                continue
+            if extension == "json":
+                with open(output_dir / f"{img.local_path.stem}.json", "w") as f:
+                    f.write(json.dumps(img.to_dict(), indent=4))
+            elif extension == "txt":
+                if img.alt:
+                    with open(output_dir / f"{img.local_path.stem}.txt", "w") as f:
+                        f.write(img.alt)
+                else:
+                    if verbose:
+                        print(f"No alt text for {img.local_path}")
+                    images_no_alt.append(img)
+            else:
+                raise ValueError("Invalid file extension. Use 'txt' or 'json'.")
+            if verbose:
+                print(f"Caption saved for {img.local_path}: '{img.alt}'")
+
+        if images_no_alt:
+            print(f"Images with no alt text: {len(images_no_alt)}")
+            for img in images_no_alt:
+                print(f"  - {img.local_path}")
+
+    @staticmethod
     def add_captions_to_meta(
         images: List[PinterestImage], indices: Optional[List[int]] = None, verbose: bool = False
     ) -> None:
@@ -55,7 +102,7 @@ class _ScraperBase:
         else:
             indices_list = indices
 
-        for index in tqdm.tqdm(indices_list, desc="Captioning", disable=verbose):
+        for index in tqdm.tqdm(indices_list, desc="Captioning to metadata", disable=verbose):
             img = None
             try:
                 img = images[index]

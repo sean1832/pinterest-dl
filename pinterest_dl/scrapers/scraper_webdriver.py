@@ -105,7 +105,7 @@ class _ScraperWebdriver(_ScraperBase):
         min_resolution: Optional[Tuple[int, int]] = None,
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
-        add_captions: bool = False,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -116,7 +116,11 @@ class _ScraperWebdriver(_ScraperBase):
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
-            add_captions (bool): Add captions to downloaded images.
+            caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
+                'txt' for alt text in separate files,
+                'json' for full image data,
+                'metadata' embeds in image files,
+                'none' skips captions
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
@@ -138,8 +142,12 @@ class _ScraperWebdriver(_ScraperBase):
 
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
-        if add_captions:
+        if caption == "txt" or caption == "json":
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+        elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+        elif caption != "none":
+            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
         return downloaded_imgs
 
