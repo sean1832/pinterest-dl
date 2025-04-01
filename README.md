@@ -65,9 +65,9 @@ pinterest-dl [command] [options]
 
 **Scraping Images in anonymous mode:**
 
-Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a limit of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
+Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a num of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
 ```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -l 30 -r 512x512 --json
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -r 512x512 --json
 ```
 
 **Get Browser Cookies:**
@@ -83,7 +83,7 @@ pinterest-dl login -o cookies.json --headful
 
 Scrape images from a private Pinterest board using the cookies saved in the `cookies.json` file.
 ```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -l 30 -c cookies.json
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -c cookies.json
 ```
 
 > [!TIP]
@@ -133,7 +133,7 @@ pinterest-dl scrape [url] [output_dir] [options]
 **Options:**
 
 - `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
-- `-l`, `--limit [number]`: Max number of image to download (default: 100).
+- `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--json`: Save scraped URLs to a JSON file.
@@ -155,7 +155,7 @@ pinterest-dl search [query] [output_dir] [options]
 
 **Options:**
 - `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
-- `-l`, `--limit [number]`: Max number of image to download (default: 100).
+- `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--json`: Save scraped URLs to a JSON file.
@@ -194,7 +194,7 @@ images = PinterestDL.with_api(
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
-    limit=30,  # Max number of images to download 
+    num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     json_output="art.json",  # File to save URLs of scraped images (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
@@ -215,7 +215,7 @@ images = PinterestDL.with_api(
 ).search_and_download(
     query="art",  # Pinterest search query
     output_dir="images/art",  # Directory to save downloaded images
-    limit=30,  # Max number of images to download 
+    num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     json_output="art.json",  # File to save URLs of scraped images (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
@@ -268,7 +268,7 @@ images = (
     .scrape_and_download(
         url="https://www.pinterest.com/pin/1234567",  # Assume this is a private board URL
         output_dir="images/art",  # Directory to save downloaded images
-        limit=30,  # Max number of images to download
+        num=30,  # Max number of images to download
     )
 )
 ```
@@ -288,7 +288,7 @@ from pinterest_dl import PinterestDL
 # 1. Initialize PinterestDL with API.
 scraped_images = PinterestDL.with_api().scrape(
     url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
-    limit=30,  # Maximum number of images to scrape
+    num=30,  # Maximum number of images to scrape
     min_resolution=(512, 512),  # <- Only available to set in the API. Browser mode will have to pruned after download.
 )
 
@@ -317,7 +317,7 @@ from pinterest_dl import PinterestDL
 # 1. Initialize PinterestDL with API.
 scraped_images = PinterestDL.with_api().search(
     query="art",  # Search query for Pinterest
-    limit=30,  # Maximum number of images to scrape
+    num=30,  # Maximum number of images to scrape
     min_resolution=(512, 512),  # Minimum resolution for images
     delay=0.4, # Delay between requests (default: 0.2)
 )
@@ -336,7 +336,7 @@ scraped_images = PinterestDL.with_browser(
     headless=True,  # Run browser in headless mode
 ).scrape(
     url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
-    limit=30,  # Maximum number of images to scrape
+    num=30,  # Maximum number of images to scrape
 )
 
 # 2. Save Scraped Data to JSON

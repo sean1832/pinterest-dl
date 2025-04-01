@@ -48,7 +48,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("output", help="Output directory")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
-    scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
@@ -64,7 +64,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("query", help="Search query")
     search_cmd.add_argument("output", help="Output directory")
     search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
-    search_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     search_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
@@ -117,7 +117,7 @@ def main() -> None:
             )
             print("Example:")
             print(
-                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -l 10 --cookies .\cookies.json'
+                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -n 10 --cookies .\cookies.json'
             )
             print("\nDone.")
         elif args.cmd == "scrape":
@@ -131,7 +131,7 @@ def main() -> None:
                 ).with_cookies_path(args.cookies).scrape_and_download(
                     args.url,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else None,
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
@@ -148,7 +148,7 @@ def main() -> None:
                 ).scrape_and_download(
                     args.url,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
@@ -170,7 +170,7 @@ def main() -> None:
                 ).search_and_download(
                     args.query,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,

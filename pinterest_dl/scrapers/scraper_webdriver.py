@@ -75,19 +75,19 @@ class _ScraperWebdriver(_ScraperBase):
         time.sleep(wait_sec)
         return self
 
-    def scrape(self, url: str, limit: int) -> List[PinterestImage]:
+    def scrape(self, url: str, num: int) -> List[PinterestImage]:
         """Scrape pins from Pinterest using a WebDriver.
 
         Args:
             url (str): Pinterest URL to scrape.
-            limit (int): Maximum number of images to scrape.
+            num (int): Maximum number of images to scrape.
 
         Returns:
             List[PinterestImage]: List of scraped PinterestImage objects.
         """
         try:
             pin_scraper = PinterestDriver(self.webdriver)
-            return pin_scraper.scrape(url, limit=limit, verbose=self.verbose, timeout=self.timeout)
+            return pin_scraper.scrape(url, num=num, verbose=self.verbose, timeout=self.timeout)
         finally:
             self.webdriver.close()
 
@@ -95,7 +95,7 @@ class _ScraperWebdriver(_ScraperBase):
         self,
         url: str,
         output_dir: Union[str, Path],
-        limit: int,
+        num: int,
         min_resolution: Optional[Tuple[int, int]] = None,
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
@@ -106,7 +106,7 @@ class _ScraperWebdriver(_ScraperBase):
         Args:
             url (str): Pinterest URL to scrape.
             output_dir (Union[str, Path]): Directory to store downloaded images.
-            limit (int): Maximum number of images to scrape.
+            num (int): Maximum number of images to scrape.
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
@@ -116,7 +116,7 @@ class _ScraperWebdriver(_ScraperBase):
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
         min_resolution = min_resolution or (0, 0)
-        scraped_imgs = self.scrape(url, limit)
+        scraped_imgs = self.scrape(url, num)
 
         imgs_dict = [img.to_dict() for img in scraped_imgs]
         if json_output:
