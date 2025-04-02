@@ -105,7 +105,7 @@ pinterest-dl [command] [options]
 
 Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a num of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
 ```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -r 512x512 --json
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -r 512x512 --cache
 ```
 
 **Get Browser Cookies:**
@@ -175,7 +175,7 @@ pinterest-dl scrape [url] [output_dir] [options]
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--delay [second]`: Delay between requests (default: 0.2).
-- `--json`: Save scraped URLs to a JSON file.
+- `--cache`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
 - `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
@@ -199,7 +199,7 @@ pinterest-dl search [query] [output_dir] [options]
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--delay [second]`: Delay between requests (default: 0.2).
-- `--json`: Save scraped URLs to a JSON file.
+- `--cache`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
 - `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
@@ -238,7 +238,7 @@ images = PinterestDL.with_api(
     output_dir="images/art",  # Directory to save downloaded images
     num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
-    json_output="art.json",  # File to save URLs of scraped images (default: None)
+    cache_path="art.json",  #  Path to cache scraped data as json (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
@@ -259,7 +259,7 @@ images = PinterestDL.with_api(
     output_dir="images/art",  # Directory to save downloaded images
     num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
-    json_output="art.json",  # File to save URLs of scraped images (default: None)
+    cache_path="art.json",  #  Path to cache scraped data as json (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
