@@ -9,7 +9,7 @@ jobs:
     name: Publish release to PyPI
     runs-on: ubuntu-latest
     environment:
-      name: release
+      name: pypi-release
       url: https://pypi.org/p/pinterest-dl
     permissions:
       id-token: write
