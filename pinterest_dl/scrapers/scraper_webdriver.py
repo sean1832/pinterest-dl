@@ -103,7 +103,7 @@ class _ScraperWebdriver(_ScraperBase):
         output_dir: Union[str, Path],
         num: int,
         min_resolution: Optional[Tuple[int, int]] = None,
-        json_output: Optional[Union[str, Path]] = None,
+        cache_path: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
     ) -> Optional[List[PinterestImage]]:
@@ -114,7 +114,7 @@ class _ScraperWebdriver(_ScraperBase):
             output_dir (Union[str, Path]): Directory to store downloaded images.
             num (int): Maximum number of images to scrape.
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
-            json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
+            cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             dry_run (bool): Only scrape URLs without downloading images.
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
                 'txt' for alt text in separate files,
@@ -129,8 +129,8 @@ class _ScraperWebdriver(_ScraperBase):
         scraped_imgs = self.scrape(url, num)
 
         imgs_dict = [img.to_dict() for img in scraped_imgs]
-        if json_output:
-            output_path = Path(json_output)
+        if cache_path:
+            output_path = Path(cache_path)
             io.write_json(imgs_dict, output_path, indent=4)
 
         if dry_run:
