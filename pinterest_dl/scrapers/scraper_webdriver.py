@@ -1,3 +1,4 @@
+import json
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -100,22 +101,20 @@ class _ScraperWebdriver(_ScraperBase):
     def scrape_and_download(
         self,
         url: str,
-        output_dir: Union[str, Path],
+        output_dir: Optional[Union[str, Path]],
         num: int,
         min_resolution: Optional[Tuple[int, int]] = None,
         cache_path: Optional[Union[str, Path]] = None,
-        dry_run: bool = False,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
         Args:
             url (str): Pinterest URL to scrape.
-            output_dir (Union[str, Path]): Directory to store downloaded images.
+            output_dir (Union[str, Path]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
-            dry_run (bool): Only scrape URLs without downloading images.
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
                 'txt' for alt text in separate files,
                 'json' for full image data,
@@ -129,13 +128,18 @@ class _ScraperWebdriver(_ScraperBase):
         scraped_imgs = self.scrape(url, num)
 
         imgs_dict = [img.to_dict() for img in scraped_imgs]
+
+        if not output_dir:
+            # no output_dir provided, print the scraped image data to console
+            print("Scraped: ")
+            print(json.dumps(imgs_dict, indent=2))
+
         if cache_path:
             output_path = Path(cache_path)
             io.write_json(imgs_dict, output_path, indent=4)
+            print(f"Scraped data cached to {output_path}")
 
-        if dry_run:
-            if self.verbose:
-                print("Scraped data (dry run):", imgs_dict)
+        if not output_dir:
             return None
 
         downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)

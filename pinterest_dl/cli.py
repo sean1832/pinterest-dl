@@ -2,14 +2,21 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
+from typing import Optional
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import io
+from datetime import datetime
 
 
-def build_cache_name(output_dir: Path) -> Path:
-    return Path(f"{Path(output_dir).absolute().name}.json")
+def build_cache_name(output_dir: Optional[Path]) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    if output_dir is None:
+        filename = f"{timestamp}.json"
+    else:
+        filename = f"{Path(output_dir).absolute().name}_{timestamp}.json"
+    return Path(filename)
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
@@ -46,7 +53,7 @@ def get_parser() -> argparse.ArgumentParser:
     # scrape command
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
     scrape_cmd.add_argument("url", help="URL to scrape images from")
-    scrape_cmd.add_argument("output", help="Output directory")
+    scrape_cmd.add_argument("-o", "--output",type=str, help="Output directory")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
@@ -54,7 +61,6 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     scrape_cmd.add_argument("--cache", action="store_true", help="cache URLs into json file for reuse")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
-    scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
     scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
@@ -64,7 +70,7 @@ def get_parser() -> argparse.ArgumentParser:
     # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
     search_cmd.add_argument("query", help="Search query")
-    search_cmd.add_argument("output", help="Output directory")
+    search_cmd.add_argument("-o", "--output",type=str, help="Output directory")
     search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
@@ -72,7 +78,6 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     search_cmd.add_argument("--cache", action="store_true", help="cache URLs into json file for reuse")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
-    search_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
     search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
@@ -140,7 +145,6 @@ def main() -> None:
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else None,
                     cache_path=build_cache_name(args.output) if args.cache else None,
-                    dry_run=args.dry_run,
                     caption=args.caption,
                 )
             else:
@@ -157,7 +161,6 @@ def main() -> None:
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     cache_path=build_cache_name(args.output) if args.cache else None,
-                    dry_run=args.dry_run,
                     caption=args.caption,
                     delay=args.delay,
                 )
@@ -180,7 +183,6 @@ def main() -> None:
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     cache_path=build_cache_name(args.output) if args.cache else None,
-                    dry_run=args.dry_run,
                     caption=args.caption,
                     delay=args.delay,
                 )
