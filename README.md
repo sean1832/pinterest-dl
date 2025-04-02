@@ -90,12 +90,12 @@ pip install .
 pinterest-dl [command] [options]
 ```
 
-| Command | Description |
-| --- | --- |
-| [`login`](#1-login) | Login to Pinterest to obtain browser cookies for scraping private boards and pins. |
-| [`scrape`](#2-scrape) | Scrape images from a Pinterest URL. |
-| [`search`](#3-search) | Search for images on Pinterest using a query. |
-| [`download`](#4-download) | Download images from a list of URLs provided in a JSON file. |
+| Command                   | Description                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| [`login`](#1-login)       | Login to Pinterest to obtain browser cookies for scraping private boards and pins. |
+| [`scrape`](#2-scrape)     | Scrape images from a Pinterest URL.                                                |
+| [`search`](#3-search)     | Search for images on Pinterest using a query.                                      |
+| [`download`](#4-download) | Download images from a list of URLs provided in a JSON file.                       |
 
 
 ---
@@ -174,7 +174,9 @@ pinterest-dl scrape [url] [output_dir] [options]
 - `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
+- `--delay [second]`: Delay between requests (default: 0.2).
 - `--json`: Save scraped URLs to a JSON file.
+- `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
 - `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
 - `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
@@ -196,7 +198,9 @@ pinterest-dl search [query] [output_dir] [options]
 - `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
+- `--delay [second]`: Delay between requests (default: 0.2).
 - `--json`: Save scraped URLs to a JSON file.
+- `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
 - `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
 
@@ -236,7 +240,7 @@ images = PinterestDL.with_api(
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     json_output="art.json",  # File to save URLs of scraped images (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
-    add_captions=True,  # Adds image `alt` text as metadata to images (default: False)
+    caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
 ```
 
@@ -257,7 +261,7 @@ images = PinterestDL.with_api(
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     json_output="art.json",  # File to save URLs of scraped images (default: None)
     dry_run=False,  # If True, performs a scrape without downloading images (default: False)
-    add_captions=True,  # Adds image `alt` text as metadata to images (default: False)
+    caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
 ```
 
@@ -338,13 +342,18 @@ with open("art.json", "w") as f:
 
 # 3. Download Images
 # Download images to a specified directory
-downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir="images/art")
+output_dir = "images/art"
+downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir=output_dir)
 
 valid_indices = list(range(len(downloaded_imgs)))  # All images are valid to add captions
 
-# 4. Add Alt Text as Metadata
+# 4. Add Alt Text as Metadata (Optional)
 # Extract `alt` text from images and set it as metadata in the downloaded files
-PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
+PinterestDL.add_captions_to_meta(images=downloaded_imgs, indices=valid_indices)
+
+# 4. Add Alt Text as text file (Optional)
+# Extract `alt` text from images and save it as a text file in the downloaded directory
+PinterestDL.add_captions_to_file(downloaded_imgs, output_dir, extension="txt")
 ```
 
 ##### Search Images
@@ -385,15 +394,20 @@ with open("art.json", "w") as f:
 
 # 3. Download Images
 # Download images to a specified directory
-downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir="images/art")
+output_dir = "images/art"
+downloaded_imgs = PinterestDL.download_images(images=scraped_images, output_dir=output_dir)
 
-# 4. Prune Images by Resolution
+# 4. Prune Images by Resolution (Optional)
 # Remove images that do not meet the minimum resolution criteria
 valid_indices = PinterestDL.prune_images(images=downloaded_imgs, min_resolution=(200, 200))
 
-# 5. Add Alt Text as Metadata
+# 5. Add Alt Text as Metadata (Optional)
 # Extract `alt` text from images and set it as metadata in the downloaded files
-PinterestDL.add_captions(images=downloaded_imgs, indices=valid_indices)
+PinterestDL.add_captions_to_meta(images=downloaded_imgs, indices=valid_indices)
+
+# 6. Add Alt Text as text file (Optional)
+# Extract `alt` text from images and save it as a text file in the downloaded directory
+PinterestDL.add_captions_to_file(downloaded_imgs, output_dir, extension="txt")
 ```
 
 ## 🤝 Contributing

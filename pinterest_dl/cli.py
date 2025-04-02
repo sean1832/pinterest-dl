@@ -55,7 +55,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
-    scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
+    scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -73,7 +73,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
-    search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
+    search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -85,7 +85,7 @@ def get_parser() -> argparse.ArgumentParser:
     download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>)")
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
-    download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
+    download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
 
     return parser
