@@ -102,7 +102,7 @@ class _ScraperAPI(_ScraperBase):
 
         if self.verbose:
             self._display_images(images)
-        return images
+        return images[:num]
 
     def scrape_and_download(
         self,
@@ -220,7 +220,7 @@ class _ScraperAPI(_ScraperBase):
                 )
                 batch_count += 1
 
-        return images
+        return images[:num]
 
     def search_and_download(
         self,
