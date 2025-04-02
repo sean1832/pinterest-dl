@@ -145,7 +145,7 @@ Login to Pinterest using your credentials to obtain browser cookies for scraping
 pinterest-dl login [options]
 ```
 
-![login](/doc/images/pinterest-dl-login.gif)
+![login](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-login.gif)
 
 **Options:**
 - `-o`, `--output [file]`: File to save browser cookies for future use. (default: `cookies.json`)
@@ -166,7 +166,7 @@ Extract images from a specified Pinterest URL.
 pinterest-dl scrape [url] [options]
 ```
 
-![scrape](/doc/images/pinterest-dl-scrape.gif)
+![scrape](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-scrape.gif)
 
 **Options:**
 
@@ -191,7 +191,7 @@ Search for images on Pinterest using a query. (*Currently only available in API 
 pinterest-dl search [query] [options]
 ```
 
-![search](/doc/images/pinterest-dl-search.gif)
+![search](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-search.gif)
 
 **Options:**
 - `-o`, `--output [directory]`: Output directory for downloaded images. Print to console if not specified.
@@ -212,7 +212,7 @@ Download images from cache file (JSON) to a specified directory.
 pinterest-dl download [cache] [options]
 ```
 
-![download](/doc/images/pinterest-dl-download.gif)
+![download](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-download.gif)
 
 **Options:**
 - `-o`, `--output [directory]`: Output directory (default: ./<json_filename>).
