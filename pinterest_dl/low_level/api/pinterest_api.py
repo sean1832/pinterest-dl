@@ -190,8 +190,12 @@ class PinterestAPI:
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request search: {e}")
-
-        return PinResponse(request_url, response_raw.json())
+        try:
+            json_response = response_raw.json()
+        except requests.exceptions.JSONDecodeError as e:
+            print(response_raw.text)
+            raise requests.JSONDecodeError(f"Failed to decode JSON response: {e}")
+        return PinResponse(request_url, json_response)
 
     def _validate_num(self, num: int) -> None:
         if num < 1:

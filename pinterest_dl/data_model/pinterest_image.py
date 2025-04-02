@@ -61,13 +61,13 @@ class PinterestImage:
             return True
         return False
 
-    def write_comment(self, comment: str) -> None:
+    def meta_write_comment(self, comment: str) -> None:
         if not self.local_path:
             raise ValueError("Local path not set.")
         with pyexiv2.Image(str(self.local_path)) as img:
             img.modify_exif({"Exif.Image.XPComment": comment})
 
-    def write_subject(self, subject: str) -> None:
+    def meta_write_subject(self, subject: str) -> None:
         if not self.local_path:
             raise ValueError("Local path not set.")
         with pyexiv2.Image(str(self.local_path)) as img:

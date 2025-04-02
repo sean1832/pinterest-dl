@@ -17,7 +17,9 @@ class _ScraperWebdriver(_ScraperBase):
         self.verbose = verbose
         self.webdriver: WebDriver = webdriver
 
-    def with_cookies(self, cookies: list[dict[str, Any]], wait_sec: float = 1) -> "_ScraperWebdriver":
+    def with_cookies(
+        self, cookies: list[dict[str, Any]], wait_sec: float = 1
+    ) -> "_ScraperWebdriver":
         """Load cookies to the current browser session.
 
         Args:
@@ -28,10 +30,14 @@ class _ScraperWebdriver(_ScraperBase):
             _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format."+
-                             "If you want to load cookies from a file, use `with_cookies_path` method instead.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+                + "If you want to load cookies from a file, use `with_cookies_path` method instead."
+            )
         if not isinstance(cookies, list):
-            raise ValueError("Invalid cookies format. Expected a list of dictionary. In Selenium format.")
+            raise ValueError(
+                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+            )
         cookies = self._sanitize_cookies(cookies)
         for cookie in cookies:
             self.webdriver.add_cookie(cookie)
@@ -75,19 +81,19 @@ class _ScraperWebdriver(_ScraperBase):
         time.sleep(wait_sec)
         return self
 
-    def scrape(self, url: str, limit: int) -> List[PinterestImage]:
+    def scrape(self, url: str, num: int) -> List[PinterestImage]:
         """Scrape pins from Pinterest using a WebDriver.
 
         Args:
             url (str): Pinterest URL to scrape.
-            limit (int): Maximum number of images to scrape.
+            num (int): Maximum number of images to scrape.
 
         Returns:
             List[PinterestImage]: List of scraped PinterestImage objects.
         """
         try:
             pin_scraper = PinterestDriver(self.webdriver)
-            return pin_scraper.scrape(url, limit=limit, verbose=self.verbose, timeout=self.timeout)
+            return pin_scraper.scrape(url, num=num, verbose=self.verbose, timeout=self.timeout)
         finally:
             self.webdriver.close()
 
@@ -95,32 +101,36 @@ class _ScraperWebdriver(_ScraperBase):
         self,
         url: str,
         output_dir: Union[str, Path],
-        limit: int,
+        num: int,
         min_resolution: Optional[Tuple[int, int]] = None,
         json_output: Optional[Union[str, Path]] = None,
         dry_run: bool = False,
-        add_captions: bool = False,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
         Args:
             url (str): Pinterest URL to scrape.
             output_dir (Union[str, Path]): Directory to store downloaded images.
-            limit (int): Maximum number of images to scrape.
+            num (int): Maximum number of images to scrape.
             min_resolution (Optional[Tuple[int, int]]): Minimum resolution for pruning.
             json_output (Optional[Union[str, Path]]): Path to save scraped data as JSON.
             dry_run (bool): Only scrape URLs without downloading images.
-            add_captions (bool): Add captions to downloaded images.
+            caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
+                'txt' for alt text in separate files,
+                'json' for full image data,
+                'metadata' embeds in image files,
+                'none' skips captions
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
         min_resolution = min_resolution or (0, 0)
-        scraped_imgs = self.scrape(url, limit)
+        scraped_imgs = self.scrape(url, num)
 
+        imgs_dict = [img.to_dict() for img in scraped_imgs]
         if json_output:
             output_path = Path(json_output)
-            imgs_dict = [img.to_dict() for img in scraped_imgs]
             io.write_json(imgs_dict, output_path, indent=4)
 
         if dry_run:
@@ -132,8 +142,12 @@ class _ScraperWebdriver(_ScraperBase):
 
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
-        if add_captions:
-            self.add_captions(downloaded_imgs, valid_indices, self.verbose)
+        if caption == "txt" or caption == "json":
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+        elif caption == "metadata":
+            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+        elif caption != "none":
+            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
         return downloaded_imgs
 

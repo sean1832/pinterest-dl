@@ -48,12 +48,14 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("url", help="URL to scrape images from")
     scrape_cmd.add_argument("output", help="Output directory")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
-    scrape_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     scrape_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
+    scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -64,12 +66,14 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("query", help="Search query")
     search_cmd.add_argument("output", help="Output directory")
     search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
-    search_cmd.add_argument("-l", "--limit", type=int, default=100, help="Max number of image to scrape (default: 100)")
+    search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     search_cmd.add_argument("--json", action="store_true", help="Write urls to json file")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--dry-run", action="store_true", help="Run without download")
+    search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -81,6 +85,8 @@ def get_parser() -> argparse.ArgumentParser:
     download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>)")
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data, 'metadata' embeds in image files, 'none' skips captions (default)")
+
 
     return parser
 # fmt: on
@@ -117,7 +123,7 @@ def main() -> None:
             )
             print("Example:")
             print(
-                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -l 10 --cookies .\cookies.json'
+                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -n 10 --cookies .\cookies.json'
             )
             print("\nDone.")
         elif args.cmd == "scrape":
@@ -131,11 +137,11 @@ def main() -> None:
                 ).with_cookies_path(args.cookies).scrape_and_download(
                     args.url,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else None,
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
-                    add_captions=True,
+                    caption=args.caption,
                 )
             else:
                 if args.incognito or args.headful:
@@ -148,11 +154,12 @@ def main() -> None:
                 ).scrape_and_download(
                     args.url,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
-                    add_captions=True,
+                    caption=args.caption,
+                    delay=args.delay,
                 )
 
             print("\nDone.")
@@ -170,11 +177,12 @@ def main() -> None:
                 ).search_and_download(
                     args.query,
                     args.output,
-                    args.limit,
+                    args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
                     json_output=construct_json_output(args.output) if args.json else None,
                     dry_run=args.dry_run,
-                    add_captions=True,
+                    caption=args.caption,
+                    delay=args.delay,
                 )
 
             print("\nDone.")
@@ -191,7 +199,14 @@ def main() -> None:
 
             # post process
             pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
-            PinterestDL.add_captions(downloaded_imgs, pruned_idx, args.verbose)
+            if args.caption == "txt" or args.caption == "json":
+                PinterestDL.add_captions_to_file(
+                    downloaded_imgs, output_dir, args.caption, args.verbose
+                )
+            elif args.caption == "metadata":
+                PinterestDL.add_captions_to_meta(downloaded_imgs, pruned_idx, args.verbose)
+            elif args.caption != "none":
+                raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
             print("\nDone.")
         else:
             parser.print_help()

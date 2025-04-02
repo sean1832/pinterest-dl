@@ -61,7 +61,7 @@ class PinterestDriver:
     def scrape(
         self,
         url: str,
-        limit: int = 20,
+        num: int = 20,
         timeout: float = 3,
         verbose: bool = False,
     ) -> List[PinterestImage]:
@@ -69,10 +69,10 @@ class PinterestDriver:
         imgs_data: List[PinterestImage] = []  # Store image data
         previous_divs = []
         tries = 0
-        pbar = tqdm(total=limit, desc="Scraping")
+        pbar = tqdm(total=num, desc="Scraping")
         try:
             self.webdriver.get(url)
-            while len(unique_results) < limit:
+            while len(unique_results) < num:
                 try:
                     divs = self.webdriver.find_elements(By.CSS_SELECTOR, "div[data-test-id='pin']")
                     if divs == previous_divs:
@@ -85,7 +85,7 @@ class PinterestDriver:
                         break
 
                     for div in divs:
-                        if self._is_div_ad(div) or len(unique_results) >= limit:
+                        if self._is_div_ad(div) or len(unique_results) >= num:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
                         href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
@@ -102,7 +102,7 @@ class PinterestDriver:
                                     pbar.update(1)
                                     if verbose:
                                         print(src, alt)
-                                    if len(unique_results) >= limit:
+                                    if len(unique_results) >= num:
                                         break
 
                     previous_divs = copy.copy(divs)  # copy to avoid reference
