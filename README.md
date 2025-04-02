@@ -163,53 +163,53 @@ Extract images from a specified Pinterest URL.
 
 **Syntax:**
 ```bash
-pinterest-dl scrape [url] [output_dir] [options]
+pinterest-dl scrape [url] [options]
 ```
 
 ![scrape](/doc/images/pinterest-dl-scrape.gif)
 
 **Options:**
 
+- `-o`, `--output [directory]`: Output directory for downloaded images. Print to console if not specified.
 - `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
 - `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--delay [second]`: Delay between requests (default: 0.2).
-- `--cache`: Save scraped URLs to a JSON file.
+- `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
 - `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
 - `--incognito`: Activate incognito mode for scraping. (*chrome / firefox only*)
 - `--headful`: Run in headful mode with browser window. (*chrome / firefox only*)
 
 #### 3. Search
-Search for images on Pinterest using a query. (*Experimental, currently only available in API mode*)
+Search for images on Pinterest using a query. (*Currently only available in API mode*)
 
 **Syntax:**
 ```bash
-pinterest-dl search [query] [output_dir] [options]
+pinterest-dl search [query] [options]
 ```
 
 ![search](/doc/images/pinterest-dl-search.gif)
 
 **Options:**
+- `-o`, `--output [directory]`: Output directory for downloaded images. Print to console if not specified.
 - `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
 - `-n`, `--num [number]`: Max number of image to download (default: 100).
 - `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
 - `--timeout [second]`: Timeout in seconds for requests (default: 3).
 - `--delay [second]`: Delay between requests (default: 0.2).
-- `--cache`: Save scraped URLs to a JSON file.
+- `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--dry-run`: Execute scrape without downloading images.
 - `--verbose`: Enable detailed output for debugging.
 
 #### 4. Download
-Download images from a list of URLs provided in a file.
+Download images from cache file (JSON) to a specified directory.
 
 **Syntax:**
 ```bash
-pinterest-dl download [url_list] [options]
+pinterest-dl download [cache] [options]
 ```
 
 ![download](/doc/images/pinterest-dl-download.gif)
@@ -239,7 +239,6 @@ images = PinterestDL.with_api(
     num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     cache_path="art.json",  #  Path to cache scraped data as json (default: None)
-    dry_run=False,  # If True, performs a scrape without downloading images (default: False)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
 ```
@@ -260,7 +259,6 @@ images = PinterestDL.with_api(
     num=30,  # Max number of images to download 
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     cache_path="art.json",  #  Path to cache scraped data as json (default: None)
-    dry_run=False,  # If True, performs a scrape without downloading images (default: False)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
 )
 ```
