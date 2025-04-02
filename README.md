@@ -105,7 +105,7 @@ pinterest-dl [command] [options]
 
 Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a num of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
 ```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -r 512x512 --cache
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -r 512x512 --cache art.json
 ```
 
 **Get Browser Cookies:**
