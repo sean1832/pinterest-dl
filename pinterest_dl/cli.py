@@ -2,21 +2,10 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
-from typing import Optional
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.ops import io
-from datetime import datetime
-
-
-def build_cache_name(output_dir: Optional[Path]) -> Path:
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    if output_dir is None:
-        filename = f"{timestamp}.json"
-    else:
-        filename = f"{Path(output_dir).absolute().name}_{timestamp}.json"
-    return Path(filename)
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
@@ -59,7 +48,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
-    scrape_cmd.add_argument("--cache", action="store_true", help="cache URLs into json file for reuse")
+    scrape_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
@@ -76,7 +65,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
-    search_cmd.add_argument("--cache", action="store_true", help="cache URLs into json file for reuse")
+    search_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
 
@@ -144,7 +133,7 @@ def main() -> None:
                     args.output,
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else None,
-                    cache_path=build_cache_name(args.output) if args.cache else None,
+                    cache_path=args.cache,
                     caption=args.caption,
                 )
             else:
@@ -160,7 +149,7 @@ def main() -> None:
                     args.output,
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
-                    cache_path=build_cache_name(args.output) if args.cache else None,
+                    cache_path=args.cache,
                     caption=args.caption,
                     delay=args.delay,
                 )
@@ -182,7 +171,7 @@ def main() -> None:
                     args.output,
                     args.num,
                     min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
-                    cache_path=build_cache_name(args.output) if args.cache else None,
+                    cache_path=args.cache,
                     caption=args.caption,
                     delay=args.delay,
                 )
