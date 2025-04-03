@@ -1,7 +1,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, List, Literal, NoReturn, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from tqdm import tqdm
 
