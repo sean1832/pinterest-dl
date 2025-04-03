@@ -122,37 +122,51 @@ def main() -> None:
             print("\nDone.")
         elif args.cmd == "scrape":
             if args.client in ["chrome", "firefox"]:
-                PinterestDL.with_browser(
-                    browser_type=args.client,  # type: ignore
-                    timeout=args.timeout,
-                    headless=not args.headful,
-                    incognito=args.incognito,
-                    verbose=args.verbose,
-                ).with_cookies_path(args.cookies).scrape_and_download(
-                    args.url,
-                    args.output,
-                    args.num,
-                    min_resolution=parse_resolution(args.resolution) if args.resolution else None,
-                    cache_path=args.cache,
-                    caption=args.caption,
+                imgs = (
+                    PinterestDL.with_browser(
+                        browser_type=args.client,  # type: ignore
+                        timeout=args.timeout,
+                        headless=not args.headful,
+                        incognito=args.incognito,
+                        verbose=args.verbose,
+                    )
+                    .with_cookies_path(args.cookies)
+                    .scrape_and_download(
+                        args.url,
+                        args.output,
+                        args.num,
+                        min_resolution=parse_resolution(args.resolution)
+                        if args.resolution
+                        else None,
+                        cache_path=args.cache,
+                        caption=args.caption,
+                    )
                 )
+                if imgs and len(imgs) != args.num:
+                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
             else:
                 if args.incognito or args.headful:
                     print(
                         "Warning: Incognito and headful mode is only available for Chrome/Firefox."
                     )
 
-                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies_path(
-                    args.cookies
-                ).scrape_and_download(
-                    args.url,
-                    args.output,
-                    args.num,
-                    min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
-                    cache_path=args.cache,
-                    caption=args.caption,
-                    delay=args.delay,
+                imgs = (
+                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    .with_cookies_path(args.cookies)
+                    .scrape_and_download(
+                        args.url,
+                        args.output,
+                        args.num,
+                        min_resolution=parse_resolution(args.resolution)
+                        if args.resolution
+                        else (0, 0),
+                        cache_path=args.cache,
+                        caption=args.caption,
+                        delay=args.delay,
+                    )
                 )
+                if imgs and len(imgs) != args.num:
+                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
 
             print("\nDone.")
         elif args.cmd == "search":
@@ -164,18 +178,23 @@ def main() -> None:
                         "Warning: Incognito and headful mode is only available for Chrome/Firefox."
                     )
 
-                PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose).with_cookies_path(
-                    args.cookies
-                ).search_and_download(
-                    args.query,
-                    args.output,
-                    args.num,
-                    min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
-                    cache_path=args.cache,
-                    caption=args.caption,
-                    delay=args.delay,
+                imgs = (
+                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    .with_cookies_path(args.cookies)
+                    .search_and_download(
+                        args.query,
+                        args.output,
+                        args.num,
+                        min_resolution=parse_resolution(args.resolution)
+                        if args.resolution
+                        else (0, 0),
+                        cache_path=args.cache,
+                        caption=args.caption,
+                        delay=args.delay,
+                    )
                 )
-
+                if imgs and len(imgs) != args.num:
+                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.query}.")
             print("\nDone.")
         elif args.cmd == "download":
             # prepare image url data
