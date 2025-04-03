@@ -408,7 +408,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
         images: List[PinterestImage],
-        pbar: tqdm[NoReturn],
+        pbar: tqdm,
         delay: float,
     ) -> int:
         """Handle cases where a batch does not return enough images."""
@@ -434,7 +434,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
         images: List[PinterestImage],
-        pbar: tqdm[NoReturn],
+        pbar: tqdm,
         delay: float,
         board_id: Optional[str] = None,
     ) -> int:
