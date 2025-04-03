@@ -1,7 +1,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, NoReturn, Optional, Tuple, Union
 
 from tqdm import tqdm
 
@@ -199,7 +199,7 @@ class _ScraperAPI(_ScraperBase):
             while remains > 0:
                 batch_size = min(50, remains)
                 current_img_batch, bookmarks = self._search_images(
-                    api, batch_size, bookmarks, min_resolution, query
+                    api, batch_size, bookmarks, min_resolution
                 )
 
                 images.extend(current_img_batch)
@@ -389,7 +389,6 @@ class _ScraperAPI(_ScraperBase):
         batch_size: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
-        query: str,
     ) -> Tuple[List[PinterestImage], BookmarkManager]:
         """Fetch images based on API response, either from a pin or a board."""
         response = api.get_search(batch_size, bookmarks.get())
@@ -409,7 +408,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
         images: List[PinterestImage],
-        pbar,
+        pbar: tqdm,
         delay: float,
     ) -> int:
         """Handle cases where a batch does not return enough images."""
@@ -435,7 +434,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
         images: List[PinterestImage],
-        pbar,
+        pbar: tqdm,
         delay: float,
         board_id: Optional[str] = None,
     ) -> int:
