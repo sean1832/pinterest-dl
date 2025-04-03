@@ -202,9 +202,12 @@ class _ScraperAPI(_ScraperBase):
                     api, batch_size, bookmarks, min_resolution
                 )
 
+                old_count = len(images)
                 images.extend(current_img_batch)
-                remains -= len(current_img_batch)
-                pbar.update(len(current_img_batch))
+                images = self._unique_images(images)
+                new_images_count = len(images) - old_count
+                remains -= new_images_count
+                pbar.update(new_images_count)
 
                 if "-end-" in bookmarks.get():
                     break
@@ -298,9 +301,12 @@ class _ScraperAPI(_ScraperBase):
                     api, batch_size, bookmarks, min_resolution
                 )
 
+                old_count = len(images)
                 images.extend(current_img_batch)
-                remains -= len(current_img_batch)
-                pbar.update(len(current_img_batch))
+                images = self._unique_images(images)
+                new_images_count = len(images) - old_count
+                remains -= new_images_count
+                pbar.update(new_images_count)
 
                 if "-end-" in bookmarks.get():
                     break
@@ -339,9 +345,12 @@ class _ScraperAPI(_ScraperBase):
                     api, batch_size, bookmarks, min_resolution, board_id
                 )
 
+                old_count = len(images)
                 images.extend(current_img_batch)
-                remains -= len(current_img_batch)
-                pbar.update(len(current_img_batch))
+                images = self._unique_images(images)
+                new_images_count = len(images) - old_count
+                remains -= new_images_count
+                pbar.update(new_images_count)
 
                 if "-end-" in bookmarks.get():
                     break
@@ -456,6 +465,16 @@ class _ScraperAPI(_ScraperBase):
             time.sleep(delay)
 
         return remains
+
+    def _unique_images(self, images: List[PinterestImage]) -> List[PinterestImage]:
+        """Return a list of unique PinterestImage objects based on their 'src' attribute."""
+        unique = []
+        seen = set()
+        for img in images:
+            if img.src not in seen:
+                unique.append(img)
+                seen.add(img.src)
+        return unique
 
     def _display_images(self, images: List[PinterestImage]):
         """Print scraped image URLs if verbosity is enabled."""
