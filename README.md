@@ -57,6 +57,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Access detailed output for effective debugging.
 - ✅ Support for the Firefox browser.
 - ✅ Insert `alt` text for images as metadata `comment` in the downloaded image for searchability.
+- ✅ Optionally save `alt` text as a separate text file for each image.
 - ✅ Scrape private boards and pins with browser cookies. ([#20](https://github.com/sean1832/pinterest-dl/pull/20))
 - ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([#21](https://github.com/sean1832/pinterest-dl/pull/21))
 - ✅ Search for images on Pinterest using a query. ([#23](https://github.com/sean1832/pinterest-dl/pull/23))
