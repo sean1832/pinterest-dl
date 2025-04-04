@@ -121,7 +121,7 @@ pinterest-dl login -o cookies.json --headful
 
 Scrape images from a private Pinterest board using the cookies saved in the `cookies.json` file.
 ```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" "images/art" -n 30 -c cookies.json
+pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -c cookies.json
 ```
 
 > [!TIP]
