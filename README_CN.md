@@ -1,4 +1,6 @@
 # Pinterest 图片下载器 (pinterest-dl)
+[English](README.md) | 中文
+
 [![PyPI - 版本](https://img.shields.io/pypi/v/pinterest-dl)](https://pypi.org/project/pinterest-dl/)
 [![PyPI - Python 版本](https://img.shields.io/pypi/pyversions/pinterest-dl)](https://pypi.org/project/pinterest-dl/)
 [![PyPI - 许可证](https://img.shields.io/pypi/l/pinterest-dl)](https://github.com/sean1832/pinterest-dl/blob/main/LICENSE)
@@ -90,12 +92,12 @@ pip install .
 pinterest-dl [命令] [选项]
 ```
 
-| 命令                   | 功能说明                                                                 |
-| ---------------------- | ----------------------------------------------------------------------- |
-| [`login`](#1-login)    | 登录 Pinterest 获取 cookies 用于私密内容抓取                            |
-| [`scrape`](#2-scrape)  | 从 Pinterest URL 抓取图片                                               |
-| [`search`](#3-search)  | 通过关键词搜索 Pinterest 图片                                           |
-| [`download`](#4-download) | 从 JSON 文件中的 URL 列表下载图片                                    |
+| 命令                      | 功能说明                                     |
+| ------------------------- | -------------------------------------------- |
+| [`login`](#1-login)       | 登录 Pinterest 获取 cookies 用于私密内容抓取 |
+| [`scrape`](#2-scrape)     | 从 Pinterest URL 抓取图片                    |
+| [`search`](#3-search)     | 通过关键词搜索 Pinterest 图片                |
+| [`download`](#4-download) | 从 JSON 文件中的 URL 列表下载图片            |
 
 ---
 ### 使用示例
