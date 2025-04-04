@@ -241,6 +241,7 @@ images = PinterestDL.with_api(
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     cache_path="art.json",  #  Path to cache scraped data as json (default: None)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
+    delay=0.4,  # Delay between requests (default: 0.2)
 )
 ```
 
@@ -261,6 +262,7 @@ images = PinterestDL.with_api(
     min_resolution=(512, 512),  # Minimum resolution for images (width, height) (default: None)
     cache_path="art.json",  #  Path to cache scraped data as json (default: None)
     caption="txt",  # Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' for no captions
+    delay=0.4,  # Delay between requests (default: 0.2)
 )
 ```
 
