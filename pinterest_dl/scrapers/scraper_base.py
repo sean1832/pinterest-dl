@@ -45,6 +45,7 @@ class _ScraperBase:
         output_dir: Union[str, Path],
         extension: Literal["txt", "json"] = "txt",
         verbose: bool = False,
+        remove_no_alt: bool = False,
     ) -> None:
         """Add captions to downloaded images and save them to a file.
 
@@ -55,6 +56,7 @@ class _ScraperBase:
                 'txt' for alt text in separate files,
                 'json' for full image data.
             verbose (bool): Enable verbose logging.
+            remove_no_alt (bool): Remove images with no alt text.
         """
         if not isinstance(output_dir, Path):
             output_dir = Path(output_dir)
@@ -85,6 +87,15 @@ class _ScraperBase:
             print(f"Images with no alt text: {len(images_no_alt)}")
             for img in images_no_alt:
                 print(f"  - {img.local_path}")
+
+            if remove_no_alt:
+                for img in images_no_alt:
+                    try:
+                        img.local_path.unlink()
+                    except Exception as e:
+                        raise RuntimeError(f"Failed to remove {img.local_path}: {e}")
+                print(f"Removed {len(images_no_alt)} images with no alt text.")
+                return
 
     @staticmethod
     def add_captions_to_meta(

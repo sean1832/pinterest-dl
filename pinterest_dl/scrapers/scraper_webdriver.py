@@ -106,6 +106,7 @@ class _ScraperWebdriver(_ScraperBase):
         min_resolution: Optional[Tuple[int, int]] = None,
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
+        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -120,6 +121,7 @@ class _ScraperWebdriver(_ScraperBase):
                 'json' for full image data,
                 'metadata' embeds in image files,
                 'none' skips captions
+            remove_no_alt (bool): Remove images with no alt text.
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
@@ -147,7 +149,9 @@ class _ScraperWebdriver(_ScraperBase):
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(
+                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
+            )
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
