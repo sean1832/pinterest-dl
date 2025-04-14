@@ -113,6 +113,7 @@ class _ScraperAPI(_ScraperBase):
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
+        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -128,6 +129,7 @@ class _ScraperAPI(_ScraperBase):
                 'metadata' embeds in image files,
                 'none' skips captions
             delay (float): Delay in seconds between requests.
+            remove_no_alt (bool): Remove images with no alt text.
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
@@ -154,7 +156,9 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(
+                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
+            )
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
@@ -234,6 +238,7 @@ class _ScraperAPI(_ScraperBase):
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
+        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Search for images on Pinterest and download them.
 
@@ -249,6 +254,8 @@ class _ScraperAPI(_ScraperBase):
                 'metadata' embeds in image files,
                 'none' skips captions
             delay (float): Delay in seconds between requests.
+            remove_no_alt (bool): Remove images with no alt text.
+
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
@@ -274,7 +281,9 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(
+                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
+            )
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
