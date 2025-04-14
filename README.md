@@ -181,6 +181,7 @@ pinterest-dl scrape [url] [options]
 - `--delay [second]`: Delay between requests (default: 0.2).
 - `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
+- `--remove-no-cap`: Remove images without captions from the downloaded list.
 - `--verbose`: Enable detailed output for debugging.
 - `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
 - `--incognito`: Activate incognito mode for scraping. (*chrome / firefox only*)
@@ -205,6 +206,7 @@ pinterest-dl search [query] [options]
 - `--delay [second]`: Delay between requests (default: 0.2).
 - `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
+- `--remove-no-cap`: Remove images without captions from the downloaded list.
 - `--verbose`: Enable detailed output for debugging.
 
 #### 4. Download
