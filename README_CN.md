@@ -178,6 +178,7 @@ pinterest-dl scrape [URL] [选项]
 - `--delay [秒]`: 请求间隔延迟（默认：0.2）
 - `--cache [路径]`: 将抓取结果保存为 JSON 文件
 - `--caption [格式]`: 图片描述保存格式：`txt` 为独立文本文件，`json` 为完整元数据文件，`metadata` 嵌入图片文件，`none` 不保存（默认：`none`）
+- `--remove-no-cap`: 删除无描述的图片
 - `--verbose`: 输出详细日志
 - `--client`: 选择抓取方式 (`api` / `chrome` / `firefox`)（默认：api）
 - `--incognito`: 启用无痕模式（仅浏览器模式有效）
@@ -202,6 +203,7 @@ pinterest-dl search [关键词] [选项]
 - `--delay [秒]`: 请求间隔延迟（默认：0.2）
 - `--cache [路径]`: 将抓取结果保存为 JSON 文件
 - `--caption [格式]`: 图片描述保存格式（同 scrape 命令）
+- `--remove-no-cap`: 删除无描述的图片
 - `--verbose`: 输出详细日志
 
 #### 4. 下载
