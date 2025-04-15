@@ -200,9 +200,13 @@ class _ScraperAPI(_ScraperBase):
         with tqdm(total=num, desc="Scraping Search", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._search_images(
-                    api, batch_size, bookmarks, min_resolution
-                )
+                try:
+                    current_img_batch, bookmarks = self._search_images(
+                        api, batch_size, bookmarks, min_resolution
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -300,9 +304,13 @@ class _ScraperAPI(_ScraperBase):
         with tqdm(total=num, desc="Scraping Pins", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._get_images(
-                    api, batch_size, bookmarks, min_resolution
-                )
+                try:
+                    current_img_batch, bookmarks = self._get_images(
+                        api, batch_size, bookmarks, min_resolution
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -316,9 +324,13 @@ class _ScraperAPI(_ScraperBase):
                 if self.verbose:
                     print(f"bookmarks: {bookmarks.get()}")
                 time.sleep(delay)
-                remains = self._handle_missing_related_images(
-                    api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
-                )
+                try:
+                    remains = self._handle_missing_images(
+                        api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
         return images
 
@@ -344,9 +356,13 @@ class _ScraperAPI(_ScraperBase):
         with tqdm(total=num, desc="Scraping Board", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._get_images(
-                    api, batch_size, bookmarks, min_resolution, board_id
-                )
+                try:
+                    current_img_batch, bookmarks = self._get_images(
+                        api, batch_size, bookmarks, min_resolution, board_id
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -359,17 +375,21 @@ class _ScraperAPI(_ScraperBase):
                     break
 
                 time.sleep(delay)
-                remains = self._handle_missing_related_images(
-                    api,
-                    batch_size,
-                    remains,
-                    bookmarks,
-                    min_resolution,
-                    images,
-                    pbar,
-                    delay,
-                    board_id,
-                )
+                try:
+                    remains = self._handle_missing_images(
+                        api,
+                        batch_size,
+                        remains,
+                        bookmarks,
+                        min_resolution,
+                        images,
+                        pbar,
+                        delay,
+                        board_id,
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
         return images
 
@@ -458,7 +478,7 @@ class _ScraperAPI(_ScraperBase):
 
         return remains
 
-    def _handle_missing_related_images(
+    def _handle_missing_images(
         self,
         api: PinterestAPI,
         batch_size: int,
