@@ -397,7 +397,7 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", [])
 
-        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
+        current_img_batch = PinterestImage.from_responses(response_data, min_resolution)
         bookmarks.add_all(response.get_bookmarks())
         return current_img_batch, bookmarks
 
@@ -414,7 +414,7 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", {}).get("results", [])
 
-        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
+        current_img_batch = PinterestImage.from_responses(response_data, min_resolution)
         bookmarks.add_all(response.get_bookmarks())
         return current_img_batch, bookmarks
 
@@ -434,7 +434,7 @@ class _ScraperAPI(_ScraperBase):
         while difference > 0 and remains > 0:
             next_response = api.get_search(difference, bookmarks.get())
             next_response_data = next_response.resource_response.get("data", {}).get("results", [])
-            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
+            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
@@ -465,7 +465,7 @@ class _ScraperAPI(_ScraperBase):
                 else api.get_board_feed(board_id, difference, bookmarks.get())
             )
             next_response_data = next_response.resource_response.get("data", [])
-            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
+            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
