@@ -45,7 +45,6 @@ class _ScraperBase:
         output_dir: Union[str, Path],
         extension: Literal["txt", "json"] = "txt",
         verbose: bool = False,
-        remove_no_alt: bool = False,
     ) -> None:
         """Add captions to downloaded images and save them to a file.
 
@@ -63,7 +62,6 @@ class _ScraperBase:
         output_dir.mkdir(parents=True, exist_ok=True)
         if verbose:
             print(f"Saving captions to {output_dir}...")
-        images_no_alt = []
         for img in tqdm.tqdm(images, desc="Captioning to file", disable=verbose):
             if not img.local_path:
                 continue
@@ -77,25 +75,11 @@ class _ScraperBase:
                 else:
                     if verbose:
                         print(f"No alt text for {img.local_path}")
-                    images_no_alt.append(img)
             else:
                 raise ValueError("Invalid file extension. Use 'txt' or 'json'.")
             if verbose:
                 print(f"Caption saved for {img.local_path}: '{img.alt}'")
 
-        if images_no_alt:
-            print(f"Images with no alt text: {len(images_no_alt)}")
-            for img in images_no_alt:
-                print(f"  - {img.local_path}")
-
-            if remove_no_alt:
-                for img in images_no_alt:
-                    try:
-                        img.local_path.unlink()
-                    except Exception as e:
-                        raise RuntimeError(f"Failed to remove {img.local_path}: {e}")
-                print(f"Removed {len(images_no_alt)} images with no alt text.")
-                return
 
     @staticmethod
     def add_captions_to_meta(

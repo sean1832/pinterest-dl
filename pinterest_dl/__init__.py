@@ -1,4 +1,4 @@
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
@@ -12,17 +12,20 @@ class PinterestDL(_ScraperBase):
     """
 
     @staticmethod
-    def with_api(timeout: float = 10, verbose: bool = False) -> "_ScraperAPI":
+    def with_api(
+        timeout: float = 10, verbose: bool = False, ensure_alt: bool = False
+    ) -> "_ScraperAPI":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:
             timeout (float): Timeout in seconds for requests.
             verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
             PinterestDL: Instance of PinterestDL with the requests library.
         """
-        return _ScraperAPI(verbose=verbose, timeout=timeout)
+        return _ScraperAPI(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
 
     @staticmethod
     def with_browser(
@@ -31,6 +34,7 @@ class PinterestDL(_ScraperBase):
         headless: bool = True,
         incognito: bool = True,
         verbose: bool = False,
+        ensure_alt: bool = False,
     ) -> "_ScraperWebdriver":
         """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
 
@@ -40,9 +44,10 @@ class PinterestDL(_ScraperBase):
             headless (bool): Run browser in headless mode.
             incognito (bool): Use incognito mode in the browser.
             verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
         webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
-        return _ScraperWebdriver(webdriver, timeout, verbose)
+        return _ScraperWebdriver(webdriver, timeout, verbose, ensure_alt=ensure_alt)

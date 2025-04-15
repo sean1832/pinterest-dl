@@ -13,10 +13,17 @@ from .scraper_base import _ScraperBase
 
 
 class _ScraperWebdriver(_ScraperBase):
-    def __init__(self, webdriver: WebDriver, timeout: float = 3, verbose: bool = False) -> None:
+    def __init__(
+        self,
+        webdriver: WebDriver,
+        timeout: float = 3,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+    ) -> None:
         self.timeout = timeout
         self.verbose = verbose
         self.webdriver: WebDriver = webdriver
+        self.ensure_alt = ensure_alt
 
     def with_cookies(
         self, cookies: list[dict[str, Any]], wait_sec: float = 1
@@ -94,7 +101,9 @@ class _ScraperWebdriver(_ScraperBase):
         """
         try:
             pin_scraper = PinterestDriver(self.webdriver)
-            return pin_scraper.scrape(url, num=num, verbose=self.verbose, timeout=self.timeout)
+            return pin_scraper.scrape(
+                url, num=num, verbose=self.verbose, timeout=self.timeout, ensure_alt=self.ensure_alt
+            )
         finally:
             self.webdriver.close()
 
@@ -106,7 +115,6 @@ class _ScraperWebdriver(_ScraperBase):
         min_resolution: Optional[Tuple[int, int]] = None,
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
-        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -121,8 +129,6 @@ class _ScraperWebdriver(_ScraperBase):
                 'json' for full image data,
                 'metadata' embeds in image files,
                 'none' skips captions
-            remove_no_alt (bool): Remove images with no alt text.
-
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
@@ -149,9 +155,7 @@ class _ScraperWebdriver(_ScraperBase):
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(
-                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
-            )
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
