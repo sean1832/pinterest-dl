@@ -2,6 +2,7 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
+from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
@@ -206,9 +207,14 @@ def main() -> None:
         elif args.cmd == "download":
             # prepare image url data
             img_datas = io.read_json(args.input)
-            images = []
+            images: List[PinterestImage] = []
             for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-                images.append(PinterestImage.from_dict(img_data))
+                img = PinterestImage.from_dict(img_data)
+                if args.remove_no_cap:
+                    if img.alt and img.alt.strip():
+                        images.append(img)
+                else:
+                    images.append(img)
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
@@ -222,7 +228,6 @@ def main() -> None:
                     output_dir,
                     args.caption,
                     args.verbose,
-                    remove_no_alt=args.remove_no_cap,
                 )
             elif args.caption == "metadata":
                 PinterestDL.add_captions_to_meta(downloaded_imgs, pruned_idx, args.verbose)
