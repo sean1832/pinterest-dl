@@ -300,7 +300,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
     ) -> List[PinterestImage]:
         """Scrape pins from a specific Pinterest pin URL."""
-        images = []
+        images: List[PinterestImage] = []
         remains = num
 
         with tqdm(total=num, desc="Scraping Pins", disable=self.verbose) as pbar:
@@ -337,7 +337,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
     ) -> List[PinterestImage]:
         """Scrape pins from a Pinterest board URL."""
-        images = []
+        images: List[PinterestImage] = []
         board_info = api.get_board()
         board_id = board_info.get_board_id()
         pin_count = board_info.get_pin_count()
