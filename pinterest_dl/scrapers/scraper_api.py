@@ -18,15 +18,17 @@ from .scraper_base import _ScraperBase
 class _ScraperAPI(_ScraperBase):
     """Pinterest scraper using the unofficial Pinterest API."""
 
-    def __init__(self, timeout: float = 5, verbose: bool = False) -> None:
+    def __init__(self, timeout: float = 5, verbose: bool = False, ensure_alt: bool = False) -> None:
         """Initialize PinterestDL with API.
 
         Args:
             timeout (float, optional): timeout in seconds. Defaults to 3.
             verbose (bool, optional): show detail messages. Defaults to False.
+            ensure_alt (bool, optional): whether to remove images without alt text. Defaults to False.
         """
         self.timeout = timeout
         self.verbose = verbose
+        self.ensure_alt = ensure_alt
         self.cookies = None
 
     def with_cookies(self, cookies: list[dict[str, Any]]) -> "_ScraperAPI":
@@ -113,7 +115,6 @@ class _ScraperAPI(_ScraperBase):
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
-        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Scrape pins from Pinterest and download images.
 
@@ -129,7 +130,6 @@ class _ScraperAPI(_ScraperBase):
                 'metadata' embeds in image files,
                 'none' skips captions
             delay (float): Delay in seconds between requests.
-            remove_no_alt (bool): Remove images with no alt text.
 
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
@@ -156,9 +156,7 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(
-                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
-            )
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
@@ -202,9 +200,13 @@ class _ScraperAPI(_ScraperBase):
         with tqdm(total=num, desc="Scraping Search", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._search_images(
-                    api, batch_size, bookmarks, min_resolution
-                )
+                try:
+                    current_img_batch, bookmarks = self._search_images(
+                        api, batch_size, bookmarks, min_resolution
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -238,7 +240,6 @@ class _ScraperAPI(_ScraperBase):
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
-        remove_no_alt: bool = False,
     ) -> Optional[List[PinterestImage]]:
         """Search for images on Pinterest and download them.
 
@@ -254,7 +255,6 @@ class _ScraperAPI(_ScraperBase):
                 'metadata' embeds in image files,
                 'none' skips captions
             delay (float): Delay in seconds between requests.
-            remove_no_alt (bool): Remove images with no alt text.
 
 
         Returns:
@@ -281,9 +281,7 @@ class _ScraperAPI(_ScraperBase):
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(
-                downloaded_imgs, output_dir, caption, self.verbose, remove_no_alt
-            )
+            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
             self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
         elif caption != "none":
@@ -300,15 +298,19 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
     ) -> List[PinterestImage]:
         """Scrape pins from a specific Pinterest pin URL."""
-        images = []
+        images: List[PinterestImage] = []
         remains = num
 
         with tqdm(total=num, desc="Scraping Pins", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._get_images(
-                    api, batch_size, bookmarks, min_resolution
-                )
+                try:
+                    current_img_batch, bookmarks = self._get_images(
+                        api, batch_size, bookmarks, min_resolution
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -322,9 +324,13 @@ class _ScraperAPI(_ScraperBase):
                 if self.verbose:
                     print(f"bookmarks: {bookmarks.get()}")
                 time.sleep(delay)
-                remains = self._handle_missing_related_images(
-                    api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
-                )
+                try:
+                    remains = self._handle_missing_images(
+                        api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
         return images
 
@@ -337,7 +343,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
     ) -> List[PinterestImage]:
         """Scrape pins from a Pinterest board URL."""
-        images = []
+        images: List[PinterestImage] = []
         board_info = api.get_board()
         board_id = board_info.get_board_id()
         pin_count = board_info.get_pin_count()
@@ -350,9 +356,13 @@ class _ScraperAPI(_ScraperBase):
         with tqdm(total=num, desc="Scraping Board", disable=self.verbose) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
-                current_img_batch, bookmarks = self._get_images(
-                    api, batch_size, bookmarks, min_resolution, board_id
-                )
+                try:
+                    current_img_batch, bookmarks = self._get_images(
+                        api, batch_size, bookmarks, min_resolution, board_id
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -365,17 +375,21 @@ class _ScraperAPI(_ScraperBase):
                     break
 
                 time.sleep(delay)
-                remains = self._handle_missing_related_images(
-                    api,
-                    batch_size,
-                    remains,
-                    bookmarks,
-                    min_resolution,
-                    images,
-                    pbar,
-                    delay,
-                    board_id,
-                )
+                try:
+                    remains = self._handle_missing_images(
+                        api,
+                        batch_size,
+                        remains,
+                        bookmarks,
+                        min_resolution,
+                        images,
+                        pbar,
+                        delay,
+                        board_id,
+                    )
+                except ValueError as e:
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
 
         return images
 
@@ -397,9 +411,17 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", [])
 
-        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
+        img_batch = PinterestImage.from_responses(response_data, min_resolution)
+        if self.ensure_alt:
+            batch_count = len(img_batch)
+            img_batch = self._cull_no_alt(img_batch)
+
+            if self.verbose:
+                culled_count = batch_count - len(img_batch)
+                if culled_count:
+                    print(f"Removed {culled_count} images with no alt text from batch.")
         bookmarks.add_all(response.get_bookmarks())
-        return current_img_batch, bookmarks
+        return img_batch, bookmarks
 
     def _search_images(
         self,
@@ -414,9 +436,21 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", {}).get("results", [])
 
-        current_img_batch = PinterestImage.from_response(response_data, min_resolution)
+        img_batch = PinterestImage.from_responses(response_data, min_resolution)
+        if self.ensure_alt:
+            batch_count = len(img_batch)
+            img_batch = self._cull_no_alt(img_batch)
+
+            if self.verbose:
+                culled_count = batch_count - len(img_batch)
+                if culled_count:
+                    print(f"Removed {culled_count} images with no alt text from batch.")
         bookmarks.add_all(response.get_bookmarks())
-        return current_img_batch, bookmarks
+        return img_batch, bookmarks
+
+    def _cull_no_alt(self, images: List[PinterestImage]) -> List[PinterestImage]:
+        """Remove images with no alt text."""
+        return [img for img in images if img.alt and img.alt.strip() != ""]
 
     def _handle_missing_search_images(
         self,
@@ -434,7 +468,7 @@ class _ScraperAPI(_ScraperBase):
         while difference > 0 and remains > 0:
             next_response = api.get_search(difference, bookmarks.get())
             next_response_data = next_response.resource_response.get("data", {}).get("results", [])
-            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
+            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
@@ -444,7 +478,7 @@ class _ScraperAPI(_ScraperBase):
 
         return remains
 
-    def _handle_missing_related_images(
+    def _handle_missing_images(
         self,
         api: PinterestAPI,
         batch_size: int,
@@ -465,7 +499,7 @@ class _ScraperAPI(_ScraperBase):
                 else api.get_board_feed(board_id, difference, bookmarks.get())
             )
             next_response_data = next_response.resource_response.get("data", [])
-            additional_images = PinterestImage.from_response(next_response_data, min_resolution)
+            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)

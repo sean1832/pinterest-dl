@@ -181,7 +181,7 @@ pinterest-dl scrape [url] [options]
 - `--delay [second]`: Delay between requests (default: 0.2).
 - `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--remove-no-cap`: Remove images without captions from the downloaded list.
+- `--ensure-cap`: Ensure every image has alt text.
 - `--verbose`: Enable detailed output for debugging.
 - `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
 - `--incognito`: Activate incognito mode for scraping. (*chrome / firefox only*)
@@ -206,7 +206,7 @@ pinterest-dl search [query] [options]
 - `--delay [second]`: Delay between requests (default: 0.2).
 - `--cache [path]`: Save scraped URLs to a JSON file.
 - `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--remove-no-cap`: Remove images without captions from the downloaded list.
+- `--ensure-cap`: Ensure every image has alt text.
 - `--verbose`: Enable detailed output for debugging.
 
 #### 4. Download
@@ -238,6 +238,7 @@ from pinterest_dl import PinterestDL
 images = PinterestDL.with_api(
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
+    ensure_cap=True,  # Ensure every image has alt text (default: False)
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
@@ -259,6 +260,7 @@ from pinterest_dl import PinterestDL
 images = PinterestDL.with_api( 
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
+    ensure_cap=True,  # Ensure every image has alt text (default: False)
 ).search_and_download(
     query="art",  # Pinterest search query
     output_dir="images/art",  # Directory to save downloaded images
@@ -386,6 +388,7 @@ from pinterest_dl import PinterestDL
 scraped_images = PinterestDL.with_browser(
     browser_type="chrome",  # Browser type to use ('chrome' or 'firefox')
     headless=True,  # Run browser in headless mode
+    ensure_cap=True,  # Ensure every image has alt text (default: False)
 ).scrape(
     url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
     num=30,  # Maximum number of images to scrape

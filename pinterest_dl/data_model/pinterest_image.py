@@ -78,7 +78,7 @@ class PinterestImage:
         return PinterestImage(data["src"], data["alt"], data["origin"], data["fallback_urls"])
 
     @staticmethod
-    def from_response(response_data: list, resolution: Tuple[int, int]) -> List["PinterestImage"]:
+    def from_responses(response_data: list, resolution: Tuple[int, int]) -> List["PinterestImage"]:
         if response_data is None or not response_data:
             raise ValueError("No data found in response.")
 

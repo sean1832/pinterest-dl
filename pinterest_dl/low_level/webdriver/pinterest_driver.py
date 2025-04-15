@@ -64,6 +64,7 @@ class PinterestDriver:
         num: int = 20,
         timeout: float = 3,
         verbose: bool = False,
+        ensure_alt: bool = False,
     ) -> List[PinterestImage]:
         unique_results = set()  # Use a set to store unique results
         imgs_data: List[PinterestImage] = []  # Store image data
@@ -91,6 +92,8 @@ class PinterestDriver:
                         href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
                         for image in images:
                             alt = image.get_attribute("alt")
+                            if ensure_alt and (not alt or not alt.strip()):
+                                continue
                             src = image.get_attribute("src")
                             if src and "/236x/" in src:
                                 src = src.replace("/236x/", "/originals/")

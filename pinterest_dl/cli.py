@@ -2,6 +2,7 @@ import argparse
 from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
+from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
@@ -51,7 +52,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
-    scrape_cmd.add_argument("--remove-no-cap", action="store_true", help="Remove images with no caption")
+    scrape_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -69,7 +70,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
-    search_cmd.add_argument("--remove-no-cap", action="store_true", help="Remove images with no caption")
+    search_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -82,7 +83,7 @@ def get_parser() -> argparse.ArgumentParser:
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
-
+    download_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
 
     return parser
 # fmt: on
@@ -131,6 +132,7 @@ def main() -> None:
                         headless=not args.headful,
                         incognito=args.incognito,
                         verbose=args.verbose,
+                        ensure_alt=args.ensure_cap,
                     )
                     .with_cookies_path(args.cookies)
                     .scrape_and_download(
@@ -142,7 +144,6 @@ def main() -> None:
                         else None,
                         cache_path=args.cache,
                         caption=args.caption,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:
@@ -154,7 +155,9 @@ def main() -> None:
                     )
 
                 imgs = (
-                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    PinterestDL.with_api(
+                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                    )
                     .with_cookies_path(args.cookies)
                     .scrape_and_download(
                         args.url,
@@ -166,7 +169,6 @@ def main() -> None:
                         cache_path=args.cache,
                         caption=args.caption,
                         delay=args.delay,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:
@@ -183,7 +185,9 @@ def main() -> None:
                     )
 
                 imgs = (
-                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    PinterestDL.with_api(
+                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                    )
                     .with_cookies_path(args.cookies)
                     .search_and_download(
                         args.query,
@@ -195,7 +199,6 @@ def main() -> None:
                         cache_path=args.cache,
                         caption=args.caption,
                         delay=args.delay,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:
@@ -204,9 +207,14 @@ def main() -> None:
         elif args.cmd == "download":
             # prepare image url data
             img_datas = io.read_json(args.input)
-            images = []
+            images: List[PinterestImage] = []
             for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-                images.append(PinterestImage.from_dict(img_data))
+                img = PinterestImage.from_dict(img_data)
+                if args.ensure_cap:
+                    if img.alt and img.alt.strip():
+                        images.append(img)
+                else:
+                    images.append(img)
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
@@ -220,7 +228,6 @@ def main() -> None:
                     output_dir,
                     args.caption,
                     args.verbose,
-                    remove_no_alt=args.remove_no_cap,
                 )
             elif args.caption == "metadata":
                 PinterestDL.add_captions_to_meta(downloaded_imgs, pruned_idx, args.verbose)
