@@ -131,6 +131,7 @@ def main() -> None:
                         headless=not args.headful,
                         incognito=args.incognito,
                         verbose=args.verbose,
+                        ensure_alt=args.remove_no_cap,
                     )
                     .with_cookies_path(args.cookies)
                     .scrape_and_download(
@@ -142,7 +143,6 @@ def main() -> None:
                         else None,
                         cache_path=args.cache,
                         caption=args.caption,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:

@@ -34,6 +34,7 @@ class PinterestDL(_ScraperBase):
         headless: bool = True,
         incognito: bool = True,
         verbose: bool = False,
+        ensure_alt: bool = False,
     ) -> "_ScraperWebdriver":
         """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
 
@@ -43,9 +44,10 @@ class PinterestDL(_ScraperBase):
             headless (bool): Run browser in headless mode.
             incognito (bool): Use incognito mode in the browser.
             verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
         webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
-        return _ScraperWebdriver(webdriver, timeout, verbose)
+        return _ScraperWebdriver(webdriver, timeout, verbose, ensure_alt=ensure_alt)
