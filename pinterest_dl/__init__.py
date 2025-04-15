@@ -12,17 +12,20 @@ class PinterestDL(_ScraperBase):
     """
 
     @staticmethod
-    def with_api(timeout: float = 10, verbose: bool = False) -> "_ScraperAPI":
+    def with_api(
+        timeout: float = 10, verbose: bool = False, ensure_alt: bool = False
+    ) -> "_ScraperAPI":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:
             timeout (float): Timeout in seconds for requests.
             verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
             PinterestDL: Instance of PinterestDL with the requests library.
         """
-        return _ScraperAPI(verbose=verbose, timeout=timeout)
+        return _ScraperAPI(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
 
     @staticmethod
     def with_browser(

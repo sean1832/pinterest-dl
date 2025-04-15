@@ -154,7 +154,9 @@ def main() -> None:
                     )
 
                 imgs = (
-                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    PinterestDL.with_api(
+                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.remove_no_cap
+                    )
                     .with_cookies_path(args.cookies)
                     .scrape_and_download(
                         args.url,
@@ -166,7 +168,6 @@ def main() -> None:
                         cache_path=args.cache,
                         caption=args.caption,
                         delay=args.delay,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:
@@ -183,7 +184,9 @@ def main() -> None:
                     )
 
                 imgs = (
-                    PinterestDL.with_api(timeout=args.timeout, verbose=args.verbose)
+                    PinterestDL.with_api(
+                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.remove_no_cap
+                    )
                     .with_cookies_path(args.cookies)
                     .search_and_download(
                         args.query,
@@ -195,7 +198,6 @@ def main() -> None:
                         cache_path=args.cache,
                         caption=args.caption,
                         delay=args.delay,
-                        remove_no_alt=args.remove_no_cap,
                     )
                 )
                 if imgs and len(imgs) != args.num:
