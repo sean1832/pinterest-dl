@@ -34,7 +34,6 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
     - [Cloning from GitHub](#cloning-from-github)
   - [🚀 CLI-Usage](#-cli-usage)
     - [General Command Structure](#general-command-structure)
-    - [Examples](#examples)
     - [Commands](#commands)
       - [1. Login](#1-login)
       - [2. Scrape](#2-scrape)
@@ -103,42 +102,6 @@ pinterest-dl [command] [options]
 | [`download`](#4-download) | Download images from a list of URLs provided in a JSON file.                       |
 
 
----
-### Examples
-
-**Scraping Images in anonymous mode:**
-
-Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a num of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
-```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -r 512x512 --cache art.json
-```
-
-**Get Browser Cookies:**
-
-Get browser cookies for Pinterest login and save them to the `cookies.json` file in headful mode (with browser window).
-```bash
-pinterest-dl login -o cookies.json --headful
-```
-> [!TIP]
-> You will be prompted to enter your Pinterest email and password. The tool will save the browser cookies to the specified file for future use.
-
-**Scraping Private Boards:**
-
-Scrape images from a private Pinterest board using the cookies saved in the `cookies.json` file.
-```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -c cookies.json
-```
-
-> [!TIP]
-> You can use the `--client` option to use `chrome` or `firefox` Webdriver for scraping. This is slower but more reliable.
-> It will open a browser in headless mode to scrape images. You can also use the `--headful` flag to run the browser in windowed mode.
-
-**Downloading Images:**
-
-Download images from the `art.json` file to the `./downloaded_imgs` directory with a minimum resolution of `1024x1024`.
-```bash
-pinterest-dl download art.json -o downloaded_imgs -r 1024x1024
-```
 ---
 
 ### Commands
