@@ -3,6 +3,8 @@ from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
 from typing import List
+from contextlib import nullcontext
+import sys
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
@@ -25,6 +27,23 @@ def parse_resolution(resolution: str) -> tuple[int, int]:
         raise ValueError("Invalid resolution format. Use 'width x height'.")
 
 
+def combine_inputs(positionals: List[str], files: List[str] | None) -> List[str]:
+    """Combine positional inputs and file-based inputs into a single list."""
+    combined: List[str] = []
+
+    for path in files or []:
+        # Use nullcontext for stdin so __exit__ is a no-op
+        ctx = nullcontext(sys.stdin) if path == "-" else open(path, "r", encoding="utf-8")
+        with ctx as handle:
+            for line in handle:
+                url = line.strip()
+                if url:
+                    combined.append(url)
+
+    combined.extend(positionals or [])
+    return combined
+
+
 # fmt: off
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__description__ + " v" + __version__)
@@ -42,8 +61,9 @@ def get_parser() -> argparse.ArgumentParser:
 
     # scrape command
     scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
-    scrape_cmd.add_argument("url", help="URL to scrape images from")
-    scrape_cmd.add_argument("-o", "--output",type=str, help="Output directory")
+    scrape_cmd.add_argument("urls", nargs="*", help="One or more URLs to scrape")
+    scrape_cmd.add_argument("-f", "--file", action="append", help="Path to file with URLs (one per line), use '-' for stdin")
+    scrape_cmd.add_argument("-o", "--output", type=str, help="Output directory")
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
@@ -60,8 +80,9 @@ def get_parser() -> argparse.ArgumentParser:
 
     # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
-    search_cmd.add_argument("query", help="Search query")
-    search_cmd.add_argument("-o", "--output",type=str, help="Output directory")
+    search_cmd.add_argument("querys", nargs="*", help="Search query")
+    search_cmd.add_argument("-f", "--file", action="append", help="Path to file with queries (one per line), use '-' for stdin")
+    search_cmd.add_argument("-o", "--output", type=str, help="Output directory")
     search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
@@ -124,85 +145,97 @@ def main() -> None:
             )
             print("\nDone.")
         elif args.cmd == "scrape":
-            if args.client in ["chrome", "firefox"]:
-                imgs = (
-                    PinterestDL.with_browser(
-                        browser_type=args.client,  # type: ignore
-                        timeout=args.timeout,
-                        headless=not args.headful,
-                        incognito=args.incognito,
-                        verbose=args.verbose,
-                        ensure_alt=args.ensure_cap,
+            urls = combine_inputs(args.urls, args.file)
+            if not urls:
+                print("No URLs provided. Please provide at least one URL.")
+                return
+            for url in urls:
+                print(f"Scraping {url}...")
+                if args.client in ["chrome", "firefox"]:
+                    imgs = (
+                        PinterestDL.with_browser(
+                            browser_type=args.client,
+                            timeout=args.timeout,
+                            headless=not args.headful,
+                            incognito=args.incognito,
+                            verbose=args.verbose,
+                            ensure_alt=args.ensure_cap,
+                        )
+                        .with_cookies_path(args.cookies)
+                        .scrape_and_download(
+                            url,
+                            args.output,
+                            args.num,
+                            min_resolution=parse_resolution(args.resolution)
+                            if args.resolution
+                            else None,
+                            cache_path=args.cache,
+                            caption=args.caption,
+                        )
                     )
-                    .with_cookies_path(args.cookies)
-                    .scrape_and_download(
-                        args.url,
-                        args.output,
-                        args.num,
-                        min_resolution=parse_resolution(args.resolution)
-                        if args.resolution
-                        else None,
-                        cache_path=args.cache,
-                        caption=args.caption,
-                    )
-                )
-                if imgs and len(imgs) != args.num:
-                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
-            else:
-                if args.incognito or args.headful:
-                    print(
-                        "Warning: Incognito and headful mode is only available for Chrome/Firefox."
-                    )
+                    if imgs and len(imgs) != args.num:
+                        print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
+                else:
+                    if args.incognito or args.headful:
+                        print(
+                            "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                        )
 
-                imgs = (
-                    PinterestDL.with_api(
-                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                    imgs = (
+                        PinterestDL.with_api(
+                            timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                        )
+                        .with_cookies_path(args.cookies)
+                        .scrape_and_download(
+                            url,
+                            args.output,
+                            args.num,
+                            min_resolution=parse_resolution(args.resolution)
+                            if args.resolution
+                            else (0, 0),
+                            cache_path=args.cache,
+                            caption=args.caption,
+                            delay=args.delay,
+                        )
                     )
-                    .with_cookies_path(args.cookies)
-                    .scrape_and_download(
-                        args.url,
-                        args.output,
-                        args.num,
-                        min_resolution=parse_resolution(args.resolution)
-                        if args.resolution
-                        else (0, 0),
-                        cache_path=args.cache,
-                        caption=args.caption,
-                        delay=args.delay,
-                    )
-                )
-                if imgs and len(imgs) != args.num:
-                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
+                    if imgs and len(imgs) != args.num:
+                        print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
 
             print("\nDone.")
         elif args.cmd == "search":
-            if args.client in ["chrome", "firefox"]:
-                raise NotImplementedError("Search is currently not available for browser clients.")
-            else:
-                if args.incognito or args.headful:
-                    print(
-                        "Warning: Incognito and headful mode is only available for Chrome/Firefox."
-                    )
+            querys = combine_inputs(args.querys, args.file)
+            if not querys:
+                print("No queries provided. Please provide at least one query.")
+                return
+            for query in querys:
+                print(f"Searching {query}...")
+                if args.client in ["chrome", "firefox"]:
+                    raise NotImplementedError("Search is currently not available for browser clients.")
+                else:
+                    if args.incognito or args.headful:
+                        print(
+                            "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                        )
 
-                imgs = (
-                    PinterestDL.with_api(
-                        timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                    imgs = (
+                        PinterestDL.with_api(
+                            timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                        )
+                        .with_cookies_path(args.cookies)
+                        .search_and_download(
+                            query,
+                            args.output,
+                            args.num,
+                            min_resolution=parse_resolution(args.resolution)
+                            if args.resolution
+                            else (0, 0),
+                            cache_path=args.cache,
+                            caption=args.caption,
+                            delay=args.delay,
+                        )
                     )
-                    .with_cookies_path(args.cookies)
-                    .search_and_download(
-                        args.query,
-                        args.output,
-                        args.num,
-                        min_resolution=parse_resolution(args.resolution)
-                        if args.resolution
-                        else (0, 0),
-                        cache_path=args.cache,
-                        caption=args.caption,
-                        delay=args.delay,
-                    )
-                )
-                if imgs and len(imgs) != args.num:
-                    print(f"Warning: Only ({len(imgs)}) images were scraped from {args.query}.")
+                    if imgs and len(imgs) != args.num:
+                        print(f"Warning: Only ({len(imgs)}) images were scraped from {query}.")
             print("\nDone.")
         elif args.cmd == "download":
             # prepare image url data
