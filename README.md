@@ -115,7 +115,7 @@ pinterest-dl login [options]
 
 ![login](doc/images/pinterest-dl-login.gif)
 
-| Flag                        | Description               | Default        |
+| Options                        | Description               | Default        |
 | --------------------------- | ------------------------- | -------------- |
 | `-o`, `--output [file]`     | Path to save cookies file | `cookies.json` |
 | `--client [chrome/firefox]` | Browser client to use     | `chrome`       |
@@ -145,7 +145,7 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 ```
 ![scrape](doc/images/pinterest-dl-scrape.gif)
 
-| Flag                                 | Description                                              | Default        |
+| Options                                 | Description                                              | Default        |
 | ------------------------------------ | -------------------------------------------------------- | -------------- |
 | `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin | –              |
 | `<url>`                              | One or more Pinterest URLs                               | –              |
@@ -182,7 +182,7 @@ cat queries.txt | pinterest-dl search -f - [options]
 
 ![search](doc/images/pinterest-dl-search.gif)
 
-| Flag                                 | Description                                                 | Default        |
+| Options                                 | Description                                                 | Default        |
 | ------------------------------------ | ----------------------------------------------------------- | -------------- |
 | `-f`, `--file [file]`                | Path to file with queries (one per line); use `-` for stdin | –              |
 | `<query>`                            | One or more search terms                                    | –              |
@@ -207,7 +207,7 @@ pinterest-dl download <cache.json> [options]
 ```
 ![download](doc/images/pinterest-dl-download.gif)
 
-| Flag                       | Description              | Default             |
+| Options                       | Description              | Default             |
 | -------------------------- | ------------------------ | ------------------- |
 | `-o`, `--output [dir]`     | Directory to save images | `./<json_filename>` |
 | `-r`, `--resolution [WxH]` | Minimum image resolution | -                   |
