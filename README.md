@@ -193,7 +193,7 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--timeout [seconds]`                | Request timeout                                          | `3`            |
 | `--delay [seconds]`                  | Delay between requests                                   | `0.2`          |
 | `--cache [path]`                     | Save scraped URLs to JSON                                | –              |
-| `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, embed metadata, or `none` | `none`         |
+| `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, `metadata`, or `none` | `none`         |
 | `--ensure-cap`                       | Require alt text on every image                          | –              |
 | `--client [api/chrome/firefox]`      | Scraper backend                                          | `api`          |
 | `--headful`                          | Show browser window (chrome/firefox only)                | –              |
