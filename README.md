@@ -34,7 +34,6 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
     - [Cloning from GitHub](#cloning-from-github)
   - [🚀 CLI-Usage](#-cli-usage)
     - [General Command Structure](#general-command-structure)
-    - [Examples](#examples)
     - [Commands](#commands)
       - [1. Login](#1-login)
       - [2. Scrape](#2-scrape)
@@ -63,14 +62,16 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Scrape private boards and pins with browser cookies. ([#20](https://github.com/sean1832/pinterest-dl/pull/20))
 - ✅ Scrape images using reversed engineered Pinterest API. (This will be default behaviour. You can use webdriver by specifying `--client chrome` or `--client firefox`) ([#21](https://github.com/sean1832/pinterest-dl/pull/21))
 - ✅ Search for images on Pinterest using a query. ([#23](https://github.com/sean1832/pinterest-dl/pull/23))
+- ✅ Support multiple urls and queries in a single command.
+- ✅ Support for batch processing of URLs and queries from files.
 
 ## 🚩 Known Issues
 - 🔲 Not yet implement testing.
-- 🔲 Not sorely tested on Linux and Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
+- 🔲 Not sorely tested on ~~Linux and~~ Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
 
 ## 📋 Requirements
 - Python 3.10 or newer
-- Chrome or Firefox browser
+- (Optional) Chrome or Firefox browser
 
 ## 📥 Installation
 
@@ -102,127 +103,115 @@ pinterest-dl [command] [options]
 
 
 ---
-### Examples
 
-**Scraping Images in anonymous mode:**
-
-Scrape images in anonymous mode, without login, to the `./images/art` directory from the Pinterest URL `https://www.pinterest.com/pin/1234567` with a num of `30` images and a minimum resolution of `512x512`. Save scraped URLs to a `JSON` file.
-```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -r 512x512 --cache art.json
-```
-
-**Get Browser Cookies:**
-
-Get browser cookies for Pinterest login and save them to the `cookies.json` file in headful mode (with browser window).
-```bash
-pinterest-dl login -o cookies.json --headful
-```
-> [!TIP]
-> You will be prompted to enter your Pinterest email and password. The tool will save the browser cookies to the specified file for future use.
-
-**Scraping Private Boards:**
-
-Scrape images from a private Pinterest board using the cookies saved in the `cookies.json` file.
-```bash
-pinterest-dl scrape "https://www.pinterest.com/pin/1234567" -o "images/art" -n 30 -c cookies.json
-```
-
-> [!TIP]
-> You can use the `--client` option to use `chrome` or `firefox` Webdriver for scraping. This is slower but more reliable.
-> It will open a browser in headless mode to scrape images. You can also use the `--headful` flag to run the browser in windowed mode.
-
-**Downloading Images:**
-
-Download images from the `art.json` file to the `./downloaded_imgs` directory with a minimum resolution of `1024x1024`.
-```bash
-pinterest-dl download art.json -o downloaded_imgs -r 1024x1024
-```
----
 ### Commands
 
-#### 1. Login
-Login to Pinterest using your credentials to obtain browser cookies for scraping private boards and pins.
+#### 1. Login  
+Authenticate to Pinterest and save browser cookies for private boards/pins.
 
-**Syntax:**
 ```bash
 pinterest-dl login [options]
 ```
 
-![login](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-login.gif)
+![login](doc/images/pinterest-dl-login.gif)
 
-**Options:**
-- `-o`, `--output [file]`: File to save browser cookies for future use. (default: `cookies.json`)
-- `--client`: Choose the scraping client (`chrome` / `firefox`). (default: `chrome`)
-- `--headful`: Run in headful mode with browser window.
-- `--verbose`: Enable detailed output for debugging.
-- `--incognito`: Activate incognito mode for scraping.
+| Flag                        | Description               | Default        |
+| --------------------------- | ------------------------- | -------------- |
+| `-o`, `--output [file]`     | Path to save cookies file | `cookies.json` |
+| `--client [chrome/firefox]` | Browser client to use     | `chrome`       |
+| `--headful`                 | Show browser window       | -              |
+| `--incognito`               | Use incognito mode        | -              |
+| `--verbose`                 | Enable debug output       | -              |
 
 > [!TIP]
-> After entering `login` command, you will be prompted to enter your Pinterest email and password.
-> The tool will then save the browser cookies to the specified file for future use. (if not specified, it will save to `./cookies.json`)
+>  After running `login`, you’ll be prompted for your Pinterest email/password. Cookies are then saved to the specified file.
 
-#### 2. Scrape
-Extract images from a specified Pinterest URL.
 
-**Syntax:**
+---
+
+#### 2. Scrape  
+Download images from a Pin, Board URL, or a list of URLs.
+
 ```bash
-pinterest-dl scrape [url] [options]
+# Single or multiple URLs:
+pinterest-dl scrape <url1> <url2> …
+
+# From one or more files (one URL per line):
+pinterest-dl scrape -f urls.txt [options]
+pinterest-dl scrape -f urls1.txt -f urls2.txt [options]
+
+# From stdin:
+cat urls.txt | pinterest-dl scrape -f - [options]
+```
+![scrape](doc/images/pinterest-dl-scrape.gif)
+
+| Flag                                 | Description                                              | Default        |
+| ------------------------------------ | -------------------------------------------------------- | -------------- |
+| `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin | –              |
+| `<url>`                              | One or more Pinterest URLs                               | –              |
+| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)             | –              |
+| `-c`, `--cookies [file]`             | Path to cookies file (for private content)               | `cookies.json` |
+| `-n`, `--num [number]`               | Maximum images to download                               | `100`          |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution (e.g. `512x512`)                | –              |
+| `--timeout [seconds]`                | Request timeout                                          | `3`            |
+| `--delay [seconds]`                  | Delay between requests                                   | `0.2`          |
+| `--cache [path]`                     | Save scraped URLs to JSON                                | –              |
+| `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, `metadata`, or `none` | `none`         |
+| `--ensure-cap`                       | Require alt text on every image                          | –              |
+| `--client [api/chrome/firefox]`      | Scraper backend                                          | `api`          |
+| `--headful`                          | Show browser window (chrome/firefox only)                | –              |
+| `--incognito`                        | Use incognito mode (chrome/firefox only)                 | –              |
+| `--verbose`                          | Enable debug output                                      | –              |
+
+---
+
+#### 3. Search  
+Find and download images via a search query (API mode only), or from URL-lists in files.
+
+```bash
+# Simple query:
+pinterest-dl search <query1> <query2> ... [options]
+
+# From one or more files:
+pinterest-dl search -f queries.txt [options]
+pinterest-dl search -f q1.txt -f q2.txt [options]
+
+# From stdin:
+cat queries.txt | pinterest-dl search -f - [options]
 ```
 
-![scrape](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-scrape.gif)
+![search](doc/images/pinterest-dl-search.gif)
 
-**Options:**
+| Flag                                 | Description                                                 | Default        |
+| ------------------------------------ | ----------------------------------------------------------- | -------------- |
+| `-f`, `--file [file]`                | Path to file with queries (one per line); use `-` for stdin | –              |
+| `<query>`                            | One or more search terms                                    | –              |
+| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)                | –              |
+| `-c`, `--cookies [file]`             | Path to cookies file                                        | `cookies.json` |
+| `-n`, `--num [number]`               | Maximum images to download                                  | `100`          |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution                                    | –              |
+| `--timeout [seconds]`                | Request timeout                                             | `3`            |
+| `--delay [seconds]`                  | Delay between requests                                      | `0.2`          |
+| `--cache [path]`                     | Save results to JSON                                        | –              |
+| `--caption [txt/json/metadata/none]` | Caption format                                              | `none`         |
+| `--ensure-cap`                       | Require alt text on every image                             | –              |
+| `--verbose`                          | Enable debug output                                         | –              |
 
-- `-o`, `--output [directory]`: Output directory for downloaded images. Print to console if not specified.
-- `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
-- `-n`, `--num [number]`: Max number of image to download (default: 100).
-- `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
-- `--timeout [second]`: Timeout in seconds for requests (default: 3).
-- `--delay [second]`: Delay between requests (default: 0.2).
-- `--cache [path]`: Save scraped URLs to a JSON file.
-- `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--ensure-cap`: Ensure every image has alt text.
-- `--verbose`: Enable detailed output for debugging.
-- `--client`: Choose the scraping client (`api` / `chrome` / `firefox`). (default: api)
-- `--incognito`: Activate incognito mode for scraping. (*chrome / firefox only*)
-- `--headful`: Run in headful mode with browser window. (*chrome / firefox only*)
+---
 
-#### 3. Search
-Search for images on Pinterest using a query. (*Currently only available in API mode*)
+#### 4. Download  
+Fetch images from a previously saved cache file.
 
-**Syntax:**
 ```bash
-pinterest-dl search [query] [options]
+pinterest-dl download <cache.json> [options]
 ```
+![download](doc/images/pinterest-dl-download.gif)
 
-![search](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-search.gif)
-
-**Options:**
-- `-o`, `--output [directory]`: Output directory for downloaded images. Print to console if not specified.
-- `-c`, `--cookies [file]`: File containing browser cookies for private boards/pins. Run `login` command to obtain cookies.
-- `-n`, `--num [number]`: Max number of image to download (default: 100).
-- `-r`, `--resolution [width]x[height]`: Minimum image resolution for download (e.g., 512x512).
-- `--timeout [second]`: Timeout in seconds for requests (default: 3).
-- `--delay [second]`: Delay between requests (default: 0.2).
-- `--cache [path]`: Save scraped URLs to a JSON file.
-- `--caption [format]`: Caption format for downloaded images: `txt` for alt text in separate text files, `json` for full image data in seperate json file, `metadata` embeds in image files, `none` for no captions. (default: `none`)
-- `--ensure-cap`: Ensure every image has alt text.
-- `--verbose`: Enable detailed output for debugging.
-
-#### 4. Download
-Download images from cache file (JSON) to a specified directory.
-
-**Syntax:**
-```bash
-pinterest-dl download [cache] [options]
-```
-
-![download](https://github.com/sean1832/pinterest-dl/blob/main/doc/images/pinterest-dl-download.gif)
-
-**Options:**
-- `-o`, `--output [directory]`: Output directory (default: ./<json_filename>).
-- `-r`, `--resolution [width]x[height]`: minimum resolution to download (e.g. 512x512).
-- `--verbose`: Enable verbose output.
+| Flag                       | Description              | Default             |
+| -------------------------- | ------------------------ | ------------------- |
+| `-o`, `--output [dir]`     | Directory to save images | `./<json_filename>` |
+| `-r`, `--resolution [WxH]` | Minimum image resolution | -                   |
+| `--verbose`                | Enable debug output      | -                   |
 
 
 ## 🛠️ Python API
