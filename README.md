@@ -80,6 +80,19 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 pip install pinterest-dl
 ```
 
+### Create Virtual Environment (Recommended)
+*While on root directory create the virtualenv*
+```bash
+python -m venv pinterest-venv
+```
+
+### Activate Virtual Environment
+*Activating virtual environment before installing package dependencies 
+could prevent dependencies issues across packages installed in the system*
+```bash
+source pinterest-env/bin/activate
+```
+
 ### Cloning from GitHub
 ```bash
 git clone https://github.com/sean1832/pinterest-dl.git
