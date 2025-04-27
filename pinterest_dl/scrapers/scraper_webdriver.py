@@ -195,7 +195,7 @@ class _ScraperWebdriver(_ScraperBase):
 
     @staticmethod
     def _initialize_webdriver(
-        browser_type: Literal["chrome", "firefox"], headless: bool, incognito: bool
+        browser_type: Literal["chrome", "firefox", "edge"], headless: bool, incognito: bool
     ) -> WebDriver:
         if browser_type.lower() == "firefox":
             return Browser().Firefox(incognito=incognito, headful=not headless)
@@ -205,5 +205,10 @@ class _ScraperWebdriver(_ScraperBase):
                 incognito=incognito,
                 headful=not headless,
             )
+        elif browser_type.lower() == "edge":
+            return Browser().Edge(
+                incognito=incognito,
+                headful=not headless
+            )
         else:
-            raise ValueError("Unsupported browser type. Choose 'chrome' or 'firefox'.")
+            raise ValueError("Unsupported browser type. Choose 'chrome', 'firefox' or 'edge'.")

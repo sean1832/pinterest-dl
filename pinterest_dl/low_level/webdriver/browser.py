@@ -89,3 +89,29 @@ class Browser:
             firefox_options.add_argument("--headless")
         browser = webdriver.Firefox(options=firefox_options)
         return browser
+
+    def Edge(
+            self,
+            image_enable=False,
+            exe_path: Path | str = "msedge.exe"
+            incognito=False,
+            headful=False
+        ) -> WebDriver:
+        edge_options = webdriver.Edge.edge_options()
+        edge_options.use_chromium = True
+        # Disable images
+        if image_enable:
+            edge_options.add_argument("prefs", {
+                "permissions.default.image": 1
+            })
+        else:
+            edge_options.add_argument("prefs", {
+                "permissions.default.image": 2
+            })
+        if incognito:
+            edge_options.add_argument("-inprivate")
+        if not headful:
+            print("Running in headless mode")
+            edge_options.add_argument("--headless")
+        browser = webdriver.Edge(options=edge_options, service=service)
+        return browser
