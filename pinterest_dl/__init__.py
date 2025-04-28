@@ -1,6 +1,7 @@
 __version__ = "0.7.0"
 __description__ = "An unofficial Pinterest image downloader"
 
+
 from typing import Literal
 
 from pinterest_dl.scrapers import _ScraperAPI, _ScraperBase, _ScraperWebdriver
@@ -49,5 +50,7 @@ class PinterestDL(_ScraperBase):
         Returns:
             PinterestDL: Instance of PinterestDL with an initialized browser.
         """
-        webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
+        webdriver = _ScraperWebdriver._initialize_webdriver(
+            browser_type, headless, incognito, verbose=verbose
+        )
         return _ScraperWebdriver(webdriver, timeout, verbose, ensure_alt=ensure_alt)
