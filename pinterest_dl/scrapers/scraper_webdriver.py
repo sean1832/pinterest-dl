@@ -5,6 +5,7 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
+from pinterest_dl.constants import SYS_PLATFORM
 from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.webdriver.browser import Browser
 from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestImage
@@ -195,15 +196,29 @@ class _ScraperWebdriver(_ScraperBase):
 
     @staticmethod
     def _initialize_webdriver(
-        browser_type: Literal["chrome", "firefox"], headless: bool, incognito: bool
+        browser_type: Literal["chrome", "firefox"],
+        headless: bool,
+        incognito: bool,
+        verbose: bool = False,
     ) -> WebDriver:
         if browser_type.lower() == "firefox":
             return Browser().Firefox(incognito=incognito, headful=not headless)
         elif browser_type.lower() == "chrome":
+            if SYS_PLATFORM == "Windows":
+                exe_path = io.get_appdata_dir("chromedriver.exe")
+            elif SYS_PLATFORM == "Linux":
+                exe_path = io.get_appdata_dir("chromedriver")
+            elif SYS_PLATFORM == "Darwin":
+                exe_path = io.get_appdata_dir("chromedriver")
+            else:
+                raise ValueError(
+                    f"Unsupported operating system {SYS_PLATFORM}. Please use Windows, Linux, or macOS."
+                )
             return Browser().Chrome(
-                exe_path=io.get_appdata_dir("chromedriver.exe"),
+                exe_path=io.get_appdata_dir(exe_path),
                 incognito=incognito,
                 headful=not headless,
+                verbose=verbose,
             )
         else:
             raise ValueError("Unsupported browser type. Choose 'chrome' or 'firefox'.")

@@ -7,8 +7,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from pinterest_dl.data_model.browser_version import BrowserVersion
-from pinterest_dl.low_level.webdriver.driver_installer import ChromeDriverInstaller
 from pinterest_dl.low_level.ops import io
+from pinterest_dl.low_level.webdriver.driver_installer import ChromeDriverInstaller
 
 
 class Browser:
@@ -45,34 +45,49 @@ class Browser:
         self,
         image_enable: bool = False,
         incognito: bool = False,
-        exe_path: Path | str = "chromedriver.exe",
+        exe_path: Path | str = "chromedriver",
         headful: bool = False,
+        verbose: bool = False,
     ) -> WebDriver:
         driver_installer = ChromeDriverInstaller(self.app_root)
         self.version = BrowserVersion.from_str(driver_installer.chrome_version)
 
         if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
             print(f"Installing latest Chrome driver for version {self.version}")
-            driver_installer.install(version="latest", platform="auto")
+            driver_installer.install(version="latest", platform="auto", verbose=verbose)
 
         service = Service(exe_path)
         chrome_options = webdriver.ChromeOptions()
 
-        # Disable images
-        # https://scrapeops.io/selenium-web-scraping-playbook/python-selenium-disable-image-loading/
+        # ===== Essential flags for headless servers =====
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--remote-debugging-port=9222")
+
+        # ===== Optional profile isolation =====
+        chrome_options.add_argument(f"--user-data-dir=/tmp/chrome-profile-{os.getpid()}")
+
+        # ===== Window & image settings =====
+        chrome_options.add_argument("window-size=1920,1080")
         chrome_options.add_argument(
             "--blink-settings=imagesEnabled=true"
             if image_enable
             else "--blink-settings=imagesEnabled=false"
         )
-        chrome_options.add_argument("--log-level=3")  # Suppress most logs
+
+        # ===== Binary location (point directly at your Chrome/Chromium) =====
+        chrome_options.binary_location = "/usr/bin/google-chrome"
+
+        # ===== Logging, incognito, headless =====
+        chrome_options.add_argument("--log-level=3")
         if incognito:
             print("Running in incognito mode")
             chrome_options.add_argument("--incognito")
         if not headful:
             print("Running in headless mode")
             chrome_options.add_argument("--headless=new")
-        browser = webdriver.Chrome(options=chrome_options, service=service)
+
+        browser = webdriver.Chrome(service=service, options=chrome_options)
         return browser
 
     def Firefox(self, image_enable=False, incognito=False, headful=False) -> WebDriver:

@@ -4,11 +4,26 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from pinterest_dl.constants import SYS_PLATFORM
 
-def get_appdata_dir(path_under: Optional[str] = None) -> Path:
-    if path_under:
-        return Path.home().joinpath("AppData", "Local", "pinterest-dl", path_under)
-    return Path.home().joinpath("AppData", "Local", "pinterest-dl")
+
+def get_appdata_dir(path_under: Optional[str | Path] = None) -> Path:
+    if SYS_PLATFORM == "Windows":
+        if path_under:
+            return Path.home().joinpath("AppData", "Local", "pinterest-dl", path_under)
+        return Path.home().joinpath("AppData", "Local", "pinterest-dl")
+    elif SYS_PLATFORM == "Darwin":
+        if path_under:
+            return Path.home().joinpath(
+                "Library", "Application Support", "pinterest-dl", path_under
+            )
+        return Path.home().joinpath("Library", "Application Support", "pinterest-dl")
+    elif SYS_PLATFORM == "Linux":
+        if path_under:
+            return Path.home().joinpath(".config", "pinterest-dl", path_under)
+        return Path.home().joinpath(".config", "pinterest-dl")
+    else:
+        raise ValueError(f"Unsupported operating system: {SYS_PLATFORM}.")
 
 
 def append_json(data: Dict[str, Any], file_path: str | Path, indent: int | None = None) -> None:
@@ -56,7 +71,7 @@ def unzip(
         if target_file:
             # Target file specified, extract only this file
             for file in zip_ref.namelist():
-                if file.endswith(target_file):
+                if file == target_file:
                     zip_ref.extract(file, extract_to)
                     # Move the file if it's within a directory
                     extracted_path = os.path.join(extract_to, file)
@@ -73,6 +88,8 @@ def unzip(
                     break
             else:
                 print(f"{target_file} was not found in the zip file.")
+                zip_ref.extractall(extract_to)
+                print(f"All files have been extracted to {extract_to}")
         else:
             # No specific file to extract, extract everything
             zip_ref.extractall(extract_to)
