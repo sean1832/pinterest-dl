@@ -1,10 +1,10 @@
 import argparse
+import sys
+from contextlib import nullcontext
 from getpass import getpass
 from pathlib import Path
 from traceback import print_exc
 from typing import List
-from contextlib import nullcontext
-import sys
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
@@ -42,6 +42,11 @@ def combine_inputs(positionals: List[str], files: List[str] | None) -> List[str]
 
     combined.extend(positionals or [])
     return combined
+
+
+def sanitize_url(url: str) -> str:
+    """Add trailing slash to URL if not present."""
+    return url if url.endswith("/") else url + "/"
 
 
 # fmt: off
@@ -150,6 +155,7 @@ def main() -> None:
                 print("No URLs provided. Please provide at least one URL.")
                 return
             for url in urls:
+                url = sanitize_url(url)
                 print(f"Scraping {url}...")
                 if args.client in ["chrome", "firefox"]:
                     imgs = (
@@ -210,7 +216,9 @@ def main() -> None:
             for query in querys:
                 print(f"Searching {query}...")
                 if args.client in ["chrome", "firefox"]:
-                    raise NotImplementedError("Search is currently not available for browser clients.")
+                    raise NotImplementedError(
+                        "Search is currently not available for browser clients."
+                    )
                 else:
                     if args.incognito or args.headful:
                         print(
