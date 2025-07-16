@@ -180,7 +180,7 @@ def main() -> None:
                         )
                     )
                     if imgs and len(imgs) != args.num:
-                        print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
+                        print(f"Warning: Only ({len(imgs)}) images were scraped from {url}.")
                 else:
                     if args.incognito or args.headful:
                         print(
@@ -205,7 +205,7 @@ def main() -> None:
                         )
                     )
                     if imgs and len(imgs) != args.num:
-                        print(f"Warning: Only ({len(imgs)}) images were scraped from {args.url}.")
+                        print(f"Warning: Only ({len(imgs)}) images were scraped from {url}.")
 
             print("\nDone.")
         elif args.cmd == "search":
