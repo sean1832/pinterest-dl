@@ -138,8 +138,8 @@ class _ScraperAPI(_ScraperBase):
 
         imgs_dict = [img.to_dict() for img in scraped_imgs]
 
-        if not output_dir:
-            # no output_dir provided, print the scraped image data to console
+        if not output_dir and not cache_path:
+            # no output_dir and cache_path provided, print the scraped image data to console
             print("Scraped: ")
             print(json.dumps(imgs_dict, indent=2))
 
