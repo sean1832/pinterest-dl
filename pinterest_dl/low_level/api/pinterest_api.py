@@ -2,7 +2,7 @@ import re
 from typing import List, Tuple
 
 import requests
-from git import Optional
+from typing import Optional
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.low_level.api.endpoints import Endpoint
