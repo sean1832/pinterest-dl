@@ -1,6 +1,5 @@
 import tempfile
-from asyncio import as_completed
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, TypeVar, Union
 
