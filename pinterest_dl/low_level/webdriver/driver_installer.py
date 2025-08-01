@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from pinterest_dl.low_level.http import USER_AGENT, downloader
+from pinterest_dl.low_level.http import USER_AGENT, downloader, fetch
 from pinterest_dl.low_level.ops import io
 
 
@@ -101,7 +101,7 @@ class ChromeDriverInstaller:
             ValueError: _description_
         """
         if version == "latest":
-            response = downloader.fetch(
+            response = fetch(
                 "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json",
                 response_format="json",
             )

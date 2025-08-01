@@ -10,18 +10,6 @@ from pinterest_dl.low_level.hls import HlsProcessor
 from pinterest_dl.low_level.http import HttpClient
 
 
-def fetch(
-    url: str, response_format: Literal["json", "text"] = "text"
-) -> Union[Dict[str, Any], str]:
-    if isinstance(url, str):
-        req = requests.get(url)
-        req.raise_for_status()
-        if response_format == "json":
-            return req.json()  # JSON response may contain more complex structures
-        elif response_format == "text":
-            return req.text
-    else:
-        raise ValueError("URL must be a string.")
 
 
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
