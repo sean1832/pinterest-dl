@@ -151,7 +151,7 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
 
         valid_indices = []
 
@@ -276,7 +276,7 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
 
         valid_indices = []
 

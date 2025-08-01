@@ -6,6 +6,7 @@ import tqdm
 
 from pinterest_dl.data_model.pinterest_image import PinterestImage
 from pinterest_dl.low_level.http import USER_AGENT, downloader
+from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 
 
 class _ScraperBase:
@@ -22,7 +23,7 @@ class _ScraperBase:
             user_agent=USER_AGENT,
             timeout=10,
             max_retries=3,
-            progress_callback=None,
+            progress_callback=TqdmProgressBarCallback(description="Downloading Streams"),
         )
 
         local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
@@ -36,14 +37,12 @@ class _ScraperBase:
     def download_images(
         images: List[PinterestImage],
         output_dir: Union[str, Path],
-        verbose: bool = False,
     ) -> List[PinterestImage]:
         """Download images from Pinterest using given URLs and fallbacks.
 
         Args:
             images (List[PinterestImage]): List of PinterestImage objects to download.
             output_dir (Union[str, Path]): Directory to store downloaded images.
-            verbose (bool): Enable verbose logging.
 
         Returns:
             List[PinterestImage]: List of PinterestImage objects with local paths set.
@@ -53,7 +52,7 @@ class _ScraperBase:
             user_agent=USER_AGENT,
             timeout=10,
             max_retries=3,
-            progress_callback=None,
+            progress_callback=TqdmProgressBarCallback(description="Downloading Images"),
         )
         local_paths = blob_dl.download_concurrent(urls, Path(output_dir))
 

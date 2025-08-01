@@ -259,7 +259,7 @@ def main() -> None:
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
+            downloaded_imgs = PinterestDL.download_images(images, output_dir)
 
             # post process
             pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
