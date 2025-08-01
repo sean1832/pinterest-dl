@@ -145,7 +145,7 @@ class HlsProcessor:
         seq = media_sequence + segment_index
         return seq.to_bytes(16, "big")
 
-    def decrypt_if_needed(self, segment: SegmentInfo, ciphertext: bytes) -> bytes:
+    def decrypt(self, segment: SegmentInfo, ciphertext: bytes) -> bytes:
         """Decrypt the segment if it is encrypted.
 
         Args:

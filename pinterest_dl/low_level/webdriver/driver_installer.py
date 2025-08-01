@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from pinterest_dl.low_level.ops import downloader, io
+from pinterest_dl.low_level.http import USER_AGENT, downloader
+from pinterest_dl.low_level.ops import io
 
 
 class ChromeDriverInstaller:
@@ -126,7 +127,13 @@ class ChromeDriverInstaller:
         url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform}/chromedriver-{platform}.zip"
         if verbose:
             print(f"Downloading Chrome driver from {url}")
-        zip_file = downloader.download(url, self.install_dir)
+        blob_dl = downloader.BlobDownloader(
+            user_agent=USER_AGENT,
+            timeout=10,
+            max_retries=3,
+            progress_callback=None,
+        )
+        zip_file = blob_dl.download(url, self.install_dir)
         io.unzip(zip_file, self.install_dir, "chromedriver.exe", verbose=verbose)
         io.write_text(version, f"{str(self.install_dir)}/CHROMEDRIVER_VERSION")
         print("Chrome driver installed.")

@@ -5,12 +5,32 @@ from typing import List, Literal, Optional, Tuple, Union
 import tqdm
 
 from pinterest_dl.data_model.pinterest_image import PinterestImage
-from pinterest_dl.low_level.ops import downloader
+from pinterest_dl.low_level.http import USER_AGENT, downloader
 
 
 class _ScraperBase:
     def __init__(self):
         pass
+
+    @staticmethod
+    def download_stream(
+        streams: List[PinterestImage],
+        output_dir: Union[str, Path],
+    ):
+        urls = [stream.src for stream in streams]
+        stream_dl = downloader.StreamDownloader(
+            user_agent=USER_AGENT,
+            timeout=10,
+            max_retries=3,
+            progress_callback=None,
+        )
+
+        local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
+
+        for stream, path in zip(streams, local_paths):
+            stream.set_local(path)
+
+        return streams
 
     @staticmethod
     def download_images(
@@ -29,10 +49,13 @@ class _ScraperBase:
             List[PinterestImage]: List of PinterestImage objects with local paths set.
         """
         urls = [img.src for img in images]
-        fallback_urls = [img.fallback_urls for img in images]
-        local_paths = downloader.download_concurrent_with_fallback(
-            urls, Path(output_dir), verbose=verbose, fallback_urls=fallback_urls
+        blob_dl = downloader.BlobDownloader(
+            user_agent=USER_AGENT,
+            timeout=10,
+            max_retries=3,
+            progress_callback=None,
         )
+        local_paths = blob_dl.download_concurrent(urls, Path(output_dir))
 
         for img, path in zip(images, local_paths):
             img.set_local(path)
@@ -79,7 +102,6 @@ class _ScraperBase:
                 raise ValueError("Invalid file extension. Use 'txt' or 'json'.")
             if verbose:
                 print(f"Caption saved for {img.local_path}: '{img.alt}'")
-
 
     @staticmethod
     def add_captions_to_meta(
