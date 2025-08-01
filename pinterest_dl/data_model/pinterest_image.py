@@ -23,7 +23,7 @@ class PinterestImage:
         self.alt = alt
         self.origin = origin
         self.local_path: Optional[Path] = None
-        self.local_size: Optional[Tuple[int, int]] = None
+        self.local_resolution: Optional[Tuple[int, int]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -35,17 +35,23 @@ class PinterestImage:
     def set_local(self, path: str | Path) -> None:
         self.local_path = Path(path)
         with Image.open(self.local_path) as img:
-            self.local_size = img.size
+            self.local_resolution = img.size
 
     def prune_local(self, resolution: Tuple[int, int], verbose: bool = False) -> bool:
-        if not self.local_path or not self.local_size:
+        if not self.local_path or not self.local_resolution:
             if verbose:
                 print(f"Local path or size not set for {self.src}")
             return False
-        if self.local_size is not None and resolution is not None and self.local_size < resolution:
+        if (
+            self.local_resolution is not None
+            and resolution is not None
+            and self.local_resolution < resolution
+        ):
             self.local_path.unlink()
             if verbose:
-                print(f"Removed {self.local_path}, resolution: {self.local_size} < {resolution}")
+                print(
+                    f"Removed {self.local_path}, resolution: {self.local_resolution} < {resolution}"
+                )
             return True
         return False
 
