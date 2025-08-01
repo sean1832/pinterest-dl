@@ -7,9 +7,6 @@ from pinterest_dl.exceptions import DownloadError
 from pinterest_dl.low_level.hls import HlsProcessor
 from pinterest_dl.low_level.http import HttpClient
 
-
-
-
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
 
 T = TypeVar("T")  # result type
@@ -88,7 +85,6 @@ class StreamDownloader:
         self.http_client = HttpClient(user_agent, timeout, max_retries)
         self.hls_processor = HlsProcessor(self.http_client.session, user_agent)
         self.progress_callback = progress_callback
-        self.coordinator = _ConcurrentCoordinator(progress_callback=progress_callback)
 
     def download(self, url: str, output_dir: Path) -> Path:
         """High-level method to download an HLS video stream and remux to MP4
@@ -113,7 +109,6 @@ class StreamDownloader:
 
         # enumerate segments
         segments = self.hls_processor.enumerate_segments(playlist, base_uri)
-        total_segments = len(segments)
         with tempfile.TemporaryDirectory() as td:
             temp_dir = Path(td)
             segment_paths: List[Path] = []
@@ -124,9 +119,6 @@ class StreamDownloader:
                 output_path = temp_dir / f"segment_{index:05d}.ts"
                 self.hls_processor.write_segment_file(output_path, data)
                 segment_paths.append(output_path)
-
-                # report progress
-                self.coordinator.report(index + 1, total_segments)
 
             # build concat list and combine segments
             concat_list = temp_dir / "concat_list.txt"
@@ -155,7 +147,9 @@ class StreamDownloader:
         def worker(url: str, outdir: Path) -> Path:
             return self.download(url, outdir)
 
-        return self.coordinator.run(
+        stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
+
+        return stream_coordinator.run(
             items=urls,
             output_dir=output_dir,
             worker=worker,
@@ -177,7 +171,6 @@ class BlobDownloader:
         """Initialize the BlobDownloader with user agent and optional parameters."""
         self.http_client = HttpClient(user_agent, timeout, max_retries)
         self.progress_callback = progress_callback
-        self.coordinator = _ConcurrentCoordinator(progress_callback=progress_callback)
 
     def download(self, url: str, output_dir: Path, chunk_size: int = 2048) -> Path:
         """Download a blob from a URL and save it to the specified directory.
@@ -226,7 +219,8 @@ class BlobDownloader:
         def worker(url: str, outdir: Path) -> Path:
             return self.download(url, outdir, chunk_size=chunk_size)
 
-        return self.coordinator.run(
+        stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
+        return stream_coordinator.run(
             items=urls,
             output_dir=output_dir,
             worker=worker,
