@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 
+class HlsDownloadError(Exception):
+    pass
+
+
 class PinterestAPIError(Exception):
     """Base exception for Pinterest API errors."""
 
