@@ -7,7 +7,7 @@ from pinterest_dl.exceptions import (
     PinCountException,
     PinResponseError,
 )
-from pinterest_dl.low_level.ops.request_builder import RequestBuilder
+from pinterest_dl.low_level.http.request_builder import RequestBuilder
 
 
 class PinResponse:
