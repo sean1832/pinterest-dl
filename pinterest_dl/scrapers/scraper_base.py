@@ -121,9 +121,11 @@ class _ScraperBase:
             indices_list = indices
 
         for index in tqdm.tqdm(indices_list, desc="Captioning to metadata", disable=verbose):
-            img = None
+            img: Optional[PinterestImage] = None
             try:
                 img = images[index]
+                if img.is_stream:
+                    continue  # Skip streams for metadata captioning
                 if not img.local_path:
                     continue
                 if img.local_path.suffix == ".gif":

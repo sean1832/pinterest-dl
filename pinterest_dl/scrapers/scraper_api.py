@@ -134,9 +134,17 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.scrape(url, num, min_resolution, delay)
+        scraped_outputs = self.scrape(url, num, min_resolution, delay)
 
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        imgs_dict = []
+        streams = []
+        imgs = []
+        for item in scraped_outputs:
+            imgs_dict.append(item.to_dict())
+            if item.is_stream:
+                streams.append(item)
+            else:
+                imgs.append(item)
 
         if not output_dir and not cache_path:
             # no output_dir and cache_path provided, print the scraped image data to console
@@ -151,18 +159,20 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
+        downloaded_items = self.download_images(imgs, output_dir)
+        downloaded_vids = self.download_stream(streams, output_dir)
+        downloaded_items.extend(downloaded_vids)
 
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_items, valid_indices, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def search(
         self,
@@ -260,8 +270,16 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.search(query, num, min_resolution, delay)
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        scraped_outputs = self.search(query, num, min_resolution, delay)
+        imgs_dict = []
+        streams = []
+        imgs = []
+        for item in scraped_outputs:
+            imgs_dict.append(item.to_dict())
+            if item.is_stream:
+                streams.append(item)
+            else:
+                imgs.append(item)
 
         if not output_dir:
             # no output_dir provided, print the scraped image data to console
@@ -276,18 +294,20 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
+        downloaded_items = self.download_images(scraped_outputs, output_dir)
+        downloaded_vids = self.download_stream(streams, output_dir)
+        downloaded_items.extend(downloaded_vids)
 
         valid_indices = []
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_items, valid_indices, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def _scrape_pins(
         self,

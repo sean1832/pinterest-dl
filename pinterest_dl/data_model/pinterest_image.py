@@ -11,6 +11,7 @@ class PinterestImage:
         src: str,
         alt: Optional[str],
         origin: Optional[str],
+        is_stream: bool,
     ) -> None:
         """Pinterest Image data.
 
@@ -22,6 +23,7 @@ class PinterestImage:
         self.src = src
         self.alt = alt
         self.origin = origin
+        self.is_stream = is_stream
         self.local_path: Optional[Path] = None
         self.local_resolution: Optional[Tuple[int, int]] = None
 
@@ -29,7 +31,12 @@ class PinterestImage:
         return {
             "src": self.src,
             "alt": self.alt,
+            "is_stream": self.is_stream,
             "origin": self.origin,
+            "resolution": {
+                "x": self.local_resolution[0] if self.local_resolution else None,
+                "y": self.local_resolution[1] if self.local_resolution else None,
+            },
         }
 
     def set_local(self, path: str | Path) -> None:
@@ -69,31 +76,86 @@ class PinterestImage:
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "PinterestImage":
-        return PinterestImage(data["src"], data["alt"], data["origin"])
+        return PinterestImage(
+            data["src"], data["alt"], data["origin"], data.get("is_stream", False)
+        )
 
-    @staticmethod
-    def from_responses(response_data: list, resolution: Tuple[int, int]) -> List["PinterestImage"]:
-        if response_data is None or not response_data:
+    @classmethod
+    def from_responses(
+        cls, response_data: List[Dict[str, Any]], min_resolution: Tuple[int, int]
+    ) -> List["PinterestImage"]:
+        if not response_data:
             raise ValueError("No data found in response.")
+        min_width, min_height = min_resolution
 
-        if not isinstance(response_data, list):
-            raise ValueError("Invalid response data")
-
-        images_data = []
-        for data_raw in response_data:
-            try:
-                image = data_raw["images"]["orig"]
-                if int(image["width"]) < resolution[0] or int(image["height"]) < resolution[1]:
-                    continue
-                src = image["url"]
-                alt = data_raw["auto_alt_text"]
-                origin = f"https://www.pinterest.com/pin/{data_raw['id']}/"
-            except KeyError:
+        images: List["PinterestImage"] = []
+        for item in response_data:
+            if not isinstance(item, dict):
                 continue
 
-            images_data.append(PinterestImage(src, alt, origin))
+            # base image
+            orig = item.get("images", {}).get("orig")
+            if not orig:
+                continue
 
-        return images_data
+            # extract width and height from the original image metadata
+            try:
+                width = int(orig.get("width", 0))
+                height = int(orig.get("height", 0))
+            except (TypeError, ValueError):
+                continue
+
+            # skip images that are smaller than the minimum resolution
+            if width < min_width or height < min_height:
+                continue
+
+            # set the source URL and other attributes
+            src = orig.get("url")
+            if not src:
+                continue
+
+            alt = item.get("auto_alt_text", "")
+            origin = f"https://www.pinterest.com/pin/{item.get('id', '')}/"
+            is_stream = bool(item.get("should_open_in_stream", False))
+
+            # if the item is a stream, try to resolve the best video URL
+            if is_stream:
+                video_url = cls._get_best_video_url(item)
+                if not video_url:
+                    # if stream is expected but cannot resolve a video variant, skip
+                    continue
+                src = video_url
+
+            images.append(cls(src, alt, origin, is_stream=is_stream))
+
+        return images
+
+    @staticmethod
+    def _extract_video_list(data_raw: Dict[str, Any]) -> Dict[str, Dict]:
+        try:
+            video_list = data_raw["story_pin_data"]["pages"][0]["blocks"][0]["video"]["video_list"]
+        except (KeyError, IndexError, TypeError):
+            return {}
+        if not isinstance(video_list, dict):
+            return {}
+        return video_list  # mapping of arbitrary keys to video metadata
+
+    @staticmethod
+    def _choose_highest_resolution(video_list: Dict[str, Dict]) -> Optional[Dict[str, Any]]:
+        if not video_list:
+            return None
+
+        def resolution(entry: Dict[str, Any]) -> int:
+            return (entry.get("width") or 0) * (entry.get("height") or 0)
+
+        return max(video_list.values(), key=resolution)
+
+    @classmethod
+    def _get_best_video_url(cls, data_raw: Dict[str, Any]) -> Optional[str]:
+        video_variant = cls._choose_highest_resolution(cls._extract_video_list(data_raw))
+        if not video_variant:
+            return None
+        return video_variant.get("url")
 
     def __str__(self) -> str:
-        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin})"
+        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, is_stream: {self.is_stream})"

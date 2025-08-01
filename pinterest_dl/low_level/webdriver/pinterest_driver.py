@@ -99,7 +99,9 @@ class PinterestDriver:
                                 src = src.replace("/236x/", "/originals/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = PinterestImage(src, alt, href)
+                                    img_data = PinterestImage(
+                                        src, alt, href, is_stream=False
+                                    )  # TODO: support streams for webdriver
                                     imgs_data.append(img_data)
                                     pbar.update(1)
                                     if verbose:
