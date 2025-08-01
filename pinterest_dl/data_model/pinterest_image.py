@@ -11,7 +11,6 @@ class PinterestImage:
         src: str,
         alt: Optional[str],
         origin: Optional[str],
-        fallback_urls: Optional[str | List[str]] = None,
     ) -> None:
         """Pinterest Image data.
 
@@ -19,29 +18,18 @@ class PinterestImage:
             src (str): Image source url.
             alt (Optional[str]): Image alt text.
             origin (Optional[str]): Pinterest pin url.
-            fallback_urls (Optional[str  |  List[str]], optional): Fallback image urls. Defaults to None.
         """
         self.src = src
         self.alt = alt
         self.origin = origin
-        self.fallback_urls: List[str] = self._set_fallback(fallback_urls) if fallback_urls else []
         self.local_path: Optional[Path] = None
         self.local_size: Optional[Tuple[int, int]] = None
-
-    def _set_fallback(self, urls: str | List[str]) -> List[str]:
-        if isinstance(urls, str):
-            return [urls]
-        elif isinstance(urls, list):
-            return urls
-        else:
-            raise ValueError("Invalid fallback urls")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "src": self.src,
             "alt": self.alt,
             "origin": self.origin,
-            "fallback_urls": self.fallback_urls,
         }
 
     def set_local(self, path: str | Path) -> None:
@@ -75,7 +63,7 @@ class PinterestImage:
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "PinterestImage":
-        return PinterestImage(data["src"], data["alt"], data["origin"], data["fallback_urls"])
+        return PinterestImage(data["src"], data["alt"], data["origin"])
 
     @staticmethod
     def from_responses(response_data: list, resolution: Tuple[int, int]) -> List["PinterestImage"]:
@@ -102,4 +90,4 @@ class PinterestImage:
         return images_data
 
     def __str__(self) -> str:
-        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, fallback_urls: {self.fallback_urls})"
+        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin})"
