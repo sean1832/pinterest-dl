@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from pinterest_dl.low_level.api.exceptions import (
+from pinterest_dl.exceptions import (
     BoardIDException,
     BookmarkException,
     HttpResponseError,

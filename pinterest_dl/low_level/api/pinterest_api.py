@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import requests
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
-from pinterest_dl.low_level.api.exceptions import (
+from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
