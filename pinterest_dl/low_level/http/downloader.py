@@ -1,9 +1,7 @@
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, TypeVar, Union
-
-import requests
+from typing import Callable, Dict, Iterable, List, Optional, TypeVar
 
 from pinterest_dl.exceptions import DownloadError
 from pinterest_dl.low_level.hls import HlsProcessor
