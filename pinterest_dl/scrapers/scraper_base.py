@@ -23,7 +23,9 @@ class _ScraperBase:
             user_agent=USER_AGENT,
             timeout=10,
             max_retries=3,
-            progress_callback=TqdmProgressBarCallback(description="Downloading Streams"),
+            progress_callback=TqdmProgressBarCallback(
+                description="Downloading Streams", unit="seg"
+            ),
         )
 
         local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
