@@ -1,7 +1,12 @@
-import json
-import time  # noqa: F401
-from typing import List, NoReturn, Optional  # noqa: F401
+from typing import List, Union
 
+from pinterest_dl.low_level.api.exceptions import (
+    BoardIDException,
+    BookmarkException,
+    HttpResponseError,
+    PinCountException,
+    PinResponseError,
+)
 from pinterest_dl.low_level.ops.request_builder import RequestBuilder
 
 
@@ -10,23 +15,32 @@ class PinResponse:
         self.raw_response = raw_response
         self.request_url = RequestBuilder().url_decode(request_url)
 
-        self.resource_response: dict = self.raw_response.get("resource_response", None)
-        if self.resource_response is None:
-            # All pinterest responses should have a resource_response key regardless of success or failure
-            raise ValueError("resource_response is None. Invalid pinterest response.")
+        try:
+            self.resource_response: dict = self.raw_response["resource_response"]
+        except KeyError:
+            raise PinResponseError(
+                "Invalid response format: 'resource_response' key not found.", raw_response
+            )
 
         # validate network error
-        self.error_info = self.resource_response.get("error", None)
-        if self.error_info is not None:
+        try:
+            self.error_info = self.resource_response["error"]
             self._handle_failed_request_response()
+        except KeyError:
+            # no error info, proceed with normal response
+            self.error_info = {}
 
-        self.resource: dict = self.raw_response.get("resource", None)
-        if self.resource is None:
-            raise ValueError("resource is None.")
+        try:
+            self.resource: dict = self.raw_response["resource"]
+        except KeyError:
+            raise PinResponseError(
+                "Invalid response format: 'resource' key not found.", raw_response
+            )
 
-        self.data: Optional[dict | List[dict]] = self.resource_response.get("data", None)
-        if self.data is None:
-            raise ValueError("data is None.")
+        try:
+            self.data: Union[dict, List[dict]] = self.resource_response["data"]
+        except KeyError:
+            raise PinResponseError("Invalid response format: 'data' key not found.", raw_response)
 
         # endpoint name
         self.endpoint_name = self.resource_response.get("endpoint_name", None)
@@ -35,88 +49,63 @@ class PinResponse:
         try:
             return self.resource["options"]["bookmarks"]
         except KeyError:
-            raise KeyError("Failed to parse bookmarks from response")
+            raise BookmarkException("Failed to parse bookmarks from response", self.raw_response)
 
     def get_board_id(self) -> str:
-        try:
-            if self.data is None:
-                raise KeyError("Failed to parse board id from response")
-            if isinstance(self.data, list):
-                raise ValueError("Multiple boards found in response. Expected single board.")
+        data = self.data
+        if data is None:
+            raise BoardIDException("No data in response", self.raw_response)
 
-            board_id = self.data.get("id", None)
-            return board_id
-        except KeyError or ValueError:
-            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
-            raise KeyError("Failed to parse board id from response")
-        except Exception as e:
-            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
-            raise e
+        if not isinstance(data, dict):
+            raise BoardIDException(
+                "Expected a single board object, got list or other type", self.raw_response
+            )
+
+        try:
+            board_id = data["id"]
+        except KeyError:
+            raise BoardIDException("Missing 'id' field in response data", self.raw_response)
+
+        if not isinstance(board_id, str) or not board_id:
+            raise BoardIDException(f"Invalid board id: {board_id!r}", self.raw_response)
+
+        return board_id
 
     def get_pin_count(self) -> int:
-        try:
-            if self.data is None:
-                raise KeyError("Failed to parse board id from response")
-            if isinstance(self.data, list):
-                raise ValueError("Multiple boards found in response. Expected single board.")
+        data = self.data
+        if data is None:
+            raise PinCountException("No data in response", self.raw_response)
 
-            pin_count = self.data.get("pin_count", None)
-            return pin_count
-        except KeyError or ValueError:
-            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
-            raise KeyError("Failed to parse pin count from response")
-        except Exception as e:
-            # self.dump_at(f"failed_{self.endpoint_name}_{time.time()}.json")
-            raise e
+        if not isinstance(data, dict):
+            raise PinCountException(
+                f"Expected single board object, got {type(data).__name__}", self.raw_response
+            )
+
+        try:
+            pin_count = data["pin_count"]
+        except KeyError:
+            raise PinCountException("Missing 'pin_count' field in response", self.raw_response)
+
+        if not isinstance(pin_count, int):
+            raise PinCountException(
+                f"Invalid type for pin_count: expected int, got {type(pin_count).__name__}",
+                self.raw_response,
+            )
+
+        return pin_count
 
     def _handle_failed_request_response(self) -> None:
         self.http_status = self.error_info.get("http_status", None)
         self.code = self.error_info.get("code", None)
-        self.message: str = self.error_info.get("message", None)
+        self.message = self.error_info.get("message", None)
         self.status = self.error_info.get("status", None)
 
-        # # clean message for file name
-        # message_name = self.message.lower().replace(" ", "-").replace(".", "")
-        # dump_file = f"failure_{message_name}_{time.time()}.json"
-
-        # data = {
-        #     "error": self.error_info,
-        #     "request_url": self.request_url,
-        #     "response_raw": self.raw_response,
-        # }
-
-        # self._dump_data_at(dump_file, data)
-        raise ValueError(
-            f"Invalid response (http_status: {self.http_status}, message: {self.message})"
+        raise HttpResponseError(
+            self.message or "Unknown error",
+            status_code=self.http_status,
+            dump_data={
+                "error": self.error_info,
+                "request_url": self.request_url,
+                "response_raw": self.raw_response,
+            },
         )
-
-    # def _handle_parsing_error(self, field: str, error: Exception) -> NoReturn:
-    #     data = {
-    #         "error": {
-    #             "message": f"{str(error)}",
-    #             "field": field,
-    #         },
-    #         "request_url": self.request_url,
-    #         "response_raw": self.raw_response,
-    #     }
-    #     filename = f"failed_parsing-error_{field}_{time.time()}.json"
-    #     self._dump_data_at(filename, data)
-    #     raise AttributeError(
-    #         f"Failed to parse '{field}' in response. See dumped file for details at './{filename}'"
-    #     )
-
-    def _get_status(self) -> dict:
-        return {
-            "code": self.code,
-            "message": self.message,
-            "status": self.status,
-            "endpoint_name": self.endpoint_name,
-        }
-
-    def dump_at(self, path: str) -> None:
-        with open(path, "w") as file:
-            file.write(json.dumps(self.raw_response, indent=4))
-
-    def _dump_data_at(self, path: str, data: dict) -> None:
-        with open(path, "w") as file:
-            file.write(json.dumps(data, indent=4))
