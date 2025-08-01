@@ -55,7 +55,7 @@ class Browser:
             print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install(version="latest", platform="auto")
 
-        service = Service(exe_path)
+        service = Service(str(exe_path))
         chrome_options = webdriver.ChromeOptions()
 
         # Disable images
