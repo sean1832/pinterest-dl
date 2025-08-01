@@ -7,10 +7,10 @@ from tqdm import tqdm
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.data_model.pinterest_image import PinterestImage
-from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
-from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.api.bookmark_manager import BookmarkManager
+from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.http.request_builder import RequestBuilder
+from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
 

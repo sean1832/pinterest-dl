@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 from pinterest_dl.low_level.http import USER_AGENT, downloader, fetch
-from pinterest_dl.low_level.ops import io
+from pinterest_dl.utils import io
 
 
 class ChromeDriverInstaller:

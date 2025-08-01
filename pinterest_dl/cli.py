@@ -8,7 +8,7 @@ from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
-from pinterest_dl.low_level.ops import io
+from pinterest_dl.utils import io
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
