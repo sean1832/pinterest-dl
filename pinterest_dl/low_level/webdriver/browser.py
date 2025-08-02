@@ -8,7 +8,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from pinterest_dl.data_model.browser_version import BrowserVersion
 from pinterest_dl.low_level.webdriver.driver_installer import ChromeDriverInstaller
-from pinterest_dl.low_level.ops import io
+from pinterest_dl.utils import io
 
 
 class Browser:
@@ -55,7 +55,7 @@ class Browser:
             print(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install(version="latest", platform="auto")
 
-        service = Service(exe_path)
+        service = Service(str(exe_path))
         chrome_options = webdriver.ChromeOptions()
 
         # Disable images

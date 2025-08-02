@@ -8,7 +8,7 @@ from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_image import PinterestImage
-from pinterest_dl.low_level.ops import io
+from pinterest_dl.utils import io
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
@@ -72,6 +72,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
+    scrape_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     scrape_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
@@ -91,6 +92,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private boards.")
     search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
+    search_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     search_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
@@ -196,6 +198,7 @@ def main() -> None:
                             url,
                             args.output,
                             args.num,
+                            download_streams=args.video,
                             min_resolution=parse_resolution(args.resolution)
                             if args.resolution
                             else (0, 0),
@@ -234,6 +237,7 @@ def main() -> None:
                             query,
                             args.output,
                             args.num,
+                            download_streams=args.video,
                             min_resolution=parse_resolution(args.resolution)
                             if args.resolution
                             else (0, 0),
@@ -259,7 +263,7 @@ def main() -> None:
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = PinterestDL.download_images(images, output_dir, args.verbose)
+            downloaded_imgs = PinterestDL.download_images(images, output_dir)
 
             # post process
             pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)

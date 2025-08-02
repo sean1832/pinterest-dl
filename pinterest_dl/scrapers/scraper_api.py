@@ -7,10 +7,10 @@ from tqdm import tqdm
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.low_level.api.bookmark_manager import BookmarkManager
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
-from pinterest_dl.low_level.ops import io
-from pinterest_dl.low_level.ops.bookmark_manager import BookmarkManager
-from pinterest_dl.low_level.ops.request_builder import RequestBuilder
+from pinterest_dl.low_level.http.request_builder import RequestBuilder
+from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
 
@@ -111,6 +111,7 @@ class _ScraperAPI(_ScraperBase):
         url: str,
         output_dir: Optional[Union[str, Path]],
         num: int,
+        download_streams: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
@@ -122,6 +123,7 @@ class _ScraperAPI(_ScraperBase):
             url (str): Pinterest URL to scrape.
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
+            download_streams (bool): Whether to download video streams if available.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -134,35 +136,49 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.scrape(url, num, min_resolution, delay)
+        scraped_outputs = self.scrape(url, num, min_resolution, delay)
 
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        # Prepare for caching / console output
+        items_as_dict = [item.to_dict() for item in scraped_outputs]
 
         if not output_dir and not cache_path:
             # no output_dir and cache_path provided, print the scraped image data to console
             print("Scraped: ")
-            print(json.dumps(imgs_dict, indent=2))
+            print(json.dumps(items_as_dict, indent=2))
 
         if cache_path:
             output_path = Path(cache_path)
-            io.write_json(imgs_dict, output_path, indent=4)
+            io.write_json(items_as_dict, output_path, indent=4)
             print(f"Scraped data cached to {output_path}")
 
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        if download_streams:
+            # split streams vs images only if intend to download streams separately
+            streams: List[PinterestImage] = []
+            images: List[PinterestImage] = []
+            for item in scraped_outputs:
+                if item.video_stream:
+                    streams.append(item)
+                else:
+                    images.append(item)
 
-        valid_indices = []
+            downloaded_items = self.download_images(images, output_dir)
+            downloaded_vids = self.download_streams(streams, output_dir)
+            downloaded_items.extend(downloaded_vids)
+        else:
+            # ignore stream splitting; treat everything as image downloads; only download thumbnails.
+            downloaded_items = self.download_images(scraped_outputs, output_dir)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_items, [], self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def search(
         self,
@@ -236,6 +252,7 @@ class _ScraperAPI(_ScraperBase):
         query: str,
         output_dir: Optional[Union[str, Path]],
         num: int,
+        download_streams: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
@@ -247,6 +264,7 @@ class _ScraperAPI(_ScraperBase):
             url (str): Pinterest URL to scrape.
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
+            download_streams (bool): Whether to download video streams if available.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -260,34 +278,52 @@ class _ScraperAPI(_ScraperBase):
         Returns:
             Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
         """
-        scraped_imgs = self.search(query, num, min_resolution, delay)
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        scraped_outputs = self.search(query, num, min_resolution, delay)
+
+        # Prepare for caching / console output
+        items_as_dict = [item.to_dict() for item in scraped_outputs]
 
         if not output_dir:
-            # no output_dir provided, print the scraped image data to console
-            print("Scraped: ")
-            print(json.dumps(imgs_dict, indent=2))
+            print("Scraped:")
+            print(json.dumps(items_as_dict, indent=2))
 
         if cache_path:
             output_path = Path(cache_path)
-            io.write_json(imgs_dict, output_path, indent=4)
+            io.write_json(items_as_dict, output_path, indent=4)
             print(f"Scraped data cached to {output_path}")
 
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_items: List[PinterestImage] = []
 
-        valid_indices = []
+        if download_streams:
+            # split streams vs images only if intend to download streams separately
+            streams: List[PinterestImage] = []
+            images: List[PinterestImage] = []
+            for item in scraped_outputs:
+                if item.video_stream:
+                    streams.append(item)
+                else:
+                    images.append(item)
 
-        if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            downloaded_items = self.download_images(images, output_dir)
+            downloaded_vids = self.download_streams(streams, output_dir)
+            downloaded_items.extend(downloaded_vids)
+        else:
+            # ignore stream splitting; treat everything as image downloads; only download thumbnails.
+            downloaded_items = self.download_images(scraped_outputs, output_dir)
+
+        # Caption handling
+        if caption in ("txt", "json"):
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            # if metadata embedding needs some indices/selection, decide and supply them here explicitly
+            self.add_captions_to_meta(downloaded_items, [], self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def _scrape_pins(
         self,

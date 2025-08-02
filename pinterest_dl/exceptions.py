@@ -3,6 +3,14 @@ from pathlib import Path
 from typing import Optional
 
 
+class DownloadError(Exception):
+    """Exception raised for errors in the download process."""
+
+
+class HlsDownloadError(Exception):
+    """Exception raised for errors in the HLS download process."""
+
+
 class PinterestAPIError(Exception):
     """Base exception for Pinterest API errors."""
 

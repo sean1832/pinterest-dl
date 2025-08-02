@@ -4,14 +4,14 @@ from typing import List, Optional, Tuple
 import requests
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
-from pinterest_dl.low_level.api.exceptions import (
+from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
 )
 from pinterest_dl.low_level.api.endpoints import Endpoint
 from pinterest_dl.low_level.api.pinterest_response import PinResponse
-from pinterest_dl.low_level.ops.request_builder import RequestBuilder
+from pinterest_dl.low_level.http.request_builder import RequestBuilder
 
 
 class PinterestAPI:

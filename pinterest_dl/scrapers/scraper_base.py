@@ -5,7 +5,8 @@ from typing import List, Literal, Optional, Tuple, Union
 import tqdm
 
 from pinterest_dl.data_model.pinterest_image import PinterestImage
-from pinterest_dl.low_level.ops import downloader
+from pinterest_dl.low_level.http import USER_AGENT, downloader
+from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 
 
 class _ScraperBase:
@@ -13,29 +14,55 @@ class _ScraperBase:
         pass
 
     @staticmethod
+    def download_streams(
+        streams: List[PinterestImage],
+        output_dir: Union[str, Path],
+    ) -> List[PinterestImage]:
+        urls = [stream.video_stream.url for stream in streams if stream.video_stream]
+        stream_dl = downloader.StreamDownloader(
+            user_agent=USER_AGENT,
+            timeout=10,
+            max_retries=3,
+            progress_callback=TqdmProgressBarCallback(description="Downloading Streams"),
+        )
+
+        local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
+        # local_paths = []
+        # for url in urls:
+        #     print(f"Downloading stream from '{url}'")
+        #     local_path = stream_dl.download(url, Path(output_dir))
+        #     local_paths.append(local_path)
+
+        for stream, path in zip(streams, local_paths):
+            stream.set_local_path(path)
+
+        return streams
+
+    @staticmethod
     def download_images(
         images: List[PinterestImage],
         output_dir: Union[str, Path],
-        verbose: bool = False,
     ) -> List[PinterestImage]:
         """Download images from Pinterest using given URLs and fallbacks.
 
         Args:
             images (List[PinterestImage]): List of PinterestImage objects to download.
             output_dir (Union[str, Path]): Directory to store downloaded images.
-            verbose (bool): Enable verbose logging.
 
         Returns:
             List[PinterestImage]: List of PinterestImage objects with local paths set.
         """
         urls = [img.src for img in images]
-        fallback_urls = [img.fallback_urls for img in images]
-        local_paths = downloader.download_concurrent_with_fallback(
-            urls, Path(output_dir), verbose=verbose, fallback_urls=fallback_urls
+        blob_dl = downloader.BlobDownloader(
+            user_agent=USER_AGENT,
+            timeout=10,
+            max_retries=3,
+            progress_callback=TqdmProgressBarCallback(description="Downloading Images"),
         )
+        local_paths = blob_dl.download_concurrent(urls, Path(output_dir))
 
         for img, path in zip(images, local_paths):
-            img.set_local(path)
+            img.set_local_path(path)
 
         return images
 
@@ -80,7 +107,6 @@ class _ScraperBase:
             if verbose:
                 print(f"Caption saved for {img.local_path}: '{img.alt}'")
 
-
     @staticmethod
     def add_captions_to_meta(
         images: List[PinterestImage], indices: Optional[List[int]] = None, verbose: bool = False
@@ -98,9 +124,11 @@ class _ScraperBase:
             indices_list = indices
 
         for index in tqdm.tqdm(indices_list, desc="Captioning to metadata", disable=verbose):
-            img = None
+            img: Optional[PinterestImage] = None
             try:
                 img = images[index]
+                if img.video_stream:
+                    continue  # Skip streams for metadata captioning
                 if not img.local_path:
                     continue
                 if img.local_path.suffix == ".gif":

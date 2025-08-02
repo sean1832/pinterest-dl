@@ -5,9 +5,9 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.webdriver.browser import Browser
 from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestImage
+from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
 
@@ -150,7 +150,7 @@ class _ScraperWebdriver(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
 
         valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
