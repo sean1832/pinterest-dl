@@ -41,6 +41,8 @@ class PinterestImage:
 
     def set_local(self, path: str | Path) -> None:
         self.local_path = Path(path)
+        if self.is_stream:
+            return
         with Image.open(self.local_path) as img:
             self.local_resolution = img.size
 
