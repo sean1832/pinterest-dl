@@ -46,21 +46,4 @@ class HttpClient:
         resp = self.session.get(url, timeout=self.timeout, **kwargs)
         resp.raise_for_status()
         return resp
-
-    def iter_content(
-        self, url: str, chunk_size: int = 2048, decode_unicode=False
-    ) -> Iterable[bytes]:
-        """Sends a GET request and returns an iterator over the response content.
-
-        Args:
-            url (str): The URL to send the GET request to.
-            chunk_size (int, optional): Size of each chunk in bytes. Defaults to 2048.
-            decode_unicode (bool, optional): Whether to decode the content to unicode. Defaults to False.
-
-        Yields:
-            bytes: The response content in chunks.
-        """
-        resp = self.get(url, stream=True)
-        for chunk in resp.iter_content(chunk_size, decode_unicode):
-            if chunk:
-                yield chunk
+    
