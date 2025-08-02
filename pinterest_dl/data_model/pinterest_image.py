@@ -1,7 +1,17 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pyexiv2
+
+
+@dataclass
+class VideoStreamInfo:
+    """Data class to hold video stream information."""
+
+    url: str
+    resolution: Tuple[int, int]
+    duration: int
 
 
 class PinterestImage:
@@ -12,6 +22,7 @@ class PinterestImage:
         origin: Optional[str],
         resolution: Tuple[int, int],
         is_stream: bool,
+        video_stream: Optional[VideoStreamInfo] = None,
     ) -> None:
         """Pinterest Image data.
 
@@ -21,16 +32,18 @@ class PinterestImage:
             origin (Optional[str]): Pinterest pin url.
             resolution (Tuple[int, int]): Image resolution as (width, height).
             is_stream (bool): True if this is a video stream.
+            video_stream (Optional[VideoStreamInfo]): Optional video stream information, if available.
         """
         self.src = src
         self.alt = alt
         self.origin = origin
         self.is_stream = is_stream
         self.resolution = resolution
+        self.video_stream = video_stream
         self.local_path: Optional[Path] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        data = {
             "src": self.src,
             "alt": self.alt,
             "is_stream": self.is_stream,
@@ -40,6 +53,15 @@ class PinterestImage:
                 "y": self.resolution[1] if self.resolution else None,
             },
         }
+        if self.video_stream:
+            data["media_stream"] = {
+                "video": {
+                    "url": self.video_stream.url,
+                    "resolution": self.video_stream.resolution,
+                    "duration": self.video_stream.duration,
+                }
+            }
+        return data
 
     def set_local_path(self, path: str | Path) -> None:
         self.local_path = Path(path)
@@ -126,17 +148,32 @@ class PinterestImage:
 
             alt = item.get("auto_alt_text", "")
             origin = f"https://www.pinterest.com/pin/{item.get('id', '')}/"
+            
             is_stream = bool(item.get("should_open_in_stream", False))
-
             # if the item is a stream, try to resolve the best video URL
+            video_stream = None
             if is_stream:
-                video_url = cls._get_best_video_url(item)
-                if not video_url:
-                    # if stream is expected but cannot resolve a video variant, skip
+                stream_variant = cls._get_best_video_variant(item)
+                if not stream_variant:
                     continue
-                src = video_url
+                if not stream_variant.get("url", None):
+                    continue
+                video_stream = VideoStreamInfo(
+                    url=stream_variant["url"],
+                    resolution=(stream_variant.get("width", 0), stream_variant.get("height", 0)),
+                    duration=stream_variant.get("duration", 0),
+                )
 
-            images.append(cls(src, alt, origin, resolution=(width, height), is_stream=is_stream))
+            images.append(
+                cls(
+                    src,
+                    alt,
+                    origin,
+                    resolution=(width, height),
+                    is_stream=is_stream,
+                    video_stream=video_stream,
+                )
+            )
 
         return images
 
@@ -161,11 +198,11 @@ class PinterestImage:
         return max(video_list.values(), key=resolution)
 
     @classmethod
-    def _get_best_video_url(cls, data_raw: Dict[str, Any]) -> Optional[str]:
+    def _get_best_video_variant(cls, data_raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         video_variant = cls._choose_highest_resolution(cls._extract_video_list(data_raw))
         if not video_variant:
             return None
-        return video_variant.get("url")
+        return video_variant
 
     def __str__(self) -> str:
         return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, is_stream: {self.is_stream})"
