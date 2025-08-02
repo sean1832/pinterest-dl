@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pyexiv2
-from PIL import Image
 
 
 class PinterestImage:
@@ -11,6 +10,7 @@ class PinterestImage:
         src: str,
         alt: Optional[str],
         origin: Optional[str],
+        resolution: Tuple[int, int],
         is_stream: bool,
     ) -> None:
         """Pinterest Image data.
@@ -19,13 +19,15 @@ class PinterestImage:
             src (str): Image source url.
             alt (Optional[str]): Image alt text.
             origin (Optional[str]): Pinterest pin url.
+            resolution (Tuple[int, int]): Image resolution as (width, height).
+            is_stream (bool): True if this is a video stream.
         """
         self.src = src
         self.alt = alt
         self.origin = origin
         self.is_stream = is_stream
+        self.resolution = resolution
         self.local_path: Optional[Path] = None
-        self.local_resolution: Optional[Tuple[int, int]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -34,33 +36,23 @@ class PinterestImage:
             "is_stream": self.is_stream,
             "origin": self.origin,
             "resolution": {
-                "x": self.local_resolution[0] if self.local_resolution else None,
-                "y": self.local_resolution[1] if self.local_resolution else None,
+                "x": self.resolution[0] if self.resolution else None,
+                "y": self.resolution[1] if self.resolution else None,
             },
         }
 
-    def set_local(self, path: str | Path) -> None:
+    def set_local_path(self, path: str | Path) -> None:
         self.local_path = Path(path)
-        if self.is_stream:
-            return
-        with Image.open(self.local_path) as img:
-            self.local_resolution = img.size
 
     def prune_local(self, resolution: Tuple[int, int], verbose: bool = False) -> bool:
-        if not self.local_path or not self.local_resolution:
+        if not self.local_path or not self.resolution:
             if verbose:
                 print(f"Local path or size not set for {self.src}")
             return False
-        if (
-            self.local_resolution is not None
-            and resolution is not None
-            and self.local_resolution < resolution
-        ):
+        if self.resolution is not None and resolution is not None and self.resolution < resolution:
             self.local_path.unlink()
             if verbose:
-                print(
-                    f"Removed {self.local_path}, resolution: {self.local_resolution} < {resolution}"
-                )
+                print(f"Removed {self.local_path}, resolution: {self.resolution} < {resolution}")
             return True
         return False
 
@@ -79,13 +71,29 @@ class PinterestImage:
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "PinterestImage":
         return PinterestImage(
-            data["src"], data["alt"], data["origin"], data.get("is_stream", False)
+            data["src"],
+            data["alt"],
+            data["origin"],
+            (data["resolution"]["x"], data["resolution"]["y"]) if "resolution" in data else (0, 0),
+            data.get("is_stream", False),
         )
 
     @classmethod
     def from_responses(
         cls, response_data: List[Dict[str, Any]], min_resolution: Tuple[int, int]
     ) -> List["PinterestImage"]:
+        """Extract PinterestImage objects from response data.
+
+        Args:
+            response_data (List[Dict[str, Any]]): List of dictionaries containing image data.
+            min_resolution (Tuple[int, int]): Minimum resolution as (width, height) to filter images.
+
+        Raises:
+            ValueError: If no valid data is found.
+
+        Returns:
+            List[PinterestImage]: A list of PinterestImage objects.
+        """
         if not response_data:
             raise ValueError("No data found in response.")
         min_width, min_height = min_resolution
@@ -128,7 +136,7 @@ class PinterestImage:
                     continue
                 src = video_url
 
-            images.append(cls(src, alt, origin, is_stream=is_stream))
+            images.append(cls(src, alt, origin, resolution=(width, height), is_stream=is_stream))
 
         return images
 

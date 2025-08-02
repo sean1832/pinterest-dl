@@ -17,7 +17,7 @@ class _ScraperBase:
     def download_stream(
         streams: List[PinterestImage],
         output_dir: Union[str, Path],
-    ):
+    ) -> List[PinterestImage]:
         urls = [stream.src for stream in streams]
         stream_dl = downloader.StreamDownloader(
             user_agent=USER_AGENT,
@@ -29,7 +29,7 @@ class _ScraperBase:
         local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
 
         for stream, path in zip(streams, local_paths):
-            stream.set_local(path)
+            stream.set_local_path(path)
 
         return streams
 
@@ -57,7 +57,7 @@ class _ScraperBase:
         local_paths = blob_dl.download_concurrent(urls, Path(output_dir))
 
         for img, path in zip(images, local_paths):
-            img.set_local(path)
+            img.set_local_path(path)
 
         return images
 
