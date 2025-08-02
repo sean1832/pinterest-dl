@@ -100,7 +100,7 @@ class PinterestDriver:
                                 if src not in unique_results:
                                     unique_results.add(src)
                                     img_data = PinterestImage(
-                                        src, alt, href, is_stream=False
+                                        src, alt, href, resolution=(0,0) # resolution is not available in this context
                                     )  # TODO: support streams for webdriver
                                     imgs_data.append(img_data)
                                     pbar.update(1)
