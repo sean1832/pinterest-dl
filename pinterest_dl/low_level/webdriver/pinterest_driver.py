@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from tqdm import tqdm
 
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 
 
 class PinterestDriver:
@@ -65,9 +65,9 @@ class PinterestDriver:
         timeout: float = 3,
         verbose: bool = False,
         ensure_alt: bool = False,
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         unique_results = set()  # Use a set to store unique results
-        imgs_data: List[PinterestImage] = []  # Store image data
+        imgs_data: List[PinterestMedia] = []  # Store image data
         previous_divs = []
         tries = 0
         pbar = tqdm(total=num, desc="Scraping")
@@ -99,8 +99,14 @@ class PinterestDriver:
                                 src = src.replace("/236x/", "/originals/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = PinterestImage(
-                                        src, alt, href, resolution=(0,0) # resolution is not available in this context
+                                    img_data = PinterestMedia(
+                                        src,
+                                        alt,
+                                        href,
+                                        resolution=(
+                                            0,
+                                            0,
+                                        ),  # resolution is not available in this context
                                     )  # TODO: support streams for webdriver
                                     imgs_data.append(img_data)
                                     pbar.update(1)

@@ -14,7 +14,7 @@ class VideoStreamInfo:
     duration: int
 
 
-class PinterestImage:
+class PinterestMedia:
     def __init__(
         self,
         src: str,
@@ -87,8 +87,8 @@ class PinterestImage:
             img.modify_exif({"Exif.Image.XPSubject": subject})
 
     @staticmethod
-    def from_dict(data: Dict[str, Any]) -> "PinterestImage":
-        return PinterestImage(
+    def from_dict(data: Dict[str, Any]) -> "PinterestMedia":
+        return PinterestMedia(
             data["src"],
             data["alt"],
             data["origin"],
@@ -99,8 +99,8 @@ class PinterestImage:
     @classmethod
     def from_responses(
         cls, response_data: List[Dict[str, Any]], min_resolution: Tuple[int, int]
-    ) -> List["PinterestImage"]:
-        """Extract PinterestImage objects from response data.
+    ) -> List["PinterestMedia"]:
+        """Extract PinterestMedia objects from response data.
 
         Args:
             response_data (List[Dict[str, Any]]): List of dictionaries containing image data.
@@ -110,13 +110,13 @@ class PinterestImage:
             ValueError: If no valid data is found.
 
         Returns:
-            List[PinterestImage]: A list of PinterestImage objects.
+            List[PinterestMedia]: A list of PinterestMedia objects.
         """
         if not response_data:
             raise ValueError("No data found in response.")
         min_width, min_height = min_resolution
 
-        images: List["PinterestImage"] = []
+        images: List["PinterestMedia"] = []
         for item in response_data:
             if not isinstance(item, dict):
                 continue
@@ -200,4 +200,4 @@ class PinterestImage:
         return video_variant
 
     def __str__(self) -> str:
-        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, resolution: {self.resolution}, video_stream: {self.video_stream})"
+        return f"PinterestMedia(src: {self.src}, alt: {self.alt}, origin: {self.origin}, resolution: {self.resolution}, video_stream: {self.video_stream})"

@@ -4,7 +4,7 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.low_level.http import USER_AGENT, downloader
 from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 
@@ -15,9 +15,9 @@ class _ScraperBase:
 
     @staticmethod
     def download_streams(
-        streams: List[PinterestImage],
+        streams: List[PinterestMedia],
         output_dir: Union[str, Path],
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         urls = [stream.video_stream.url for stream in streams if stream.video_stream]
         stream_dl = downloader.StreamDownloader(
             user_agent=USER_AGENT,
@@ -40,17 +40,17 @@ class _ScraperBase:
 
     @staticmethod
     def download_images(
-        images: List[PinterestImage],
+        images: List[PinterestMedia],
         output_dir: Union[str, Path],
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         """Download images from Pinterest using given URLs and fallbacks.
 
         Args:
-            images (List[PinterestImage]): List of PinterestImage objects to download.
+            images (List[PinterestMedia]): List of PinterestMedia objects to download.
             output_dir (Union[str, Path]): Directory to store downloaded images.
 
         Returns:
-            List[PinterestImage]: List of PinterestImage objects with local paths set.
+            List[PinterestMedia]: List of PinterestMedia objects with local paths set.
         """
         urls = [img.src for img in images]
         blob_dl = downloader.BlobDownloader(
@@ -68,7 +68,7 @@ class _ScraperBase:
 
     @staticmethod
     def add_captions_to_file(
-        images: List[PinterestImage],
+        images: List[PinterestMedia],
         output_dir: Union[str, Path],
         extension: Literal["txt", "json"] = "txt",
         verbose: bool = False,
@@ -76,7 +76,7 @@ class _ScraperBase:
         """Add captions to downloaded images and save them to a file.
 
         Args:
-            images (List[PinterestImage]): List of PinterestImage objects to add captions to.
+            images (List[PinterestMedia]): List of PinterestMedia objects to add captions to.
             output_dir (Union[str, Path]): Directory to save image captions.
             extension (Literal["txt","json"]): File extension for the captions.
                 'txt' for alt text in separate files,
@@ -109,12 +109,12 @@ class _ScraperBase:
 
     @staticmethod
     def add_captions_to_meta(
-        images: List[PinterestImage], indices: Optional[List[int]] = None, verbose: bool = False
+        images: List[PinterestMedia], indices: Optional[List[int]] = None, verbose: bool = False
     ) -> None:
         """Add captions and origin information to downloaded images.
 
         Args:
-            images (List[PinterestImage]): List of PinterestImage objects to add captions to.
+            images (List[PinterestMedia]): List of PinterestMedia objects to add captions to.
             indices (List[int]): Specific indices to add captions for. Default is all images.
             verbose (bool): Enable verbose logging.
         """
@@ -124,7 +124,7 @@ class _ScraperBase:
             indices_list = indices
 
         for index in tqdm.tqdm(indices_list, desc="Captioning to metadata", disable=verbose):
-            img: Optional[PinterestImage] = None
+            img: Optional[PinterestMedia] = None
             try:
                 img = images[index]
                 if img.video_stream:
@@ -152,7 +152,7 @@ class _ScraperBase:
 
     @staticmethod
     def prune_images(
-        images: List[PinterestImage], min_resolution: Tuple[int, int], verbose: bool = False
+        images: List[PinterestMedia], min_resolution: Tuple[int, int], verbose: bool = False
     ) -> List[int]:
         """Prune images that do not meet minimum resolution requirements.
 

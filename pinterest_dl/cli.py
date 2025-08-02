@@ -7,7 +7,7 @@ from traceback import print_exc
 from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.utils import io
 
 
@@ -252,9 +252,9 @@ def main() -> None:
         elif args.cmd == "download":
             # prepare image url data
             img_datas = io.read_json(args.input)
-            images: List[PinterestImage] = []
+            images: List[PinterestMedia] = []
             for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-                img = PinterestImage.from_dict(img_data)
+                img = PinterestMedia.from_dict(img_data)
                 if args.ensure_cap:
                     if img.alt and img.alt.strip():
                         images.append(img)
