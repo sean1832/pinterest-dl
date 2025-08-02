@@ -141,7 +141,7 @@ class _ScraperAPI(_ScraperBase):
         imgs = []
         for item in scraped_outputs:
             imgs_dict.append(item.to_dict())
-            if item.is_stream:
+            if item.video_stream:
                 streams.append(item)
             else:
                 imgs.append(item)
@@ -276,7 +276,7 @@ class _ScraperAPI(_ScraperBase):
         imgs = []
         for item in scraped_outputs:
             imgs_dict.append(item.to_dict())
-            if item.is_stream:
+            if item.video_stream:
                 streams.append(item)
             else:
                 imgs.append(item)

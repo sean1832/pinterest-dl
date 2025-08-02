@@ -18,7 +18,7 @@ class _ScraperBase:
         streams: List[PinterestImage],
         output_dir: Union[str, Path],
     ) -> List[PinterestImage]:
-        urls = [stream.src for stream in streams]
+        urls = [stream.video_stream.url for stream in streams if stream.video_stream]
         stream_dl = downloader.StreamDownloader(
             user_agent=USER_AGENT,
             timeout=10,
@@ -127,7 +127,7 @@ class _ScraperBase:
             img: Optional[PinterestImage] = None
             try:
                 img = images[index]
-                if img.is_stream:
+                if img.video_stream:
                     continue  # Skip streams for metadata captioning
                 if not img.local_path:
                     continue

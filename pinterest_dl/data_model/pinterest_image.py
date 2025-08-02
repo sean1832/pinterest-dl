@@ -21,7 +21,6 @@ class PinterestImage:
         alt: Optional[str],
         origin: Optional[str],
         resolution: Tuple[int, int],
-        is_stream: bool,
         video_stream: Optional[VideoStreamInfo] = None,
     ) -> None:
         """Pinterest Image data.
@@ -31,13 +30,11 @@ class PinterestImage:
             alt (Optional[str]): Image alt text.
             origin (Optional[str]): Pinterest pin url.
             resolution (Tuple[int, int]): Image resolution as (width, height).
-            is_stream (bool): True if this is a video stream.
             video_stream (Optional[VideoStreamInfo]): Optional video stream information, if available.
         """
         self.src = src
         self.alt = alt
         self.origin = origin
-        self.is_stream = is_stream
         self.resolution = resolution
         self.video_stream = video_stream
         self.local_path: Optional[Path] = None
@@ -46,7 +43,6 @@ class PinterestImage:
         data = {
             "src": self.src,
             "alt": self.alt,
-            "is_stream": self.is_stream,
             "origin": self.origin,
             "resolution": {
                 "x": self.resolution[0] if self.resolution else None,
@@ -148,7 +144,7 @@ class PinterestImage:
 
             alt = item.get("auto_alt_text", "")
             origin = f"https://www.pinterest.com/pin/{item.get('id', '')}/"
-            
+
             is_stream = bool(item.get("should_open_in_stream", False))
             # if the item is a stream, try to resolve the best video URL
             video_stream = None
@@ -170,7 +166,6 @@ class PinterestImage:
                     alt,
                     origin,
                     resolution=(width, height),
-                    is_stream=is_stream,
                     video_stream=video_stream,
                 )
             )
@@ -205,4 +200,4 @@ class PinterestImage:
         return video_variant
 
     def __str__(self) -> str:
-        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, is_stream: {self.is_stream})"
+        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, resolution: {self.resolution}, video_stream: {self.video_stream})"
