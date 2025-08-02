@@ -90,6 +90,9 @@ class PinterestDriver:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
                         href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
+                        id = div.get_attribute("data-test-pin-id")
+                        if not id:
+                            continue
                         for image in images:
                             alt = image.get_attribute("alt")
                             if ensure_alt and (not alt or not alt.strip()):
@@ -100,6 +103,7 @@ class PinterestDriver:
                                 if src not in unique_results:
                                     unique_results.add(src)
                                     img_data = PinterestMedia(
+                                        int(id),
                                         src,
                                         alt,
                                         href,

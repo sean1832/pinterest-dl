@@ -17,6 +17,7 @@ class VideoStreamInfo:
 class PinterestMedia:
     def __init__(
         self,
+        id: int,
         src: str,
         alt: Optional[str],
         origin: Optional[str],
@@ -26,12 +27,14 @@ class PinterestMedia:
         """Pinterest Image data.
 
         Args:
+            id (int): Unique identifier for the media.
             src (str): Image source url.
             alt (Optional[str]): Image alt text.
             origin (Optional[str]): Pinterest pin url.
             resolution (Tuple[int, int]): Image resolution as (width, height).
             video_stream (Optional[VideoStreamInfo]): Optional video stream information, if available.
         """
+        self.id = id
         self.src = src
         self.alt = alt
         self.origin = origin
@@ -41,6 +44,7 @@ class PinterestMedia:
 
     def to_dict(self) -> Dict[str, Any]:
         data = {
+            "id": self.id,
             "src": self.src,
             "alt": self.alt,
             "origin": self.origin,
@@ -89,6 +93,7 @@ class PinterestMedia:
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "PinterestMedia":
         return PinterestMedia(
+            data["id"],
             data["src"],
             data["alt"],
             data["origin"],
@@ -141,9 +146,9 @@ class PinterestMedia:
             src = orig.get("url")
             if not src:
                 continue
-
+            id = int(item.get("id", 0))  # Use 'id' from the item, default to 0 if not present
             alt = item.get("auto_alt_text", "")
-            origin = f"https://www.pinterest.com/pin/{item.get('id', '')}/"
+            origin = f"https://www.pinterest.com/pin/{id}/"
 
             is_stream = bool(item.get("should_open_in_stream", False))
             # if the item is a stream, try to resolve the best video URL
@@ -162,6 +167,7 @@ class PinterestMedia:
 
             images.append(
                 cls(
+                    id,
                     src,
                     alt,
                     origin,
