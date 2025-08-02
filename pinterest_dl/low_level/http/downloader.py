@@ -128,9 +128,7 @@ class StreamDownloader:
             # build concat list and combine segments
             concat_list = temp_dir / "concat_list.txt"
             self.hls_processor.build_concat_list(segment_paths, concat_list)
-            output_ts = output_dir / "output.ts"
-            self.hls_processor.ffmpeg_concat(concat_list, output_ts)
-            self.hls_processor.remux_to_mp4(output_ts, video_path)
+            self.hls_processor.concat_and_remux(concat_list, video_path)
 
         return video_path
 

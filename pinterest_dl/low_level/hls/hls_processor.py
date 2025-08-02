@@ -203,41 +203,17 @@ class HlsProcessor:
             for p in segment_paths:
                 f.write(f"file '{p.as_posix()}'\n")
 
-    def ffmpeg_concat(self, concat_list: Path, output_ts: Path) -> None:
-        """Concatenate TS segments using ffmpeg.
+    def concat_and_remux(
+        self, concat_list: Path, output_mp4: Path, reencode_fallback: bool = True
+    ) -> None:
+        """Concatenate segments and remux to MP4 using ffmpeg in a single step. (use this for better performance)
+
         Args:
             concat_list (Path): Path to the file containing the list of segments.
-            output_ts (Path): Path to the output TS file.
-        Raises:
-            HlsDownloadError: If ffmpeg fails to concatenate segments.
-        """
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-loglevel",
-            "info",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            str(concat_list),
-            "-c",
-            "copy",
-            str(output_ts),
-        ]
-        self._run_cmd(cmd, "concat segments")
-
-    def remux_to_mp4(self, ts_path: Path, output_mp4: Path, reencode_fallback: bool = True) -> None:
-        """Remux TS to MP4 using ffmpeg.
-        Args:
-            ts_path (Path): Path to the input TS file.
             output_mp4 (Path): Path to the output MP4 file.
-            reencode_fallback (bool): Whether to re-encode if remuxing fails. Defaults to True.
-        Raises:
-            HlsDownloadError: If remuxing or re-encoding fails.
+            reencode_fallback (bool, optional): Whether to re-encode if remuxing fails. Defaults to True.
         """
-
+        # Try direct remux (concat into mp4)
         try:
             self._run_cmd(
                 [
@@ -245,25 +221,34 @@ class HlsProcessor:
                     "-y",
                     "-loglevel",
                     "info",
+                    "-f",
+                    "concat",
+                    "-safe",
+                    "0",
                     "-i",
-                    str(ts_path),
+                    str(concat_list),
                     "-c",
                     "copy",
                     str(output_mp4),
                 ],
-                "remux",
+                "concat and remux",
             )
         except HlsDownloadError:
             if not reencode_fallback:
                 raise
+            # Fallback: re-encode video/audio while concatenating
             self._run_cmd(
                 [
                     "ffmpeg",
                     "-y",
                     "-loglevel",
                     "info",
+                    "-f",
+                    "concat",
+                    "-safe",
+                    "0",
                     "-i",
-                    str(ts_path),
+                    str(concat_list),
                     "-c:v",
                     "libx264",
                     "-preset",
@@ -276,7 +261,7 @@ class HlsProcessor:
                     "128k",
                     str(output_mp4),
                 ],
-                "re-encode",
+                "concat and re-encode",
             )
 
     def _run_cmd(self, cmd: List[str], phase: str) -> None:
