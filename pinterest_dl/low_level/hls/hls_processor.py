@@ -45,6 +45,11 @@ class HlsProcessor:
         Returns:
             m3u8.M3U8: The parsed HLS playlist object.
         """
+        if not url.startswith("http"):
+            raise HlsDownloadError(f"HLS URL must start with http or https: '{url}'")
+        if not url.endswith(".m3u8"):
+            raise HlsDownloadError(f"HLS URL must end with .m3u8: '{url}'")
+
         return m3u8.load(url)
 
     def resolve_variant(self, playlist: m3u8.M3U8, base_uri: str) -> str:
