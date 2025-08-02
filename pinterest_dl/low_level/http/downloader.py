@@ -188,15 +188,9 @@ class BlobDownloader:
         Returns:
             Path: The path to the downloaded blob file.
         """
-        response = self.http_client.get(url, stream=True)
-        response.raise_for_status()
-
         filename = Path(url).name
         outfile = output_dir / filename
-
-        with open(outfile, "wb") as f:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                f.write(chunk)
+        self.http_client.download_blob(url, outfile, chunk_size=chunk_size)
 
         return outfile
 
