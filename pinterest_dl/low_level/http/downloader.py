@@ -96,8 +96,13 @@ class StreamDownloader:
         Returns:
             Path: The path to the downloaded MP4 video file.
         """
+        url_path = Path(url)
+        video_path = output_dir / f"{url_path.stem}.mp4"
         output_dir.mkdir(parents=True, exist_ok=True)
-        video_path = output_dir / f"{Path(url).stem}.mp4"
+        if url_path.suffix.lower() == ".mp4":
+            # if the URL is already an MP4 file, just download it directly
+            self.http_client.download_blob(url, video_path, chunk_size=2048)
+            return video_path
 
         # fetch and resolve playlist
         playlist = self.hls_processor.fetch_playlist(url)

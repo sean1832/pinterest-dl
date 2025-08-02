@@ -27,6 +27,11 @@ class _ScraperBase:
         )
 
         local_paths = stream_dl.download_concurrent(urls, Path(output_dir))
+        # local_paths = []
+        # for url in urls:
+        #     print(f"Downloading stream from '{url}'")
+        #     local_path = stream_dl.download(url, Path(output_dir))
+        #     local_paths.append(local_path)
 
         for stream, path in zip(streams, local_paths):
             stream.set_local_path(path)
