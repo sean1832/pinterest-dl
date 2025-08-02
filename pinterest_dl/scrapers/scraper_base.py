@@ -14,7 +14,7 @@ class _ScraperBase:
         pass
 
     @staticmethod
-    def download_stream(
+    def download_streams(
         streams: List[PinterestImage],
         output_dir: Union[str, Path],
     ) -> List[PinterestImage]:

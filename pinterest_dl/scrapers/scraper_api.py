@@ -160,7 +160,7 @@ class _ScraperAPI(_ScraperBase):
             return None
 
         downloaded_items = self.download_images(imgs, output_dir)
-        downloaded_vids = self.download_stream(streams, output_dir)
+        downloaded_vids = self.download_streams(streams, output_dir)
         downloaded_items.extend(downloaded_vids)
 
         valid_indices = []
@@ -295,7 +295,7 @@ class _ScraperAPI(_ScraperBase):
             return None
 
         downloaded_items = self.download_images(scraped_outputs, output_dir)
-        downloaded_vids = self.download_stream(streams, output_dir)
+        downloaded_vids = self.download_streams(streams, output_dir)
         downloaded_items.extend(downloaded_vids)
 
         valid_indices = []
