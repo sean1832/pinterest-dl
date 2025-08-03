@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 
+class InvalidBrowser(Exception):
+    """Exception raised when the browser is not supported or invalid."""
+
+
 class ExecutableNotFoundError(Exception):
     """Exception raised when a required binary is not found in the system PATH."""
 
