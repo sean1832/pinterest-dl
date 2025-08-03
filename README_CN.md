@@ -217,7 +217,7 @@ from pinterest_dl import PinterestDL
 images = PinterestDL.with_api(
     timeout=3,        # 请求超时（秒）
     verbose=False,    # 调试日志
-    ensure_cap=True,  # 确保每张图都有alt文本
+    ensure_alt=True,  # 确保每张图都有alt文本
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL
     output_dir="images/art",  # 保存目录

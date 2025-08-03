@@ -233,7 +233,7 @@ from pinterest_dl import PinterestDL
 images = PinterestDL.with_api(
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
-    ensure_cap=True,  # Ensure every image has alt text (default: False)
+    ensure_alt=True,  # Ensure every image has alt text (default: False)
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
@@ -256,7 +256,7 @@ from pinterest_dl import PinterestDL
 images = PinterestDL.with_api( 
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
-    ensure_cap=True,  # Ensure every image has alt text (default: False)
+    ensure_alt=True,  # Ensure every image has alt text (default: False)
 ).search_and_download(
     query="art",  # Pinterest search query
     output_dir="images/art",  # Directory to save downloaded images
