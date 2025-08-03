@@ -5,9 +5,9 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from pinterest_dl.low_level.ops import io
 from pinterest_dl.low_level.webdriver.browser import Browser
-from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestImage
+from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestMedia
+from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
 
@@ -89,7 +89,7 @@ class _ScraperWebdriver(_ScraperBase):
         time.sleep(wait_sec)
         return self
 
-    def scrape(self, url: str, num: int) -> List[PinterestImage]:
+    def scrape(self, url: str, num: int) -> List[PinterestMedia]:
         """Scrape pins from Pinterest using a WebDriver.
 
         Args:
@@ -97,7 +97,7 @@ class _ScraperWebdriver(_ScraperBase):
             num (int): Maximum number of images to scrape.
 
         Returns:
-            List[PinterestImage]: List of scraped PinterestImage objects.
+            List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
         try:
             pin_scraper = PinterestDriver(self.webdriver)
@@ -115,7 +115,7 @@ class _ScraperWebdriver(_ScraperBase):
         min_resolution: Optional[Tuple[int, int]] = None,
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
-    ) -> Optional[List[PinterestImage]]:
+    ) -> Optional[List[PinterestMedia]]:
         """Scrape pins from Pinterest and download images.
 
         Args:
@@ -130,7 +130,7 @@ class _ScraperWebdriver(_ScraperBase):
                 'metadata' embeds in image files,
                 'none' skips captions
         Returns:
-            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
+            Optional[List[PinterestMedia]]: List of downloaded PinterestMedia objects.
         """
         min_resolution = min_resolution or (0, 0)
         scraped_imgs = self.scrape(url, num)
@@ -150,18 +150,18 @@ class _ScraperWebdriver(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_imgs = self.download_media(scraped_imgs, output_dir, False)
 
-        valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
+        kept_imgs = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(kept_imgs, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return kept_imgs
 
     def login(self, email: str, password: str) -> PinterestDriver:
         """Login to Pinterest using the given credentials.

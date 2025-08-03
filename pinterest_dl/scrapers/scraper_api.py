@@ -6,11 +6,11 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 from tqdm import tqdm
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.low_level.api.bookmark_manager import BookmarkManager
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
-from pinterest_dl.low_level.ops import io
-from pinterest_dl.low_level.ops.bookmark_manager import BookmarkManager
-from pinterest_dl.low_level.ops.request_builder import RequestBuilder
+from pinterest_dl.low_level.http.request_builder import RequestBuilder
+from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
 
@@ -78,7 +78,7 @@ class _ScraperAPI(_ScraperBase):
 
     def scrape(
         self, url: str, num: int, min_resolution: Tuple[int, int] = (0, 0), delay: float = 0.2
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         """Scrape pins from Pinterest using the API.
 
         Args:
@@ -87,41 +87,43 @@ class _ScraperAPI(_ScraperBase):
             delay (float): Delay in seconds between requests.
 
         Returns:
-            List[PinterestImage]: List of scraped PinterestImage objects.
+            List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
 
-        images: List[PinterestImage] = []
+        medias: List[PinterestMedia] = []
         api = PinterestAPI(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(2)
 
         if api.is_pin:
-            images = self._scrape_pins(api, num, min_resolution, delay, bookmarks)
+            medias = self._scrape_pins(api, num, min_resolution, delay, bookmarks)
         else:
-            images = self._scrape_board(api, num, min_resolution, delay, bookmarks)
+            medias = self._scrape_board(api, num, min_resolution, delay, bookmarks)
 
         if self.verbose:
-            self._display_images(images)
+            self._display_images(medias)
 
         if self.verbose:
-            self._display_images(images)
-        return images[:num]
+            self._display_images(medias)
+        return medias[:num]
 
     def scrape_and_download(
         self,
         url: str,
         output_dir: Optional[Union[str, Path]],
         num: int,
+        download_streams: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
-    ) -> Optional[List[PinterestImage]]:
+    ) -> Optional[List[PinterestMedia]]:
         """Scrape pins from Pinterest and download images.
 
         Args:
             url (str): Pinterest URL to scrape.
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
+            download_streams (bool): Whether to download video streams if available.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -132,37 +134,36 @@ class _ScraperAPI(_ScraperBase):
             delay (float): Delay in seconds between requests.
 
         Returns:
-            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
+            Optional[List[PinterestMedia]]: List of downloaded PinterestMedia objects.
         """
-        scraped_imgs = self.scrape(url, num, min_resolution, delay)
+        scraped_outputs = self.scrape(url, num, min_resolution, delay)
 
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        # Prepare for caching / console output
+        items_as_dict = [item.to_dict() for item in scraped_outputs]
 
         if not output_dir and not cache_path:
             # no output_dir and cache_path provided, print the scraped image data to console
             print("Scraped: ")
-            print(json.dumps(imgs_dict, indent=2))
+            print(json.dumps(items_as_dict, indent=2))
 
         if cache_path:
             output_path = Path(cache_path)
-            io.write_json(imgs_dict, output_path, indent=4)
+            io.write_json(items_as_dict, output_path, indent=4)
             print(f"Scraped data cached to {output_path}")
 
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
-
-        valid_indices = []
+        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(downloaded_items, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def search(
         self,
@@ -171,7 +172,7 @@ class _ScraperAPI(_ScraperBase):
         min_resolution: Tuple[int, int],
         delay: float = 0.2,
         bookmarksCount: int = 1,
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         """Scrape pins from a Pinterest search query using the API.
 
         Args:
@@ -182,7 +183,7 @@ class _ScraperAPI(_ScraperBase):
             bookmarksCount (int, optional): Number of bookmarks to keep. Defaults to 1.
 
         Returns:
-            List[PinterestImage]: List of scraped PinterestImage objects.
+            List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
         images = []
         remains = num
@@ -236,17 +237,19 @@ class _ScraperAPI(_ScraperBase):
         query: str,
         output_dir: Optional[Union[str, Path]],
         num: int,
+        download_streams: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
-    ) -> Optional[List[PinterestImage]]:
+    ) -> Optional[List[PinterestMedia]]:
         """Search for images on Pinterest and download them.
 
         Args:
             url (str): Pinterest URL to scrape.
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
+            download_streams (bool): Whether to download video streams if available.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -258,36 +261,37 @@ class _ScraperAPI(_ScraperBase):
 
 
         Returns:
-            Optional[List[PinterestImage]]: List of downloaded PinterestImage objects.
+            Optional[List[PinterestMedia]]: List of downloaded PinterestMedia objects.
         """
-        scraped_imgs = self.search(query, num, min_resolution, delay)
-        imgs_dict = [img.to_dict() for img in scraped_imgs]
+        scraped_outputs = self.search(query, num, min_resolution, delay)
+
+        # Prepare for caching / console output
+        items_as_dict = [item.to_dict() for item in scraped_outputs]
 
         if not output_dir:
-            # no output_dir provided, print the scraped image data to console
-            print("Scraped: ")
-            print(json.dumps(imgs_dict, indent=2))
+            print("Scraped:")
+            print(json.dumps(items_as_dict, indent=2))
 
         if cache_path:
             output_path = Path(cache_path)
-            io.write_json(imgs_dict, output_path, indent=4)
+            io.write_json(items_as_dict, output_path, indent=4)
             print(f"Scraped data cached to {output_path}")
 
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir, self.verbose)
+        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
 
-        valid_indices = []
-
-        if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+        # Caption handling
+        if caption in ("txt", "json"):
+            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            # if metadata embedding needs some indices/selection, decide and supply them here explicitly
+            self.add_captions_to_meta(downloaded_items, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return downloaded_items
 
     def _scrape_pins(
         self,
@@ -296,9 +300,9 @@ class _ScraperAPI(_ScraperBase):
         min_resolution: Tuple[int, int],
         delay: float,
         bookmarks: BookmarkManager,
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         """Scrape pins from a specific Pinterest pin URL."""
-        images: List[PinterestImage] = []
+        images: List[PinterestMedia] = []
         remains = num
 
         with tqdm(total=num, desc="Scraping Pins", disable=self.verbose) as pbar:
@@ -341,9 +345,9 @@ class _ScraperAPI(_ScraperBase):
         min_resolution: Tuple[int, int],
         delay: float,
         bookmarks: BookmarkManager,
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         """Scrape pins from a Pinterest board URL."""
-        images: List[PinterestImage] = []
+        medias: List[PinterestMedia] = []
         board_info = api.get_board()
         board_id = board_info.get_board_id()
         pin_count = board_info.get_pin_count()
@@ -364,10 +368,10 @@ class _ScraperAPI(_ScraperBase):
                     print(f"\nError: {e}. Exiting scraping.")
                     break
 
-                old_count = len(images)
-                images.extend(current_img_batch)
-                images = self._unique_images(images)
-                new_images_count = len(images) - old_count
+                old_count = len(medias)
+                medias.extend(current_img_batch)
+                medias = self._unique_images(medias)
+                new_images_count = len(medias) - old_count
                 remains -= new_images_count
                 pbar.update(new_images_count)
 
@@ -382,7 +386,7 @@ class _ScraperAPI(_ScraperBase):
                         remains,
                         bookmarks,
                         min_resolution,
-                        images,
+                        medias,
                         pbar,
                         delay,
                         board_id,
@@ -391,7 +395,7 @@ class _ScraperAPI(_ScraperBase):
                     print(f"\nError: {e}. Exiting scraping.")
                     break
 
-        return images
+        return medias
 
     def _get_images(
         self,
@@ -400,7 +404,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
         board_id: Optional[str] = None,
-    ) -> Tuple[List[PinterestImage], BookmarkManager]:
+    ) -> Tuple[List[PinterestMedia], BookmarkManager]:
         """Fetch images based on API response, either from a pin or a board."""
         response = (
             api.get_related_images(batch_size, bookmarks.get())
@@ -411,7 +415,7 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", [])
 
-        img_batch = PinterestImage.from_responses(response_data, min_resolution)
+        img_batch = PinterestMedia.from_responses(response_data, min_resolution)
         if self.ensure_alt:
             batch_count = len(img_batch)
             img_batch = self._cull_no_alt(img_batch)
@@ -429,14 +433,14 @@ class _ScraperAPI(_ScraperBase):
         batch_size: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
-    ) -> Tuple[List[PinterestImage], BookmarkManager]:
+    ) -> Tuple[List[PinterestMedia], BookmarkManager]:
         """Fetch images based on API response, either from a pin or a board."""
         response = api.get_search(batch_size, bookmarks.get())
 
         # parse response data
         response_data = response.resource_response.get("data", {}).get("results", [])
 
-        img_batch = PinterestImage.from_responses(response_data, min_resolution)
+        img_batch = PinterestMedia.from_responses(response_data, min_resolution)
         if self.ensure_alt:
             batch_count = len(img_batch)
             img_batch = self._cull_no_alt(img_batch)
@@ -448,7 +452,7 @@ class _ScraperAPI(_ScraperBase):
         bookmarks.add_all(response.get_bookmarks())
         return img_batch, bookmarks
 
-    def _cull_no_alt(self, images: List[PinterestImage]) -> List[PinterestImage]:
+    def _cull_no_alt(self, images: List[PinterestMedia]) -> List[PinterestMedia]:
         """Remove images with no alt text."""
         return [img for img in images if img.alt and img.alt.strip() != ""]
 
@@ -459,7 +463,7 @@ class _ScraperAPI(_ScraperBase):
         remains: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
-        images: List[PinterestImage],
+        images: List[PinterestMedia],
         pbar: tqdm,
         delay: float,
     ) -> int:
@@ -468,7 +472,7 @@ class _ScraperAPI(_ScraperBase):
         while difference > 0 and remains > 0:
             next_response = api.get_search(difference, bookmarks.get())
             next_response_data = next_response.resource_response.get("data", {}).get("results", [])
-            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
+            additional_images = PinterestMedia.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
@@ -485,7 +489,7 @@ class _ScraperAPI(_ScraperBase):
         remains: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
-        images: List[PinterestImage],
+        images: List[PinterestMedia],
         pbar: tqdm,
         delay: float,
         board_id: Optional[str] = None,
@@ -499,7 +503,7 @@ class _ScraperAPI(_ScraperBase):
                 else api.get_board_feed(board_id, difference, bookmarks.get())
             )
             next_response_data = next_response.resource_response.get("data", [])
-            additional_images = PinterestImage.from_responses(next_response_data, min_resolution)
+            additional_images = PinterestMedia.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
@@ -509,8 +513,8 @@ class _ScraperAPI(_ScraperBase):
 
         return remains
 
-    def _unique_images(self, images: List[PinterestImage]) -> List[PinterestImage]:
-        """Return a list of unique PinterestImage objects based on their 'src' attribute."""
+    def _unique_images(self, images: List[PinterestMedia]) -> List[PinterestMedia]:
+        """Return a list of unique PinterestMedia objects based on their 'src' attribute."""
         unique = []
         seen = set()
         for img in images:
@@ -519,7 +523,7 @@ class _ScraperAPI(_ScraperBase):
                 seen.add(img.src)
         return unique
 
-    def _display_images(self, images: List[PinterestImage]):
+    def _display_images(self, images: List[PinterestMedia]):
         """Print scraped image URLs if verbosity is enabled."""
         for i, img in enumerate(images):
             print(f"({i + 1}) {img.src}")

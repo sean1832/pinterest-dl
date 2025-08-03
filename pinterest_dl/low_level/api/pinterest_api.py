@@ -1,13 +1,17 @@
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import requests
-from typing import Optional
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
+from pinterest_dl.exceptions import (
+    InvalidBoardUrlError,
+    InvalidPinterestUrlError,
+    InvalidSearchUrlError,
+)
 from pinterest_dl.low_level.api.endpoints import Endpoint
 from pinterest_dl.low_level.api.pinterest_response import PinResponse
-from pinterest_dl.low_level.ops.request_builder import RequestBuilder
+from pinterest_dl.low_level.http.request_builder import RequestBuilder
 
 
 class PinterestAPI:
@@ -33,16 +37,16 @@ class PinterestAPI:
         self.timeout = timeout
         try:
             self.pin_id = self._parse_pin_id(self.url)
-        except ValueError:
+        except InvalidPinterestUrlError:
             self.pin_id = None
             try:
                 self.query = self._parse_search_query(self.url)
-            except ValueError:
+            except InvalidSearchUrlError:
                 pass
 
         try:
             self.username, self.boardname = self._parse_board_url(self.url)
-        except ValueError:
+        except InvalidBoardUrlError:
             self.username = None
             self.boardname = None
 
@@ -53,7 +57,9 @@ class PinterestAPI:
         self._session = requests.Session()
         self._session.cookies.update(self.cookies)  # Update session cookies
         self._session.headers.update({"User-Agent": self.USER_AGENT})
-        self._session.headers.update({"x-pinterest-pws-handler": "www/pin/[id].js"}) # required since 2025-03-07. See https://github.com/sean1832/pinterest-dl/issues/30
+        self._session.headers.update(
+            {"x-pinterest-pws-handler": "www/pin/[id].js"}
+        )  # required since 2025-03-07. See https://github.com/sean1832/pinterest-dl/issues/30
         self.is_pin = bool(self.pin_id)
 
     def get_related_images(self, num: int, bookmark: List[str]) -> PinResponse:
@@ -215,7 +221,7 @@ class PinterestAPI:
     def _parse_pin_id(url: str) -> str:
         result = re.search(r"pin/(\d+)/", url)
         if not result:
-            raise ValueError(f"Invalid Pinterest URL: {url}")
+            raise InvalidPinterestUrlError(f"Invalid Pinterest URL: {url}")
         return result.group(1)
 
     @staticmethod
@@ -223,7 +229,7 @@ class PinterestAPI:
         # /search/pins/?q={query}%26rs=typed
         result = re.search(r"/search/pins/\?q=([A-Za-z0-9%]+)&rs=typed", url)
         if not result:
-            raise ValueError(f"Invalid Pinterest search URL: {url}")
+            raise InvalidSearchUrlError(f"Invalid Pinterest search URL: {url}")
         query = result.group(1)
         return RequestBuilder.url_decode(query)
 
@@ -239,5 +245,5 @@ class PinterestAPI:
         """
         result = re.search(r"https://www.pinterest.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?", url)
         if not result:
-            raise ValueError(f"Invalid Pinterest board URL: {url}")
+            raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
         return result.group(1), result.group(2)

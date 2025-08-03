@@ -10,17 +10,13 @@ readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "sean1832", email = "dev@zekezhang.com" }]
 requires-python = ">=3.10"
-keywords = ["pinterest", "image downloader", "selenium", "web scraping"]
+keywords = ["pinterest", "image downloader", "web scraping"]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Environment :: Console",
-    "Operating System :: Microsoft :: Windows",
 ]
 dependencies = [
     "selenium>=4.26.1",
@@ -29,10 +25,13 @@ dependencies = [
     "pyexiv2",
     "requests",
     "deprecated",
+    "m3u8",
+    "cryptography"
 ]
 
 [project.scripts]
 pinterest-dl = "pinterest_dl.cli:main"
+pin-dl = "pinterest_dl.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/sean1832/pinterest-dl"
