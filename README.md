@@ -8,6 +8,8 @@
 
 
 **English | [中文](README_CN.md)**
+
+
 This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and [Selenium](https://selenium.dev) for automation, it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
 
 It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python-api) for programmatic access. The tool supports scraping medias from public and private boards and pins using browser cookies. It also allows users to save scraped URLs to a JSON file for future access.

@@ -8,6 +8,7 @@
 
 **[English](README.md) | 中文**
 
+
 本工具库用于从 [Pinterest](https://pinterest.com) 抓取和下载媒体内容（包括图片和视频流）。通过 [Selenium](https://selenium.dev) 和逆向工程的 Pinterest API 实现自动化，支持从指定 Pinterest URL 提取图片并保存到指定目录。
 
 提供 [命令行工具](#-命令行使用) 直接使用，也支持 [Python API](#️-python-api) 编程调用。支持通过浏览器 cookies 获取私密画板和图钉中的媒体内容，并可将抓取的 URL 保存为 JSON 文件供后续使用。
