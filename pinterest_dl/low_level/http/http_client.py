@@ -68,7 +68,7 @@ class HttpClient:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file.write(chunk)
 
-    def download_stream(self, url: str, output_path: Union[str, Path]) -> None:
+    def download_streams(self, url: str, output_path: Union[str, Path]) -> None:
         """Downloads a stream from the specified URL and saves it to the output path.
 
         Args:

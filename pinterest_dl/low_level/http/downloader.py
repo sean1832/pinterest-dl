@@ -1,4 +1,3 @@
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, TypeVar
@@ -86,14 +85,14 @@ class PinterestMediaDownloader:
         self.progress_callback = progress_callback
 
     def download(
-        self, pin_media: PinterestMedia, output_dir: Path, download_stream: bool = False
+        self, pin_media: PinterestMedia, output_dir: Path, download_streams: bool = False
     ) -> Path:
         """Download a media file (video stream or image) to the given directory.
 
         Args:
             pin_media (PinterestMedia): Media descriptor.
             output_dir (Path): Destination directory.
-            download_stream (bool): If True and a video stream exists, prefer that over the image.
+            download_streams (bool): If True and a video stream exists, prefer that over the image.
 
         Returns:
             Path: Path to the downloaded file.
@@ -101,7 +100,7 @@ class PinterestMediaDownloader:
         output_dir.mkdir(parents=True, exist_ok=True)
         media_base = output_dir / f"{pin_media.id}"
 
-        if download_stream and pin_media.video_stream:
+        if download_streams and pin_media.video_stream:
             stream_url = pin_media.video_stream.url
             target_path = media_base.with_suffix(".mp4")
 
@@ -110,7 +109,7 @@ class PinterestMediaDownloader:
                 self.http_client.download_blob(stream_url, target_path, chunk_size=2048)
             else:
                 # HLS stream: download and remux to MP4
-                self.http_client.download_stream(stream_url, target_path)
+                self.http_client.download_streams(stream_url, target_path)
             return target_path
 
         # Fallback to image
@@ -121,11 +120,12 @@ class PinterestMediaDownloader:
         image_path = media_base.with_suffix(ext)
         self.http_client.download_blob(image_url, image_path, chunk_size=2048)
         return image_path
-    
-    def download_concurrent(self,
+
+    def download_concurrent(
+        self,
         media_list: List[PinterestMedia],
         output_dir: Path,
-        download_stream: bool = False,
+        download_streams: bool = False,
         max_workers: int = 8,
         fail_fast: bool = False,
     ) -> List[Path]:
@@ -134,7 +134,7 @@ class PinterestMediaDownloader:
         Args:
             media_list (List[PinterestMedia]): List of PinterestMedia objects to download.
             output_dir (Path): Directory to save downloaded media.
-            download_stream (bool): If True, prefer video streams over images.
+            download_streams (bool): If True, prefer video streams over images.
             max_workers (int): Maximum number of worker threads.
             fail_fast (bool): If True, stop on first download failure.
 
@@ -143,7 +143,7 @@ class PinterestMediaDownloader:
         """
 
         def worker(media: PinterestMedia, outdir: Path) -> Path:
-            return self.download(media, outdir, download_stream)
+            return self.download(media, outdir, download_streams)
 
         stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
         return stream_coordinator.run(

@@ -18,14 +18,14 @@ class _ScraperBase:
     def download_media(
         media: List[PinterestMedia],
         output_dir: Union[str, Path],
-        download_stream: bool,
+        download_streams: bool,
     ) -> List[PinterestMedia]:
         """Download media from Pinterest using given URLs and fallbacks.
 
         Args:
             media (List[PinterestMedia]): List of PinterestMedia objects to download.
             output_dir (Union[str, Path]): Directory to store downloaded media.
-            download_stream (bool): Whether to download video streams.
+            download_streams (bool): Whether to download video streams.
 
         Returns:
             List[PinterestMedia]: List of PinterestMedia objects with local paths set.
@@ -41,7 +41,7 @@ class _ScraperBase:
             progress_callback=TqdmProgressBarCallback(description="Downloading Media"),
         )
 
-        local_paths = dl.download_concurrent(media, output_dir, download_stream)
+        local_paths = dl.download_concurrent(media, output_dir, download_streams)
 
         for item, path in zip(media, local_paths):
             item.set_local_path(path)
