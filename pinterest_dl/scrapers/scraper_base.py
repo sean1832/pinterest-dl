@@ -5,8 +5,9 @@ from typing import List, Literal, Optional, Tuple, Union
 import tqdm
 
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
-from pinterest_dl.exceptions import UnsupportedMediaTypeError
+from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
 from pinterest_dl.low_level.http import USER_AGENT, downloader
+from pinterest_dl.utils import ensure_executable
 from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 
 
@@ -40,6 +41,14 @@ class _ScraperBase:
             max_retries=3,
             progress_callback=TqdmProgressBarCallback(description="Downloading Media"),
         )
+        if download_streams:
+            try:
+                ensure_executable.ensure_executable("ffmpeg")
+            except ExecutableNotFoundError as e:
+                print(
+                    f"Warning: {e}. Video streams will not be downloaded, falling back to images."
+                )
+                download_streams = False
 
         local_paths = dl.download_concurrent(media, output_dir, download_streams)
 
