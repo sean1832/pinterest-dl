@@ -13,3 +13,5 @@ cookies.json
 test_output/
 .examples/
 *.json
+
+test.py
