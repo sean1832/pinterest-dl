@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 
+class UnsupportedMediaTypeError(Exception):
+    """Exception raised when the media type is not supported."""
+
+
 class DownloadError(Exception):
     """Exception raised for errors in the download process."""
 

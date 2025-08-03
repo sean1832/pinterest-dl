@@ -150,18 +150,18 @@ class _ScraperWebdriver(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_images(scraped_imgs, output_dir)
+        downloaded_imgs = self.download_media(scraped_imgs, output_dir, False)
 
-        valid_indices = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
+        kept_imgs = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_imgs, output_dir, caption, self.verbose)
+            self.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_imgs, valid_indices, self.verbose)
+            self.add_captions_to_meta(kept_imgs, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
-        return downloaded_imgs
+        return kept_imgs
 
     def login(self, email: str, password: str) -> PinterestDriver:
         """Login to Pinterest using the given credentials.

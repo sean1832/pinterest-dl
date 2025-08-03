@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pyexiv2
+from PIL import Image
+
+from pinterest_dl.exceptions import UnsupportedMediaTypeError
 
 
 @dataclass
@@ -65,6 +68,25 @@ class PinterestMedia:
 
     def set_local_path(self, path: str | Path) -> None:
         self.local_path = Path(path)
+
+    def set_local_resolution(self, path: str | Path) -> None:
+        """Set the local resolution of the media.
+
+        Args:
+            path (str | Path): Local file path to the media.
+        """
+        if Path(path).suffix.lower() not in {".mp4", ".mkv", ".avi", ".mov"}:
+            return None  # If not a video, skip resolution setting
+        if Path(path).suffix.lower() not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+            raise UnsupportedMediaTypeError(
+                f"Unsupported image format for {path}. Supported formats: jpg, jpeg, png, gif, webp."
+            )
+        if not self.local_path:
+            self.local_path = Path(path)
+        if not self.local_path.exists():
+            raise FileNotFoundError(f"Local path {self.local_path} does not exist.")
+        with Image.open(self.local_path) as img:
+            self.resolution = (img.width, img.height)
 
     def prune_local(self, resolution: Tuple[int, int], verbose: bool = False) -> bool:
         if not self.local_path or not self.resolution:

@@ -154,27 +154,12 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        if download_streams:
-            # split streams vs images only if intend to download streams separately
-            streams: List[PinterestMedia] = []
-            images: List[PinterestMedia] = []
-            for item in scraped_outputs:
-                if item.video_stream:
-                    streams.append(item)
-                else:
-                    images.append(item)
-
-            downloaded_items = self.download_images(images, output_dir)
-            downloaded_vids = self.download_streams(streams, output_dir)
-            downloaded_items.extend(downloaded_vids)
-        else:
-            # ignore stream splitting; treat everything as image downloads; only download thumbnails.
-            downloaded_items = self.download_images(scraped_outputs, output_dir)
+        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
 
         if caption == "txt" or caption == "json":
             self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_items, [], self.verbose)
+            self.add_captions_to_meta(downloaded_items, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
@@ -295,31 +280,14 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_items: List[PinterestMedia] = []
-
-        if download_streams:
-            # split streams vs images only if intend to download streams separately
-            streams: List[PinterestMedia] = []
-            images: List[PinterestMedia] = []
-            for item in scraped_outputs:
-                if item.video_stream:
-                    streams.append(item)
-                else:
-                    images.append(item)
-
-            downloaded_items = self.download_images(images, output_dir)
-            downloaded_vids = self.download_streams(streams, output_dir)
-            downloaded_items.extend(downloaded_vids)
-        else:
-            # ignore stream splitting; treat everything as image downloads; only download thumbnails.
-            downloaded_items = self.download_images(scraped_outputs, output_dir)
+        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
 
         # Caption handling
         if caption in ("txt", "json"):
             self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
         elif caption == "metadata":
             # if metadata embedding needs some indices/selection, decide and supply them here explicitly
-            self.add_captions_to_meta(downloaded_items, [], self.verbose)
+            self.add_captions_to_meta(downloaded_items, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 

@@ -1,8 +1,11 @@
+import tempfile
 from pathlib import Path
-from typing import Union
+from typing import Iterable, List, Union
 
 import requests
 import requests.adapters
+
+from pinterest_dl.low_level.hls.hls_processor import HlsProcessor
 
 
 class HttpClient:
@@ -33,6 +36,7 @@ class HttpClient:
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
         self.timeout = timeout
+        self.hls_processor = HlsProcessor(self.session, user_agent)
 
     def get(self, url: str, **kwargs) -> requests.Response:
         """Sends a GET request to the specified URL.
@@ -63,3 +67,36 @@ class HttpClient:
             with open(output_path, "wb") as file:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file.write(chunk)
+
+    def download_stream(self, url: str, output_path: Union[str, Path]) -> None:
+        """Downloads a stream from the specified URL and saves it to the output path.
+
+        Args:
+            url (str): The URL to download the stream from.
+            output_path (Union[str, Path]): The file path where the stream will be saved.
+        """
+        # fetch and resolve playlist
+        playlist = self.hls_processor.fetch_playlist(url)
+        base_uri = playlist.base_uri or url.rsplit("/", 1)[0] + "/"
+        if playlist.is_variant:
+            media_url = self.hls_processor.resolve_variant(playlist, base_uri)
+            playlist = self.hls_processor.fetch_playlist(media_url)
+            base_uri = playlist.base_uri or media_url.rsplit("/", 1)[0] + "/"
+
+        # enumerate segments
+        segments = self.hls_processor.enumerate_segments(playlist, base_uri)
+        with tempfile.TemporaryDirectory() as td:
+            temp_dir = Path(td)
+            segment_paths: List[Path] = []
+            iterator: Iterable = enumerate(segments)
+            for index, segment in iterator:
+                raw = self.hls_processor.download_segment(segment.uri)
+                data = self.hls_processor.decrypt(segment, raw)
+                segment_path = temp_dir / f"segment_{index:05d}.ts"
+                self.hls_processor.write_segment_file(segment_path, data)
+                segment_paths.append(segment_path)
+
+            # build concat list and combine segments
+            concat_list = temp_dir / "concat_list.txt"
+            self.hls_processor.build_concat_list(segment_paths, concat_list)
+            self.hls_processor.concat_and_remux(concat_list, Path(output_path))
