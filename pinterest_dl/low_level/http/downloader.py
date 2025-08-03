@@ -63,7 +63,7 @@ class _ConcurrentCoordinator:
                     self.report(done, total)
 
         if errors:
-            summary = "\n".join(f"{url}: {str(e)}" for url, e in errors.items())
+            summary = "\n".join(f"{str(e)}" for e in errors.values())
             raise DownloadError(f"Errors occurred during concurrent run:\n{summary}")
 
         # type: ignore  # we've ensured no None if no exception
