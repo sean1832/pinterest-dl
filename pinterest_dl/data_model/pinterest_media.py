@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pyexiv2
+from PIL import Image
+
+from pinterest_dl.exceptions import UnsupportedMediaTypeError
 
 
 @dataclass
@@ -14,9 +17,10 @@ class VideoStreamInfo:
     duration: int
 
 
-class PinterestImage:
+class PinterestMedia:
     def __init__(
         self,
+        id: int,
         src: str,
         alt: Optional[str],
         origin: Optional[str],
@@ -26,12 +30,14 @@ class PinterestImage:
         """Pinterest Image data.
 
         Args:
+            id (int): Unique identifier for the media.
             src (str): Image source url.
             alt (Optional[str]): Image alt text.
             origin (Optional[str]): Pinterest pin url.
             resolution (Tuple[int, int]): Image resolution as (width, height).
             video_stream (Optional[VideoStreamInfo]): Optional video stream information, if available.
         """
+        self.id = id
         self.src = src
         self.alt = alt
         self.origin = origin
@@ -41,6 +47,7 @@ class PinterestImage:
 
     def to_dict(self) -> Dict[str, Any]:
         data = {
+            "id": self.id,
             "src": self.src,
             "alt": self.alt,
             "origin": self.origin,
@@ -61,6 +68,25 @@ class PinterestImage:
 
     def set_local_path(self, path: str | Path) -> None:
         self.local_path = Path(path)
+
+    def set_local_resolution(self, path: str | Path) -> None:
+        """Set the local resolution of the media.
+
+        Args:
+            path (str | Path): Local file path to the media.
+        """
+        if Path(path).suffix.lower() not in {".mp4", ".mkv", ".avi", ".mov"}:
+            return None  # If not a video, skip resolution setting
+        if Path(path).suffix.lower() not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+            raise UnsupportedMediaTypeError(
+                f"Unsupported image format for {path}. Supported formats: jpg, jpeg, png, gif, webp."
+            )
+        if not self.local_path:
+            self.local_path = Path(path)
+        if not self.local_path.exists():
+            raise FileNotFoundError(f"Local path {self.local_path} does not exist.")
+        with Image.open(self.local_path) as img:
+            self.resolution = (img.width, img.height)
 
     def prune_local(self, resolution: Tuple[int, int], verbose: bool = False) -> bool:
         if not self.local_path or not self.resolution:
@@ -87,8 +113,9 @@ class PinterestImage:
             img.modify_exif({"Exif.Image.XPSubject": subject})
 
     @staticmethod
-    def from_dict(data: Dict[str, Any]) -> "PinterestImage":
-        return PinterestImage(
+    def from_dict(data: Dict[str, Any]) -> "PinterestMedia":
+        return PinterestMedia(
+            data["id"],
             data["src"],
             data["alt"],
             data["origin"],
@@ -99,8 +126,8 @@ class PinterestImage:
     @classmethod
     def from_responses(
         cls, response_data: List[Dict[str, Any]], min_resolution: Tuple[int, int]
-    ) -> List["PinterestImage"]:
-        """Extract PinterestImage objects from response data.
+    ) -> List["PinterestMedia"]:
+        """Extract PinterestMedia objects from response data.
 
         Args:
             response_data (List[Dict[str, Any]]): List of dictionaries containing image data.
@@ -110,13 +137,13 @@ class PinterestImage:
             ValueError: If no valid data is found.
 
         Returns:
-            List[PinterestImage]: A list of PinterestImage objects.
+            List[PinterestMedia]: A list of PinterestMedia objects.
         """
         if not response_data:
             raise ValueError("No data found in response.")
         min_width, min_height = min_resolution
 
-        images: List["PinterestImage"] = []
+        images: List["PinterestMedia"] = []
         for item in response_data:
             if not isinstance(item, dict):
                 continue
@@ -141,9 +168,9 @@ class PinterestImage:
             src = orig.get("url")
             if not src:
                 continue
-
+            id = int(item.get("id", 0))  # Use 'id' from the item, default to 0 if not present
             alt = item.get("auto_alt_text", "")
-            origin = f"https://www.pinterest.com/pin/{item.get('id', '')}/"
+            origin = f"https://www.pinterest.com/pin/{id}/"
 
             is_stream = bool(item.get("should_open_in_stream", False))
             # if the item is a stream, try to resolve the best video URL
@@ -162,6 +189,7 @@ class PinterestImage:
 
             images.append(
                 cls(
+                    id,
                     src,
                     alt,
                     origin,
@@ -200,4 +228,4 @@ class PinterestImage:
         return video_variant
 
     def __str__(self) -> str:
-        return f"PinterestImage(src: {self.src}, alt: {self.alt}, origin: {self.origin}, resolution: {self.resolution}, video_stream: {self.video_stream})"
+        return f"PinterestMedia(src: {self.src}, alt: {self.alt}, origin: {self.origin}, resolution: {self.resolution}, video_stream: {self.video_stream})"

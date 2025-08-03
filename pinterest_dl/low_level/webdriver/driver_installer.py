@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from pinterest_dl.low_level.http import USER_AGENT, downloader, fetch
+from pinterest_dl.low_level.http import USER_AGENT, fetch, http_client
 from pinterest_dl.utils import io
 
 
@@ -125,19 +125,19 @@ class ChromeDriverInstaller:
         Path(self.install_dir).mkdir(parents=True, exist_ok=True)
 
         url = f"https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform}/chromedriver-{platform}.zip"
+        zip_path = self.install_dir / Path(url).name
         if verbose:
             print(f"Downloading Chrome driver from {url}")
-        blob_dl = downloader.BlobDownloader(
+        blob_dl = http_client.HttpClient(
             user_agent=USER_AGENT,
             timeout=10,
             max_retries=3,
-            progress_callback=None,
         )
-        zip_file = blob_dl.download(url, self.install_dir)
-        io.unzip(zip_file, self.install_dir, "chromedriver.exe", verbose=verbose)
+        blob_dl.download_blob(url, zip_path)
+        io.unzip(zip_path, self.install_dir, "chromedriver.exe", verbose=verbose)
         io.write_text(version, f"{str(self.install_dir)}/CHROMEDRIVER_VERSION")
         print("Chrome driver installed.")
 
-        os.unlink(zip_file)
+        os.unlink(zip_path)
         if verbose:
             print("Clean up zip file.")

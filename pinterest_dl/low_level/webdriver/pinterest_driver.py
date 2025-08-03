@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from tqdm import tqdm
 
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 
 
 class PinterestDriver:
@@ -65,9 +65,9 @@ class PinterestDriver:
         timeout: float = 3,
         verbose: bool = False,
         ensure_alt: bool = False,
-    ) -> List[PinterestImage]:
+    ) -> List[PinterestMedia]:
         unique_results = set()  # Use a set to store unique results
-        imgs_data: List[PinterestImage] = []  # Store image data
+        imgs_data: List[PinterestMedia] = []  # Store image data
         previous_divs = []
         tries = 0
         pbar = tqdm(total=num, desc="Scraping")
@@ -90,6 +90,9 @@ class PinterestDriver:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
                         href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
+                        id = div.get_attribute("data-test-pin-id")
+                        if not id:
+                            continue
                         for image in images:
                             alt = image.get_attribute("alt")
                             if ensure_alt and (not alt or not alt.strip()):
@@ -99,8 +102,15 @@ class PinterestDriver:
                                 src = src.replace("/236x/", "/originals/")
                                 if src not in unique_results:
                                     unique_results.add(src)
-                                    img_data = PinterestImage(
-                                        src, alt, href, is_stream=False
+                                    img_data = PinterestMedia(
+                                        int(id),
+                                        src,
+                                        alt,
+                                        href,
+                                        resolution=(
+                                            0,
+                                            0,
+                                        ),  # resolution is not available in this context
                                     )  # TODO: support streams for webdriver
                                     imgs_data.append(img_data)
                                     pbar.update(1)

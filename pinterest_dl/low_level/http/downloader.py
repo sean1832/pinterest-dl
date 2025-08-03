@@ -1,10 +1,9 @@
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, TypeVar
+from typing import Callable, Dict, List, Optional, TypeVar
 
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.exceptions import DownloadError
-from pinterest_dl.low_level.hls import HlsProcessor
 from pinterest_dl.low_level.http import HttpClient
 
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
@@ -25,9 +24,9 @@ class _ConcurrentCoordinator:
 
     def run(
         self,
-        items: List[str],
+        items: List[PinterestMedia],
         output_dir: Path,
-        worker: Callable[[str, Path], Optional[T]],
+        worker: Callable[[PinterestMedia, Path], Optional[T]],
         max_workers: int,
         fail_fast: bool = False,
     ) -> List[T]:
@@ -71,8 +70,8 @@ class _ConcurrentCoordinator:
         return [r for r in results if r is not None]
 
 
-class StreamDownloader:
-    """Orchestrates downloading an HLS video stream"""
+class PinterestMediaDownloader:
+    """Handles downloading media files from Pinterest"""
 
     def __init__(
         self,
@@ -81,144 +80,74 @@ class StreamDownloader:
         max_retries: int = 3,
         progress_callback: Optional[ProgressCallback] = None,
     ):
-        """Initialize the StreamDownloader with user agent and optional parameters."""
+        """Initialize the PinterestMediaDownloader with user agent and optional parameters."""
         self.http_client = HttpClient(user_agent, timeout, max_retries)
-        self.hls_processor = HlsProcessor(self.http_client.session, user_agent)
         self.progress_callback = progress_callback
 
-    def download(self, url: str, output_dir: Path) -> Path:
-        """High-level method to download an HLS video stream and remux to MP4
+    def download(
+        self, pin_media: PinterestMedia, output_dir: Path, download_streams: bool = False
+    ) -> Path:
+        """Download a media file (video stream or image) to the given directory.
 
         Args:
-            url (str): The URL of the HLS video stream to download.
-            output_dir (Path): The directory to save the downloaded video.
+            pin_media (PinterestMedia): Media descriptor.
+            output_dir (Path): Destination directory.
+            download_streams (bool): If True and a video stream exists, prefer that over the image.
 
         Returns:
-            Path: The path to the downloaded MP4 video file.
+            Path: Path to the downloaded file.
         """
-        url_path = Path(url)
-        video_path = output_dir / f"{url_path.stem}.mp4"
         output_dir.mkdir(parents=True, exist_ok=True)
-        if url_path.suffix.lower() == ".mp4":
-            # if the URL is already an MP4 file, just download it directly
-            self.http_client.download_blob(url, video_path, chunk_size=2048)
-            return video_path
+        media_base = output_dir / f"{pin_media.id}"
 
-        # fetch and resolve playlist
-        playlist = self.hls_processor.fetch_playlist(url)
-        base_uri = playlist.base_uri or url.rsplit("/", 1)[0] + "/"
-        if playlist.is_variant:
-            media_url = self.hls_processor.resolve_variant(playlist, base_uri)
-            playlist = self.hls_processor.fetch_playlist(media_url)
-            base_uri = playlist.base_uri or media_url.rsplit("/", 1)[0] + "/"
+        if download_streams and pin_media.video_stream:
+            stream_url = pin_media.video_stream.url
+            target_path = media_base.with_suffix(".mp4")
 
-        # enumerate segments
-        segments = self.hls_processor.enumerate_segments(playlist, base_uri)
-        with tempfile.TemporaryDirectory() as td:
-            temp_dir = Path(td)
-            segment_paths: List[Path] = []
-            iterator: Iterable = enumerate(segments)
-            for index, segment in iterator:
-                raw = self.hls_processor.download_segment(segment.uri)
-                data = self.hls_processor.decrypt(segment, raw)
-                output_path = temp_dir / f"segment_{index:05d}.ts"
-                self.hls_processor.write_segment_file(output_path, data)
-                segment_paths.append(output_path)
+            if Path(stream_url).suffix.lower() == ".mp4":
+                # Direct MP4 download
+                self.http_client.download_blob(stream_url, target_path, chunk_size=2048)
+            else:
+                # HLS stream: download and remux to MP4
+                self.http_client.download_streams(stream_url, target_path)
+            return target_path
 
-            # build concat list and combine segments
-            concat_list = temp_dir / "concat_list.txt"
-            self.hls_processor.build_concat_list(segment_paths, concat_list)
-            self.hls_processor.concat_and_remux(concat_list, video_path)
-
-        return video_path
+        # Fallback to image
+        image_url = pin_media.src
+        ext = Path(image_url).suffix.lower()
+        if not ext:
+            ext = ".jpg"  # reasonable default if extension is missing
+        image_path = media_base.with_suffix(ext)
+        self.http_client.download_blob(image_url, image_path, chunk_size=2048)
+        return image_path
 
     def download_concurrent(
         self,
-        urls: List[str],
+        media_list: List[PinterestMedia],
         output_dir: Path,
+        download_streams: bool = False,
         max_workers: int = 8,
         fail_fast: bool = False,
     ) -> List[Path]:
-        """Download images concurrently from a list of URLs.
+        """Download a list of PinterestMedia objects concurrently.
 
         Args:
-            urls (List[str]): List of image URLs to download.
-            output_dir (Path): Directory to save downloaded images.
-            max_workers (int, optional): Maximum number of worker threads. Defaults to 8.
-        """
-
-        def worker(url: str, outdir: Path) -> Path:
-            return self.download(url, outdir)
-
-        stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
-
-        return stream_coordinator.run(
-            items=urls,
-            output_dir=output_dir,
-            worker=worker,
-            max_workers=max_workers,
-            fail_fast=fail_fast,
-        )
-
-
-class BlobDownloader:
-    """Handles downloading blobs from URLs"""
-
-    def __init__(
-        self,
-        user_agent: str,
-        timeout: float = 10.0,
-        max_retries: int = 3,
-        progress_callback: Optional[ProgressCallback] = None,
-    ):
-        """Initialize the BlobDownloader with user agent and optional parameters."""
-        self.http_client = HttpClient(user_agent, timeout, max_retries)
-        self.progress_callback = progress_callback
-
-    def download(self, url: str, output_dir: Path, chunk_size: int = 2048) -> Path:
-        """Download a blob from a URL and save it to the specified directory.
-
-        Args:
-            url (str): The URL of the blob to download.
-            output_dir (Path): The directory to save the downloaded blob.
-            chunk_size (int): Size of each chunk to read from the response.
+            media_list (List[PinterestMedia]): List of PinterestMedia objects to download.
+            output_dir (Path): Directory to save downloaded media.
+            download_streams (bool): If True, prefer video streams over images.
+            max_workers (int): Maximum number of worker threads.
+            fail_fast (bool): If True, stop on first download failure.
 
         Returns:
-            Path: The path to the downloaded blob file.
-        """
-        filename = Path(url).name
-        outfile = output_dir / filename
-        self.http_client.download_blob(url, outfile, chunk_size=chunk_size)
-
-        return outfile
-
-    def download_concurrent(
-        self,
-        urls: List[str],
-        output_dir: Path,
-        chunk_size: int = 2048,
-        max_workers: int = 8,
-        fail_fast: bool = False,
-    ) -> List[Path]:
-        """Download images concurrently from a list of URLs.
-
-        Args:
-            urls (List[str]): List of image URLs to download.
-            output_dir (Path): Directory to save downloaded images.
-            chunk_size (int, optional): Size of each chunk to read from the response. Defaults to 2048.
-            max_workers (int, optional): Maximum number of worker threads. Defaults to 8.
-            fail_fast (bool, optional): If True, stop on first download failure. Defaults to False.
-
-        Returns:
-            List[Path]: List of paths to the downloaded images.
+            List[Path]: List of paths to the downloaded media files.
         """
 
-        def worker(url: str, outdir: Path) -> Path:
-            return self.download(url, outdir, chunk_size=chunk_size)
+        def worker(media: PinterestMedia, outdir: Path) -> Path:
+            return self.download(media, outdir, download_streams)
 
         stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
         return stream_coordinator.run(
-            items=urls,
+            items=media_list,
             output_dir=output_dir,
             worker=worker,
             max_workers=max_workers,

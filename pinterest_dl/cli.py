@@ -7,7 +7,7 @@ from traceback import print_exc
 from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
-from pinterest_dl.data_model.pinterest_image import PinterestImage
+from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.utils import io
 
 
@@ -109,6 +109,7 @@ def get_parser() -> argparse.ArgumentParser:
     download_cmd.add_argument("input", help="Input json file containing image urls")
     download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>)")
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
+    download_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     download_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
@@ -252,9 +253,9 @@ def main() -> None:
         elif args.cmd == "download":
             # prepare image url data
             img_datas = io.read_json(args.input)
-            images: List[PinterestImage] = []
+            images: List[PinterestMedia] = []
             for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-                img = PinterestImage.from_dict(img_data)
+                img = PinterestMedia.from_dict(img_data)
                 if args.ensure_cap:
                     if img.alt and img.alt.strip():
                         images.append(img)
@@ -263,19 +264,19 @@ def main() -> None:
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = PinterestDL.download_images(images, output_dir)
+            downloaded_imgs = PinterestDL.download_media(images, output_dir, args.video)
 
             # post process
-            pruned_idx = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
+            kept = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
             if args.caption == "txt" or args.caption == "json":
                 PinterestDL.add_captions_to_file(
-                    downloaded_imgs,
+                    kept,
                     output_dir,
                     args.caption,
                     args.verbose,
                 )
             elif args.caption == "metadata":
-                PinterestDL.add_captions_to_meta(downloaded_imgs, pruned_idx, args.verbose)
+                PinterestDL.add_captions_to_meta(kept, args.verbose)
             elif args.caption != "none":
                 raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
             print("\nDone.")
