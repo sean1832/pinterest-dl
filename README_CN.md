@@ -1,6 +1,7 @@
 # Pinterest 媒体下载器 (pinterest-dl)
 [![PyPI 版本](https://img.shields.io/pypi/v/pinterest-dl)](https://pypi.org/project/pinterest-dl/)
-[![Python 版本支持](https://img.shields.io/pypi/pyversions/pinterest-dl)](https://pypi.org/project/pinterest-dl/)
+[![Python 版本支持](https://img.shields.io/badge/python-%3E%3D3.10-blue
+)](https://pypi.org/project/pinterest-dl/)
 [![许可证](https://img.shields.io/pypi/l/pinterest-dl)](https://github.com/sean1832/pinterest-dl/blob/main/LICENSE)
 [![下载量](https://static.pepy.tech/badge/pinterest-dl)](https://pepy.tech/project/pinterest-dl)
 
