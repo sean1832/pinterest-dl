@@ -125,13 +125,17 @@ class PinterestMedia:
 
     @classmethod
     def from_responses(
-        cls, response_data: List[Dict[str, Any]], min_resolution: Tuple[int, int]
+        cls,
+        response_data: List[Dict[str, Any]],
+        min_resolution: Tuple[int, int],
+        caption_from_title: bool = False,
     ) -> List["PinterestMedia"]:
         """Extract PinterestMedia objects from response data.
 
         Args:
             response_data (List[Dict[str, Any]]): List of dictionaries containing image data.
             min_resolution (Tuple[int, int]): Minimum resolution as (width, height) to filter images.
+            caption_from_title (bool): Whether to use the image title as the caption.
 
         Raises:
             ValueError: If no valid data is found.
@@ -169,7 +173,15 @@ class PinterestMedia:
             if not src:
                 continue
             id = int(item.get("id", 0))  # Use 'id' from the item, default to 0 if not present
-            alt = item.get("auto_alt_text", "")
+            if caption_from_title:
+                # use title as alt
+                alt = item.get(
+                    "title",
+                    item.get("auto_alt_text", ""),  # <- fallback to auto_alt_text
+                )
+            else:
+                # use auto_alt_text as alt
+                alt = item.get("auto_alt_text", "")
             origin = f"https://www.pinterest.com/pin/{id}/"
 
             is_stream = bool(item.get("should_open_in_stream", False))

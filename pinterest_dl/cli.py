@@ -79,6 +79,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     scrape_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
+    scrape_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -99,6 +100,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     search_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
+    search_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
     search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
@@ -206,6 +208,7 @@ def main() -> None:
                             cache_path=args.cache,
                             caption=args.caption,
                             delay=args.delay,
+                            caption_from_title=args.cap_from_title,
                         )
                     )
                     if imgs and len(imgs) != args.num:
@@ -245,6 +248,7 @@ def main() -> None:
                             cache_path=args.cache,
                             caption=args.caption,
                             delay=args.delay,
+                            caption_from_title=args.cap_from_title,
                         )
                     )
                     if imgs and len(imgs) != args.num:
