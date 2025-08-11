@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pyexiv2
 from PIL import Image
 
-from pinterest_dl.exceptions import UnsupportedMediaTypeError
+from pinterest_dl.exceptions import EmptyResponseError, UnsupportedMediaTypeError
 
 
 @dataclass
@@ -138,13 +138,13 @@ class PinterestMedia:
             caption_from_title (bool): Whether to use the image title as the caption.
 
         Raises:
-            ValueError: If no valid data is found.
+            EmptyResponseError: If no valid data is found.
 
         Returns:
             List[PinterestMedia]: A list of PinterestMedia objects.
         """
         if not response_data:
-            raise ValueError("No data found in response.")
+            raise EmptyResponseError("No data found in response.")
         min_width, min_height = min_resolution
 
         images: List["PinterestMedia"] = []

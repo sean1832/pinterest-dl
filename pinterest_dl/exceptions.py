@@ -87,3 +87,7 @@ class PinCountException(PinResponseError):
 
 class BookmarkException(PinResponseError):
     """Exception raised when a bookmark operation fails."""
+
+
+class EmptyResponseError(PinterestAPIError):
+    """Exception raised when the API response is empty."""

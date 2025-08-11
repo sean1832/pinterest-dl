@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.exceptions import EmptyResponseError
 from pinterest_dl.low_level.api.bookmark_manager import BookmarkManager
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.http.request_builder import RequestBuilder
@@ -97,7 +98,7 @@ class _ScraperAPI(_ScraperBase):
 
         medias: List[PinterestMedia] = []
         api = PinterestAPI(url, self.cookies, timeout=self.timeout)
-        bookmarks = BookmarkManager(2)
+        bookmarks = BookmarkManager(3)
 
         if api.is_pin:
             medias = self._scrape_pins(
@@ -430,6 +431,9 @@ class _ScraperAPI(_ScraperBase):
                 except ValueError as e:
                     print(f"\nError: {e}. Exiting scraping.")
                     break
+                except EmptyResponseError as e:
+                    print(f"\nEmptyResponseError: {e}. Exiting scraping.")
+                    break
 
         return medias
 
@@ -451,10 +455,13 @@ class _ScraperAPI(_ScraperBase):
 
         # parse response data
         response_data = response.resource_response.get("data", [])
-
-        img_batch = PinterestMedia.from_responses(
-            response_data, min_resolution, caption_from_title=caption_from_title
-        )
+        try:
+            img_batch = PinterestMedia.from_responses(
+                response_data, min_resolution, caption_from_title=caption_from_title
+            )
+        except EmptyResponseError as e:
+            print("Empty response received.")
+            return [], bookmarks
         if self.ensure_alt:
             batch_count = len(img_batch)
             img_batch = self._cull_no_alt(img_batch)
