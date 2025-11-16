@@ -70,8 +70,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Download video streams if available.
 
 ## 🚩 Known Issues
-- 🔲 Not yet implement testing.
-- 🔲 Not sorely tested on ~~Linux and~~ Mac. Please create an [Issue](https://github.com/sean1832/pinterest-dl/issues) to report any bugs.
+- 🔲 Not able to scrape nested boards yet.
 
 ## 📋 Requirements
 - Python 3.10 or newer
