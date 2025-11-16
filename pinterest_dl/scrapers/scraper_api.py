@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -14,6 +15,8 @@ from pinterest_dl.low_level.http.request_builder import RequestBuilder
 from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
+
+logger = logging.getLogger(__name__)
 
 
 class _ScraperAPI(_ScraperBase):
@@ -172,12 +175,24 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+        try:
+            downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+        except Exception as e:
+            logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
+            raise
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+            try:
+                self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
+                raise
         elif caption == "metadata":
-            self.add_captions_to_meta(downloaded_items, self.verbose)
+            try:
+                self.add_captions_to_meta(downloaded_items, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
+                raise
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
@@ -228,9 +243,15 @@ class _ScraperAPI(_ScraperBase):
                         min_resolution,
                         caption_from_title=caption_from_title,
                     )
-                except ValueError as e:
+                except (ValueError, EmptyResponseError) as e:
+                    logger.warning(f"Search scraping interrupted: {e}")
                     print(f"\nError: {e}. Exiting scraping.")
                     break
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error during search scraping: {e}", exc_info=self.verbose
+                    )
+                    raise
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -248,9 +269,22 @@ class _ScraperAPI(_ScraperBase):
                     print(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
 
                 time.sleep(delay)
-                remains = self._handle_missing_search_images(
-                    api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
-                )
+                try:
+                    remains = self._handle_missing_search_images(
+                        api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
+                    )
+                except (ValueError, EmptyResponseError) as e:
+                    logger.warning(
+                        f"Search scraping interrupted while handling missing images: {e}"
+                    )
+                    print(f"\nError: {e}. Exiting scraping.")
+                    break
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error while handling missing search images: {e}",
+                        exc_info=self.verbose,
+                    )
+                    raise
                 batch_count += 1
 
         return images[:num]
@@ -306,14 +340,26 @@ class _ScraperAPI(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+        try:
+            downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+        except Exception as e:
+            logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
+            raise
 
         # Caption handling
         if caption in ("txt", "json"):
-            self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+            try:
+                self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
+                raise
         elif caption == "metadata":
-            # if metadata embedding needs some indices/selection, decide and supply them here explicitly
-            self.add_captions_to_meta(downloaded_items, self.verbose)
+            try:
+                # if metadata embedding needs some indices/selection, decide and supply them here explicitly
+                self.add_captions_to_meta(downloaded_items, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
+                raise
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
@@ -343,9 +389,13 @@ class _ScraperAPI(_ScraperBase):
                         min_resolution,
                         caption_from_title=caption_from_title,
                     )
-                except ValueError as e:
+                except (ValueError, EmptyResponseError) as e:
+                    logger.warning(f"Scraping interrupted: {e}")
                     print(f"\nError: {e}. Exiting scraping.")
                     break
+                except Exception as e:
+                    logger.error(f"Unexpected error while scraping: {e}", exc_info=self.verbose)
+                    raise
 
                 old_count = len(images)
                 images.extend(current_img_batch)
@@ -363,9 +413,16 @@ class _ScraperAPI(_ScraperBase):
                     remains = self._handle_missing_images(
                         api, batch_size, remains, bookmarks, min_resolution, images, pbar, delay
                     )
-                except ValueError as e:
+                except (ValueError, EmptyResponseError) as e:
+                    logger.warning(f"Scraping interrupted while handling missing images: {e}")
                     print(f"\nError: {e}. Exiting scraping.")
                     break
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error while handling missing images: {e}",
+                        exc_info=self.verbose,
+                    )
+                    raise
 
         return images
 
@@ -398,12 +455,18 @@ class _ScraperAPI(_ScraperBase):
                         batch_size,
                         bookmarks,
                         min_resolution,
-                        board_id,
+                        board_id=board_id,
                         caption_from_title=caption_from_title,
                     )
-                except ValueError as e:
+                except (ValueError, EmptyResponseError) as e:
+                    logger.warning(f"Board scraping interrupted: {e}")
                     print(f"\nError: {e}. Exiting scraping.")
                     break
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error while scraping board: {e}", exc_info=self.verbose
+                    )
+                    raise
 
                 old_count = len(medias)
                 medias.extend(current_img_batch)
@@ -429,9 +492,11 @@ class _ScraperAPI(_ScraperBase):
                         board_id,
                     )
                 except ValueError as e:
+                    logger.error(f"Scraping error: {e}", exc_info=self.verbose)
                     print(f"\nError: {e}. Exiting scraping.")
                     break
                 except EmptyResponseError as e:
+                    logger.warning(f"Empty response error: {e}")
                     print(f"\nEmptyResponseError: {e}. Exiting scraping.")
                     break
 
@@ -459,9 +524,14 @@ class _ScraperAPI(_ScraperBase):
             img_batch = PinterestMedia.from_responses(
                 response_data, min_resolution, caption_from_title=caption_from_title
             )
-        except EmptyResponseError as e:
+        except EmptyResponseError:
+            logger.warning("Empty response received from Pinterest API")
             print("Empty response received.")
             return [], bookmarks
+        except Exception as e:
+            # Log unexpected errors during response parsing
+            logger.error(f"Failed to parse Pinterest response: {e}", exc_info=self.verbose)
+            raise
         if self.ensure_alt:
             batch_count = len(img_batch)
             img_batch = self._cull_no_alt(img_batch)

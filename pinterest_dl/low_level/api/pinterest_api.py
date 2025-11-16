@@ -42,7 +42,8 @@ class PinterestAPI:
             try:
                 self.query = self._parse_search_query(self.url)
             except InvalidSearchUrlError:
-                pass
+                # Neither pin nor search URL - will try board parsing next
+                self.query = None
 
         try:
             self.username, self.boardname = self._parse_board_url(self.url)

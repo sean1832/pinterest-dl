@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 from contextlib import nullcontext
 from getpass import getpass
@@ -9,6 +10,8 @@ from typing import List
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.utils import io
+
+logger = logging.getLogger(__name__)
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
@@ -286,11 +289,22 @@ def main() -> None:
             print("\nDone.")
         else:
             parser.print_help()
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user.")
+        sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        # Log with full traceback, show user-friendly message
+        logger.error(f"An error occurred: {e}", exc_info=True)
         if args.verbose:
+            print("\nFull traceback:")
             print_exc()
+        else:
+            print(f"\nError: {e}")
+            print("\nRun with --verbose for full traceback.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
+    # Configure logging - only WARNING and above to avoid noise
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s [%(name)s]: %(message)s")
     main()

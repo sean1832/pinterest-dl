@@ -268,9 +268,9 @@ class ChromeDriverInstaller:
         if not target_platform.startswith("win"):
             try:
                 extracted_path.chmod(extracted_path.stat().st_mode | 0o111)
-            except Exception:
+            except OSError as e:
                 if verbose:
-                    print(f"Warning: failed to set executable bit on {extracted_path}.")
+                    print(f"Warning: failed to set executable bit on {extracted_path}: {e}")
 
         io.write_text(version, str(marker_file))
 
@@ -279,9 +279,9 @@ class ChromeDriverInstaller:
             zip_path.unlink()
             if verbose:
                 print("Removed zip archive.")
-        except Exception:
+        except OSError as e:
             if verbose:
-                print(f"Warning: failed to delete archive {zip_path}.")
+                print(f"Warning: failed to delete archive {zip_path}: {e}")
 
         if verbose:
             print(f"ChromeDriver {version} installed at {extracted_path}.")

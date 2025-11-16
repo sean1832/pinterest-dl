@@ -140,10 +140,13 @@ class HlsProcessor:
                 resp = self.session.get(url, timeout=self.timeout)
                 if resp.status_code == 200:
                     return resp.content
-                last_exc = HlsDownloadError(f"HTTP {resp.status_code} for {url}")
+                last_exc = HlsDownloadError(f"HTTP {resp.status_code} for segment: {url}")
             except requests.RequestException as e:
                 last_exc = e
-        raise HlsDownloadError(f"Failed to download segment {url}: {last_exc}")
+        raise HlsDownloadError(
+            f"Failed to download HLS segment after {self.max_retries} attempts: {url}\n"
+            f"Last error: {last_exc}"
+        )
 
     @staticmethod
     def _compute_default_iv(media_sequence: int, segment_index: int) -> bytes:
@@ -265,7 +268,12 @@ class HlsProcessor:
             )
 
     def _run_cmd(self, cmd: List[str], phase: str) -> None:
+        """Run ffmpeg command and raise detailed error on failure."""
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0:
             stderr_tail = "\n".join(proc.stderr.strip().splitlines()[-60:])
-            raise HlsDownloadError(f"ffmpeg {phase} failed ({proc.returncode}):\n{stderr_tail}")
+            raise HlsDownloadError(
+                f"ffmpeg {phase} failed with exit code {proc.returncode}.\n"
+                f"Command: {' '.join(cmd[:5])}...\n"
+                f"Error output:\n{stderr_tail}"
+            )

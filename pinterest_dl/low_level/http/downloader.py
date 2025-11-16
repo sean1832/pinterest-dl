@@ -51,20 +51,25 @@ class _ConcurrentCoordinator:
                     result = future.result()
                     results[idx] = result
                 except Exception as e:
-                    errors[item] = e
+                    # Store error with item identifier for better error reporting
+                    item_id = getattr(item, "id", None) or getattr(item, "url", str(item)[:50])
+                    errors[item] = (item_id, e)
                     if fail_fast:
                         # cancel others
                         for f in future_to_meta:
                             if not f.done():
                                 f.cancel()
-                        raise e from e
+                        raise
                 finally:
                     done += 1
                     self.report(done, total)
 
         if errors:
-            summary = "\n".join(f"{str(e)}" for e in errors.values())
-            raise DownloadError(f"Errors occurred during concurrent run:\n{summary}")
+            error_lines = [f"  - {item_id}: {str(e)}" for item_id, e in errors.values()]
+            summary = "\n".join(error_lines)
+            raise DownloadError(
+                f"Failed to download {len(errors)} out of {total} items:\n{summary}"
+            )
 
         # type: ignore  # we've ensured no None if no exception
         return [r for r in results if r is not None]
