@@ -1,4 +1,4 @@
-__version__ = "0.8.2"
+__version__ = "dev"
 __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
