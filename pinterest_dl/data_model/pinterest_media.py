@@ -172,7 +172,7 @@ class PinterestMedia:
             src = orig.get("url")
             if not src:
                 continue
-            id = int(item.get("id", 0))  # Use 'id' from the item, default to 0 if not present
+            id = item.get("id", 0)  # Use 'id' from the item, default to 0 if not present
             if caption_from_title:
                 # use title as alt
                 alt = item.get(
