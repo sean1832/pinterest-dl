@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -10,6 +11,8 @@ from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, P
 from pinterest_dl.utils import io
 
 from .scraper_base import _ScraperBase
+
+logger = logging.getLogger(__name__)
 
 
 class _ScraperWebdriver(_ScraperBase):
@@ -176,7 +179,7 @@ class _ScraperWebdriver(_ScraperBase):
         try:
             return PinterestDriver(self.webdriver).login(email, password)
         except Exception as e:
-            raise RuntimeError("Failed to login to Pinterest.") from e
+            raise RuntimeError(f"Failed to login to Pinterest: {e}") from e
 
     @staticmethod
     def _sanitize_cookies(cookies: List[dict]) -> List[dict]:

@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
@@ -9,6 +10,8 @@ from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTyp
 from pinterest_dl.low_level.http import USER_AGENT, downloader
 from pinterest_dl.utils import ensure_executable
 from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
+
+logger = logging.getLogger(__name__)
 
 
 class _ScraperBase:
@@ -45,12 +48,18 @@ class _ScraperBase:
             try:
                 ensure_executable.ensure_executable("ffmpeg")
             except ExecutableNotFoundError as e:
+                logger.warning(f"ffmpeg not found: {e}. Falling back to images.")
                 print(
                     f"Warning: {e}. Video streams will not be downloaded, falling back to images."
                 )
                 download_streams = False
 
-        local_paths = dl.download_concurrent(media, output_dir, download_streams)
+        try:
+            local_paths = dl.download_concurrent(media, output_dir, download_streams)
+        except Exception as e:
+            # Log the error and re-raise for CLI to handle
+            logger.error(f"Download failed: {e}")
+            raise
 
         for item, path in zip(media, local_paths):
             item.set_local_path(path)
@@ -136,10 +145,17 @@ class _ScraperBase:
                         print(f"Caption added to {img.local_path}: '{img.alt}'")
 
             except Exception as e:
-                if img:
-                    print(f"Error captioning {img.local_path}: {e}")
+                # Log metadata errors but continue processing other images
+                if img and img.local_path:
+                    logger.warning(
+                        f"Failed to add metadata to {img.local_path}: {e}", exc_info=verbose
+                    )
+                    if verbose:
+                        print(f"Error captioning {img.local_path}: {e}")
                 else:
-                    print(f"Error captioning image at index {index}: {e}")
+                    logger.warning(
+                        f"Failed to add metadata to image at index {index}: {e}", exc_info=verbose
+                    )
 
     @staticmethod
     def prune_images(
