@@ -24,7 +24,7 @@ jobs:
           VERSION="${{ github.event.release.tag_name }}"
           VERSION="${VERSION#v}"
           echo "Updating version to: $VERSION"
-          sed -i "s/__version__ = \""0.0.0.dev0\"/__version__ = \"$VERSION\"/" pinterest_dl/__init__.py
+          sed -i "s/__version__ = \"0.0.0.dev0\"/__version__ = \"$VERSION\"/" pinterest_dl/__init__.py
           cat pinterest_dl/__init__.py | head -n 1
       - name: Install dependencies
         run: |
