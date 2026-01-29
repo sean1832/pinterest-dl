@@ -1,4 +1,5 @@
 """Tests for Pinterest API URL parsing."""
+
 from pinterest_dl.api.pinterest_api import PinterestAPI
 
 

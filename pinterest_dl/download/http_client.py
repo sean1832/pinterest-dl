@@ -5,7 +5,7 @@ from typing import Iterable, List, Union
 import requests
 import requests.adapters
 
-from pinterest_dl.low_level.hls.hls_processor import HlsProcessor
+from pinterest_dl.download.video.hls_processor import HlsProcessor
 
 
 class HttpClient:

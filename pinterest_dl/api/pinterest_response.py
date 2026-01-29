@@ -1,5 +1,6 @@
 from typing import List, Union
 
+from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import (
     BoardIDException,
     BookmarkException,
@@ -7,7 +8,6 @@ from pinterest_dl.exceptions import (
     PinCountException,
     PinResponseError,
 )
-from pinterest_dl.download.request_builder import RequestBuilder
 
 
 class PinResponse:

@@ -8,9 +8,9 @@ import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from pinterest_dl.download.video.key_cache import KeyCache
+from pinterest_dl.download.video.segment_info import SegmentInfo
 from pinterest_dl.exceptions import HlsDownloadError
-from pinterest_dl.low_level.hls.key_cache import KeyCache
-from pinterest_dl.low_level.hls.segment_info import SegmentInfo
 
 
 class HlsProcessor:

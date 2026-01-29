@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
-from pinterest_dl.exceptions import InvalidBrowser
 from pinterest_dl.download import USER_AGENT, fetch, http_client
+from pinterest_dl.exceptions import InvalidBrowser
 from pinterest_dl.utils import io
 
 # Supported driver target platforms

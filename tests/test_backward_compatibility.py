@@ -1,4 +1,5 @@
 """Tests for backward compatibility of deprecated APIs."""
+
 import warnings
 
 import pytest
@@ -14,6 +15,7 @@ class TestDeprecatedScraperNames:
         """Test that importing _ScraperAPI triggers DeprecationWarning."""
         with pytest.warns(DeprecationWarning, match=r"_ScraperAPI is deprecated.*2\.1\.0"):
             from pinterest_dl.scrapers import _ScraperAPI
+
             # Verify it returns the correct class
             assert _ScraperAPI is ApiScraper
 
@@ -21,6 +23,7 @@ class TestDeprecatedScraperNames:
         """Test that importing _ScraperWebdriver triggers DeprecationWarning."""
         with pytest.warns(DeprecationWarning, match=r"_ScraperWebdriver is deprecated.*2\.1\.0"):
             from pinterest_dl.scrapers import _ScraperWebdriver
+
             # Verify it returns the correct class
             assert _ScraperWebdriver is WebDriverScraper
 
@@ -28,6 +31,7 @@ class TestDeprecatedScraperNames:
         """Test that old name can still instantiate scrapers."""
         with pytest.warns(DeprecationWarning):
             from pinterest_dl.scrapers import _ScraperAPI
+
             scraper = _ScraperAPI(timeout=5, verbose=False)  # noqa: F841
             # Should be an instance of ApiScraper
             assert isinstance(scraper, ApiScraper)
@@ -51,11 +55,11 @@ class TestDeprecatedScraperNames:
         """Test that deprecation messages are clear and helpful."""
         with pytest.warns(DeprecationWarning) as record:
             from pinterest_dl.scrapers import _ScraperAPI  # noqa: F401
-        
+
         # Should have at least one warning
         assert len(record) >= 1
         warning_message = str(record[0].message)
-        
+
         # Message should mention:
         # 1. The deprecated name
         assert "_ScraperAPI" in warning_message

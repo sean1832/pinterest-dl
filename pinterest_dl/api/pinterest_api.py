@@ -3,15 +3,15 @@ from typing import List, Optional, Tuple
 
 import requests
 
+from pinterest_dl.api.endpoints import Endpoint
+from pinterest_dl.api.pinterest_response import PinResponse
 from pinterest_dl.data_model.cookie import PinterestCookieJar
+from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
 )
-from pinterest_dl.api.endpoints import Endpoint
-from pinterest_dl.api.pinterest_response import PinResponse
-from pinterest_dl.download.request_builder import RequestBuilder
 
 
 class PinterestAPI:
