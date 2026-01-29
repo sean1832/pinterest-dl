@@ -15,7 +15,7 @@ from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import EmptyResponseError
 from pinterest_dl.parsers.response import ResponseParser
 
-from . import utils
+from . import operations
 
 logger = logging.getLogger(__name__)
 
@@ -177,20 +177,22 @@ class ApiScraper:
             return None
 
         try:
-            downloaded_items = utils.download_media(scraped_outputs, output_dir, download_streams)
+            downloaded_items = operations.download_media(
+                scraped_outputs, output_dir, download_streams
+            )
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
             raise
 
         if caption == "txt" or caption == "json":
             try:
-                utils.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+                operations.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
                 raise
         elif caption == "metadata":
             try:
-                utils.add_captions_to_meta(downloaded_items, self.verbose)
+                operations.add_captions_to_meta(downloaded_items, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
                 raise
@@ -342,7 +344,9 @@ class ApiScraper:
             return None
 
         try:
-            downloaded_items = utils.download_media(scraped_outputs, output_dir, download_streams)
+            downloaded_items = operations.download_media(
+                scraped_outputs, output_dir, download_streams
+            )
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
             raise
@@ -350,14 +354,14 @@ class ApiScraper:
         # Caption handling
         if caption in ("txt", "json"):
             try:
-                utils.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+                operations.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
                 raise
         elif caption == "metadata":
             try:
                 # if metadata embedding needs some indices/selection, decide and supply them here explicitly
-                utils.add_captions_to_meta(downloaded_items, self.verbose)
+                operations.add_captions_to_meta(downloaded_items, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
                 raise

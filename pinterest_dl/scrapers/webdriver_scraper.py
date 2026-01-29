@@ -10,7 +10,7 @@ from pinterest_dl.common import io
 from pinterest_dl.webdriver.browser import Browser
 from pinterest_dl.webdriver.pinterest_driver import PinterestDriver, PinterestMedia
 
-from . import utils
+from . import operations
 
 logger = logging.getLogger(__name__)
 
@@ -153,14 +153,14 @@ class WebDriverScraper:
         if not output_dir:
             return None
 
-        downloaded_imgs = utils.download_media(scraped_imgs, output_dir, False)
+        downloaded_imgs = operations.download_media(scraped_imgs, output_dir, False)
 
-        kept_imgs = utils.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
+        kept_imgs = operations.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            utils.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
+            operations.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            utils.add_captions_to_meta(kept_imgs, self.verbose)
+            operations.add_captions_to_meta(kept_imgs, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
