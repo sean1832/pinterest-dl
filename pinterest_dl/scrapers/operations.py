@@ -16,7 +16,7 @@ from pinterest_dl.common.progress_bar import TqdmProgressBarCallback
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import USER_AGENT, downloader
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
-from pinterest_dl.storage.media import MediaFileHandler
+from pinterest_dl.storage import media as media_storage
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def download_media(
         item.set_local_path(path)
         if item.resolution is None or item.resolution == (0, 0):
             try:
-                MediaFileHandler.set_local_resolution(item, path)
+                media_storage.set_local_resolution(item, path)
             except FileNotFoundError:
                 print(f"Warning: Local path '{path}' does not exist. Skipping resolution set.")
             except UnsupportedMediaTypeError as ve:
@@ -150,12 +150,12 @@ def add_captions_to_meta(
                 continue
 
             if img.origin:
-                MediaFileHandler.write_exif_comment(img, img.origin)
+                media_storage.write_exif_comment(img, img.origin)
                 if verbose:
                     print(f"Origin added to {img.local_path}: '{img.origin}'")
 
             if img.alt:
-                MediaFileHandler.write_exif_subject(img, img.alt)
+                media_storage.write_exif_subject(img, img.alt)
                 if verbose:
                     print(f"Caption added to {img.local_path}: '{img.alt}'")
 
@@ -192,7 +192,7 @@ def prune_images(
     """
     kept: List[PinterestMedia] = []
     for img in images:
-        if not MediaFileHandler.prune_local(img, min_resolution, verbose):
+        if not media_storage.prune_local(img, min_resolution, verbose):
             kept.append(img)
 
     pruned_count = len(images) - len(kept)

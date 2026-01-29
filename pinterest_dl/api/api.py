@@ -6,7 +6,7 @@ import requests
 from pinterest_dl.api.endpoints import Endpoint
 from pinterest_dl.api.pinterest_response import PinResponse
 from pinterest_dl.domain.cookies import CookieJar
-from pinterest_dl.download.request_builder import RequestBuilder
+from pinterest_dl.download import request_builder
 from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
     InvalidPinterestUrlError,
@@ -85,7 +85,7 @@ class Api:
             "is_pdp": False,
         }
         try:
-            request_url = RequestBuilder.build_get(endpoint, options, source_url)
+            request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request related images: {e}")
@@ -114,7 +114,7 @@ class Api:
         }
 
         try:
-            request_url = RequestBuilder.build_get(endpoint, options, source_url)
+            request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request main image: {e}")
@@ -137,7 +137,7 @@ class Api:
         }
 
         try:
-            request_url = RequestBuilder.build_get(endpoint, options, source_url)
+            request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request board: {e}")
@@ -165,7 +165,7 @@ class Api:
         }
 
         try:
-            request_url = RequestBuilder.build_get(endpoint, options, source_url)
+            request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request board feed: {e}")
@@ -193,7 +193,7 @@ class Api:
         }
 
         try:
-            request_url = RequestBuilder.build_get(endpoint, options, source_url)
+            request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
         except requests.exceptions.RequestException as e:
             raise requests.RequestException(f"Failed to request search: {e}")
@@ -232,7 +232,7 @@ class Api:
         if not result:
             raise InvalidSearchUrlError(f"Invalid Pinterest search URL: {url}")
         query = result.group(1)
-        return RequestBuilder.url_decode(query)
+        return request_builder.url_decode(query)
 
     @staticmethod
     def _parse_board_url(url: str) -> Tuple[str, str]:

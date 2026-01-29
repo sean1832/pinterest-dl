@@ -11,7 +11,7 @@ from pinterest_dl.api.bookmark_manager import BookmarkManager
 from pinterest_dl.common import io
 from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.domain.media import PinterestMedia
-from pinterest_dl.download.request_builder import RequestBuilder
+from pinterest_dl.download import request_builder
 from pinterest_dl.exceptions import EmptyResponseError
 from pinterest_dl.parsers.response import ResponseParser
 
@@ -227,7 +227,7 @@ class ApiScraper:
         batch_count = 0
 
         if " " in query:
-            query = RequestBuilder.url_encode(query)
+            query = request_builder.url_encode(query)
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
 
         if self.verbose:

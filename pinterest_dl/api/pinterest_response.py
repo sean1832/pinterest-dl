@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from pinterest_dl.download.request_builder import RequestBuilder
+from pinterest_dl.download import request_builder
 from pinterest_dl.exceptions import (
     BoardIDException,
     BookmarkException,
@@ -13,7 +13,7 @@ from pinterest_dl.exceptions import (
 class PinResponse:
     def __init__(self, request_url: str, raw_response: dict) -> None:
         self.raw_response = raw_response
-        self.request_url = RequestBuilder().url_decode(request_url)
+        self.request_url = request_builder.url_decode(request_url)
 
         try:
             self.resource_response: dict = self.raw_response["resource_response"]
