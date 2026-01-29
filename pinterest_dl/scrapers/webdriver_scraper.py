@@ -15,7 +15,7 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
-class _ScraperWebdriver:
+class WebDriverScraper:
     def __init__(
         self,
         webdriver: WebDriver,
@@ -30,7 +30,7 @@ class _ScraperWebdriver:
 
     def with_cookies(
         self, cookies: list[dict[str, Any]], wait_sec: float = 1
-    ) -> "_ScraperWebdriver":
+    ) -> "WebDriverScraper":
         """Load cookies to the current browser session.
 
         Args:
@@ -38,7 +38,7 @@ class _ScraperWebdriver:
             wait_sec (float): Time in seconds to wait after loading cookies.
 
         Returns:
-            _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
+            WebDriverScraper: Instance of WebDriverScraper with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
             raise ValueError(
@@ -57,7 +57,7 @@ class _ScraperWebdriver:
 
     def with_cookies_path(
         self, cookies_path: Optional[Union[str, Path]], wait_sec: float = 1
-    ) -> "_ScraperWebdriver":
+    ) -> "WebDriverScraper":
         """Load cookies from a file to the current browser session.
 
         Args:
@@ -65,7 +65,7 @@ class _ScraperWebdriver:
             wait_sec (float): Time in seconds to wait after loading cookies.
 
         Returns:
-            _ScraperWebdriver: Instance of ScraperWebdriver with cookies loaded.
+            WebDriverScraper: Instance of WebDriverScraper with cookies loaded.
         """
         if cookies_path is None:
             return self

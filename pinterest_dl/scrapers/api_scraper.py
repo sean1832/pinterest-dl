@@ -20,11 +20,11 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
-class _ScraperAPI:
+class ApiScraper:
     """Pinterest scraper using the unofficial Pinterest API."""
 
     def __init__(self, timeout: float = 5, verbose: bool = False, ensure_alt: bool = False) -> None:
-        """Initialize PinterestDL with API.
+        """Initialize ApiScraper.
 
         Args:
             timeout (float, optional): timeout in seconds. Defaults to 3.
@@ -36,14 +36,14 @@ class _ScraperAPI:
         self.ensure_alt = ensure_alt
         self.cookies = None
 
-    def with_cookies(self, cookies: list[dict[str, Any]]) -> "_ScraperAPI":
+    def with_cookies(self, cookies: list[dict[str, Any]]) -> "ApiScraper":
         """Load cookies to the current session.
 
         Args:
             cookies (list[dict]): List of cookies in Selenium format.
 
         Returns:
-            _ScraperAPI: Instance of ScraperAPI with cookies loaded.
+            ApiScraper: Instance of ApiScraper with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
             raise ValueError(
@@ -57,14 +57,14 @@ class _ScraperAPI:
         self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
         return self
 
-    def with_cookies_path(self, cookies_path: Optional[Union[str, Path]]) -> "_ScraperAPI":
+    def with_cookies_path(self, cookies_path: Optional[Union[str, Path]]) -> "ApiScraper":
         """Load cookies from a file to the current session.
 
         Args:
             cookies_path (Optional[Union[str, Path]]): Path to cookies file.
 
         Returns:
-            _ScraperAPI: Instance of ScraperAPI with cookies loaded.
+            ApiScraper: Instance of ApiScraper with cookies loaded.
         """
         if cookies_path is None:
             return self

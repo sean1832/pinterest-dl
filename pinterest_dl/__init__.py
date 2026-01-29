@@ -3,7 +3,8 @@ __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
 
-from pinterest_dl.scrapers import _ScraperAPI, _ScraperWebdriver
+from pinterest_dl.scrapers.api_scraper import ApiScraper
+from pinterest_dl.scrapers.webdriver_scraper import WebDriverScraper
 
 
 class PinterestDL:
@@ -17,7 +18,7 @@ class PinterestDL:
     @staticmethod
     def with_api(
         timeout: float = 10, verbose: bool = False, ensure_alt: bool = False
-    ) -> "_ScraperAPI":
+    ) -> "ApiScraper":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:
@@ -26,9 +27,9 @@ class PinterestDL:
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with the requests library.
+            ApiScraper: Instance of ApiScraper with the requests library.
         """
-        return _ScraperAPI(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
+        return ApiScraper(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
 
     @staticmethod
     def with_browser(
@@ -38,7 +39,7 @@ class PinterestDL:
         incognito: bool = True,
         verbose: bool = False,
         ensure_alt: bool = False,
-    ) -> "_ScraperWebdriver":
+    ) -> "WebDriverScraper":
         """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
 
         Args:
@@ -50,7 +51,7 @@ class PinterestDL:
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with an initialized browser.
+            WebDriverScraper: Instance of WebDriverScraper with an initialized browser.
         """
-        webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
-        return _ScraperWebdriver(webdriver, timeout, verbose, ensure_alt=ensure_alt)
+        webdriver = WebDriverScraper._initialize_webdriver(browser_type, headless, incognito)
+        return WebDriverScraper(webdriver, timeout, verbose, ensure_alt=ensure_alt)
