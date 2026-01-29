@@ -16,13 +16,21 @@
   - Refactored `pinterest_media.py` (244 → 141 lines)
   - All 35 tests passing
 
+- **Phase 1, Task 1.2:** Eliminate Fake Inheritance (COMPLETED)
+  - Created `scrapers/utils.py` (221 lines) with module-level functions
+  - Deleted `scrapers/scraper_base.py` (185 lines)
+  - Removed inheritance from `PinterestDL`, `_ScraperAPI`, `_ScraperWebdriver`
+  - All 35 tests passing
+
 ### Current Metrics
-| Metric               | Original  | Current   | Target     | Status        |
-| -------------------- | --------- | --------- | ---------- | ------------- |
-| **Largest file**     | 649 lines | 649 lines | <300 lines | ⏳ Next phase  |
-| **Data model size**  | 244 lines | 141 lines | <150 lines | ✅ Achieved    |
-| **Files >300 lines** | 3 files   | 2 files   | 0 files    | 🔄 In progress |
-| **Test pass rate**   | 35/35     | 35/35     | 35/35      | ✅ Maintained  |
+| Metric                  | Original  | Current   | Target     | Status        |
+| ----------------------- | --------- | --------- | ---------- | ------------- |
+| **Largest file**        | 649 lines | 649 lines | <300 lines | ⏳ Next phase  |
+| **Data model size**     | 244 lines | 141 lines | <150 lines | ✅ Achieved    |
+| **Inheritance depth**   | 2 levels  | 0 levels  | 0 levels   | ✅ Achieved    |
+| **Static-only classes** | 4 classes | 2 classes | 0 classes  | 🔄 In progress |
+| **Files >300 lines**    | 3 files   | 2 files   | 0 files    | 🔄 In progress |
+| **Test pass rate**      | 35/35     | 35/35     | 35/35      | ✅ Maintained  |
 
 ---
 
@@ -896,25 +904,35 @@ pinterest_dl/
 
 ---
 
-#### Task 1.2: Eliminate Fake Inheritance
-- [ ] Remove `PinterestDL` inheritance from `_ScraperBase`
-- [ ] Convert `_ScraperBase` static methods to module functions
-- [ ] Create `scrapers/utils.py` for shared scraper utilities
-- [ ] Update `__init__.py` to remove inheritance
-- [ ] Remove `_ScraperBase` class entirely
-- [ ] Update all scraper imports
+#### Task 1.2: Eliminate Fake Inheritance ✅ COMPLETED
+- [x] Remove `PinterestDL` inheritance from `_ScraperBase`
+- [x] Convert `_ScraperBase` static methods to module functions
+- [x] Create `scrapers/utils.py` for shared scraper utilities
+- [x] Update `__init__.py` to remove inheritance
+- [x] Remove `_ScraperBase` class entirely
+- [x] Update all scraper imports
 
 **Files Changed:**
-- DELETED: `pinterest_dl/scrapers/scraper_base.py` (168 lines)
-- NEW: `pinterest_dl/scrapers/utils.py` (module-level functions)
-- MODIFIED: `pinterest_dl/__init__.py` (remove inheritance)
-- MODIFIED: `pinterest_dl/scrapers/scraper_api.py` (import updates)
-- MODIFIED: `pinterest_dl/scrapers/scraper_webdriver.py` (import updates)
+- DELETED: `pinterest_dl/scrapers/scraper_base.py` (185 lines deleted)
+- NEW: `pinterest_dl/scrapers/utils.py` (221 lines - module-level functions)
+- MODIFIED: `pinterest_dl/__init__.py` (removed `_ScraperBase` inheritance)
+- MODIFIED: `pinterest_dl/scrapers/__init__.py` (removed `_ScraperBase` export)
+- MODIFIED: `pinterest_dl/scrapers/scraper_api.py` (6 call sites: `self.method()` → `utils.function()`)
+- MODIFIED: `pinterest_dl/scrapers/scraper_webdriver.py` (4 call sites: `self.method()` → `utils.function()`)
 
 **Success Criteria:**
-- ✅ Inheritance depth: 2 → 0 levels
-- ✅ Static-only classes: 4 → 2 remaining
-- ✅ All tests pass
+- ✅ Inheritance depth: 2 → 0 levels (ACHIEVED)
+- ✅ Static-only classes removed: `_ScraperBase` deleted
+- ✅ All 35 tests passing
+- ✅ Zero functionality regression
+
+**Actual Results:**
+- Eliminated 2-level inheritance hierarchy completely
+- `PinterestDL` is now a pure factory class (no base class)
+- `_ScraperAPI` and `_ScraperWebdriver` are independent classes
+- Shared logic moved to `scrapers/utils.py` module (4 functions)
+- Net change: -185 lines from scraper_base.py, +221 lines in utils.py (better organized)
+- All scrapers use explicit imports instead of inheritance
 
 ---
 

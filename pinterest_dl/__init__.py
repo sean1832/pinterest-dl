@@ -3,12 +3,15 @@ __description__ = "An unofficial Pinterest image downloader"
 
 from typing import Literal
 
-from pinterest_dl.scrapers import _ScraperAPI, _ScraperBase, _ScraperWebdriver
+from pinterest_dl.scrapers import _ScraperAPI, _ScraperWebdriver
 
 
-class PinterestDL(_ScraperBase):
-    """PinterestDL is a class for scraping, downloading, and managing images from Pinterest.
-    Users can scrape pins, download images, add captions, and prune by resolution.
+class PinterestDL:
+    """Factory for creating Pinterest scrapers.
+
+    PinterestDL provides two scraping strategies:
+    - API-based: Fast, uses reverse-engineered Pinterest API
+    - WebDriver-based: Slower but more reliable, uses Selenium
     """
 
     @staticmethod

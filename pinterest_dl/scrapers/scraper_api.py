@@ -15,12 +15,12 @@ from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
 from pinterest_dl.low_level.http.request_builder import RequestBuilder
 from pinterest_dl.utils import io
 
-from .scraper_base import _ScraperBase
+from . import utils
 
 logger = logging.getLogger(__name__)
 
 
-class _ScraperAPI(_ScraperBase):
+class _ScraperAPI:
     """Pinterest scraper using the unofficial Pinterest API."""
 
     def __init__(self, timeout: float = 5, verbose: bool = False, ensure_alt: bool = False) -> None:
@@ -177,20 +177,20 @@ class _ScraperAPI(_ScraperBase):
             return None
 
         try:
-            downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+            downloaded_items = utils.download_media(scraped_outputs, output_dir, download_streams)
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
             raise
 
         if caption == "txt" or caption == "json":
             try:
-                self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+                utils.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
                 raise
         elif caption == "metadata":
             try:
-                self.add_captions_to_meta(downloaded_items, self.verbose)
+                utils.add_captions_to_meta(downloaded_items, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
                 raise
@@ -342,7 +342,7 @@ class _ScraperAPI(_ScraperBase):
             return None
 
         try:
-            downloaded_items = self.download_media(scraped_outputs, output_dir, download_streams)
+            downloaded_items = utils.download_media(scraped_outputs, output_dir, download_streams)
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
             raise
@@ -350,14 +350,14 @@ class _ScraperAPI(_ScraperBase):
         # Caption handling
         if caption in ("txt", "json"):
             try:
-                self.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+                utils.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
                 raise
         elif caption == "metadata":
             try:
                 # if metadata embedding needs some indices/selection, decide and supply them here explicitly
-                self.add_captions_to_meta(downloaded_items, self.verbose)
+                utils.add_captions_to_meta(downloaded_items, self.verbose)
             except Exception as e:
                 logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
                 raise

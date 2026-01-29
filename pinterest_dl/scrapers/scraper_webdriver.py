@@ -10,12 +10,12 @@ from pinterest_dl.low_level.webdriver.browser import Browser
 from pinterest_dl.low_level.webdriver.pinterest_driver import PinterestDriver, PinterestMedia
 from pinterest_dl.utils import io
 
-from .scraper_base import _ScraperBase
+from . import utils
 
 logger = logging.getLogger(__name__)
 
 
-class _ScraperWebdriver(_ScraperBase):
+class _ScraperWebdriver:
     def __init__(
         self,
         webdriver: WebDriver,
@@ -153,14 +153,14 @@ class _ScraperWebdriver(_ScraperBase):
         if not output_dir:
             return None
 
-        downloaded_imgs = self.download_media(scraped_imgs, output_dir, False)
+        downloaded_imgs = utils.download_media(scraped_imgs, output_dir, False)
 
-        kept_imgs = self.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
+        kept_imgs = utils.prune_images(downloaded_imgs, min_resolution or (0, 0), self.verbose)
 
         if caption == "txt" or caption == "json":
-            self.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
+            utils.add_captions_to_file(kept_imgs, output_dir, caption, self.verbose)
         elif caption == "metadata":
-            self.add_captions_to_meta(kept_imgs, self.verbose)
+            utils.add_captions_to_meta(kept_imgs, self.verbose)
         elif caption != "none":
             raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
