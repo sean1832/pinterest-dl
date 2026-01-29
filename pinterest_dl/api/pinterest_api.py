@@ -9,9 +9,9 @@ from pinterest_dl.exceptions import (
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
 )
-from pinterest_dl.low_level.api.endpoints import Endpoint
-from pinterest_dl.low_level.api.pinterest_response import PinResponse
-from pinterest_dl.low_level.http.request_builder import RequestBuilder
+from pinterest_dl.api.endpoints import Endpoint
+from pinterest_dl.api.pinterest_response import PinResponse
+from pinterest_dl.download.request_builder import RequestBuilder
 
 
 class PinterestAPI:

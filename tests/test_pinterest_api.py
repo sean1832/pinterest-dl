@@ -1,5 +1,5 @@
 """Tests for Pinterest API URL parsing."""
-from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
+from pinterest_dl.api.pinterest_api import PinterestAPI
 
 
 class TestPinterestAPIUrlParsing:

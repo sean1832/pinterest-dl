@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Optional, TypeVar
 
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.exceptions import DownloadError
-from pinterest_dl.low_level.http import HttpClient
+from pinterest_dl.download import HttpClient
 
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
 

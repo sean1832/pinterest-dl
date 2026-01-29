@@ -3,7 +3,7 @@ from typing import Any, Dict, Literal, Union
 
 import requests
 
-from pinterest_dl.low_level.http.http_client import HttpClient
+from pinterest_dl.download.http_client import HttpClient
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 6.1; Win64; x64) "
