@@ -1,9 +1,11 @@
 # Pinterest-DL Architecture Analysis & Refactoring Plan
 
 **Date Started:** January 30, 2026  
-**Status:** 🔄 **IN PROGRESS** - Phase 1 Complete  
+**Status:** 🔄 **IN PROGRESS** - Phase 2.0 (Architecture)  
 **Last Updated:** January 30, 2026  
 **Goal:** Align codebase with Locality, Simplicity, and Explicitness principles
+
+**Priority Change:** Phase 2.0 (Architecture Refactoring) now prioritized before Phase 2 (Scraper Decomposition) to establish clean foundation for 2.0.0 release.
 
 ---
 
@@ -1000,12 +1002,323 @@ pinterest_dl/
 
 ---
 
-### Phase 4: Explicitness
+### Phase 2.0: Architecture & Naming Refactoring 🆕
+
+**Priority: CRITICAL** (Moved ahead of Phase 2)  
+**Estimated Effort:** 1-2 weeks (incremental)  
+**Status:** 🔄 **IN PROGRESS**  
+**Rationale:** Establish clean architecture foundation for 2.0.0 before decomposing scrapers
+
+**Breaking Changes:** Acceptable for 2.0.0 release  
+**Migration Strategy:** Preserve old API with deprecation warnings (remove in 3.0.0)
+
+---
+
+#### Task 2.0.1: Rename Public Scraper Classes
+
+**Priority:** CRITICAL (Most visible breaking change)  
+**Effort:** 2-3 hours  
+**Status:** ⏳ NEXT
+
+**Problem:**
+- `_ScraperAPI` - Leading underscore means "private" but it's publicly exported
+- `_ScraperWebdriver` - Same issue
+- Inconsistent with Python naming conventions
+
+**Changes:**
+- [ ] Rename `_ScraperAPI` → `ApiScraper`
+- [ ] Rename `_ScraperWebdriver` → `WebDriverScraper`
+- [ ] Rename `scraper_api.py` → `api_scraper.py`
+- [ ] Rename `scraper_webdriver.py` → `webdriver_scraper.py`
+- [ ] Update `__init__.py` exports
+- [ ] Update `cli.py` imports
+- [ ] Update all test imports
+- [ ] Add deprecation warnings for old imports (backward compatibility)
+
+**Files Changed:**
+- RENAME: `pinterest_dl/scrapers/scraper_api.py` → `api_scraper.py`
+- RENAME: `pinterest_dl/scrapers/scraper_webdriver.py` → `webdriver_scraper.py`
+- MODIFIED: `pinterest_dl/__init__.py` (factory methods, exports)
+- MODIFIED: `pinterest_dl/cli.py` (import statements)
+- MODIFIED: All test files with scraper imports
+
+**Backward Compatibility:**
+```python
+# pinterest_dl/scrapers/__init__.py (NEW)
+from .api_scraper import ApiScraper
+from .webdriver_scraper import WebDriverScraper
+
+# Deprecated aliases
+import warnings
+_ScraperAPI = ApiScraper
+_ScraperWebdriver = WebDriverScraper
+
+def __getattr__(name):
+    if name in ("_ScraperAPI", "_ScraperWebdriver"):
+        warnings.warn(
+            f"{name} is deprecated, use {name[1:]} instead. "
+            "Will be removed in 3.0.0",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+```
+
+**Success Criteria:**
+- ✅ Clear public class names (no leading underscores)
+- ✅ All tests passing
+- ✅ Deprecation warnings for old names
+- ✅ Updated documentation
+
+---
+
+#### Task 2.0.2: Flatten and Reorganize Directory Structure
+
+**Priority:** HIGH  
+**Effort:** 1-2 days  
+**Status:** ⏳ PENDING
+
+**Problem:**
+- `low_level/` is meaningless (tells you nothing about contents)
+- `data_model/` contains non-models (parsers, file handlers)
+- Two `utils` modules causing namespace confusion
+
+**Phase A: Flatten `low_level/`**
+
+Move subdirectories to meaningful top-level names:
+- [ ] Move `low_level/api/` → `api/`
+- [ ] Move `low_level/http/` → `download/` (http + downloader combined)
+- [ ] Move `low_level/hls/` → `download/video/`
+- [ ] Move `low_level/webdriver/` → `webdriver/`
+- [ ] Delete empty `low_level/` directory
+- [ ] Update all import statements (30+ files)
+
+**Phase B: Reorganize `data_model/`**
+
+Split by actual concern:
+- [ ] Move `data_model/pinterest_media.py` → `domain/media.py`
+- [ ] Move `data_model/response_parser.py` → `parsers/response.py`
+- [ ] Move `data_model/media_file_handler.py` → `storage/media.py`
+- [ ] Move `data_model/cookie.py` → `domain/cookies.py`
+- [ ] Move `data_model/browser_version.py` → `domain/browser.py`
+- [ ] Delete empty `data_model/` directory
+- [ ] Update all import statements
+
+**Phase C: Consolidate `utils/`**
+
+- [ ] Rename `utils/` → `common/` (clearer name)
+- [ ] Rename `scrapers/utils.py` → `scrapers/operations.py` (avoid confusion)
+- [ ] Update all import statements
+
+**New Structure:**
+```
+pinterest_dl/
+├── __init__.py              # Public API factory
+├── cli.py                   # CLI entry
+├── exceptions.py            # All exceptions
+├── domain/                  # ✨ Core domain models
+│   ├── media.py            # PinterestMedia, VideoStreamInfo
+│   ├── cookies.py          # Cookie utilities
+│   └── browser.py          # BrowserVersion
+├── scrapers/                # ✨ High-level orchestration
+│   ├── api_scraper.py      # ApiScraper (renamed)
+│   ├── webdriver_scraper.py # WebDriverScraper (renamed)
+│   └── operations.py       # Shared operations (renamed from utils)
+├── parsers/                 # ✨ Data transformation
+│   └── response.py         # ResponseParser
+├── storage/                 # ✨ File system operations
+│   └── media.py            # Media storage functions
+├── api/                     # ✨ Pinterest API client (from low_level)
+│   ├── client.py           # PinterestAPI
+│   ├── endpoints.py        # API endpoints
+│   ├── bookmarks.py        # BookmarkManager
+│   └── responses.py        # PinResponse
+├── download/                # ✨ Download infrastructure (from low_level/http + hls)
+│   ├── http.py             # HttpClient
+│   ├── media.py            # MediaDownloader
+│   ├── requests.py         # Request building
+│   └── video/              # Video-specific
+│       ├── hls.py          # HlsProcessor
+│       ├── segments.py     # SegmentInfo
+│       └── keys.py         # KeyCache
+├── webdriver/               # ✨ Selenium automation (from low_level)
+│   ├── driver.py           # PinterestDriver
+│   ├── browser.py          # Browser init
+│   └── installer.py        # Driver installer
+└── common/                  # ✨ Cross-cutting utilities (from utils)
+    ├── io.py               # File I/O
+    ├── progress.py         # Progress bars
+    └── executables.py      # Executable checks
+```
+
+**Files Changed:** 30+ files (all imports)
+
+**Backward Compatibility:**
+```python
+# pinterest_dl/data_model/__init__.py (keep for compatibility)
+"""Deprecated: Use pinterest_dl.domain instead. Will be removed in 3.0.0"""
+import warnings
+
+def __getattr__(name):
+    warnings.warn(
+        "pinterest_dl.data_model is deprecated, use pinterest_dl.domain instead. "
+        "Will be removed in 3.0.0",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    if name == "PinterestMedia":
+        from pinterest_dl.domain.media import PinterestMedia
+        return PinterestMedia
+    # ... other exports
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+```
+
+**Success Criteria:**
+- ✅ Clear, meaningful directory names
+- ✅ Domain-driven organization
+- ✅ No `low_level/` directory
+- ✅ No namespace conflicts
+- ✅ All tests passing
+- ✅ Deprecation warnings for old imports
+
+---
+
+#### Task 2.0.3: Remove Redundant Prefixes
+
+**Priority:** MEDIUM  
+**Effort:** 3-4 hours  
+**Status:** ⏳ PENDING
+
+**Problem:** Internal classes have redundant `Pinterest` prefix (package already called `pinterest_dl`)
+
+**Changes:**
+- [ ] Rename `PinterestAPI` → `ApiClient` (`api/client.py`)
+- [ ] Rename `PinterestDriver` → `Driver` (`webdriver/driver.py`)
+- [ ] Rename `PinterestMediaDownloader` → `MediaDownloader` (`download/media.py`)
+- [ ] Rename `PinterestCookieJar` → `CookieJar` (if exists, or remove if using requests')
+- [ ] Keep `PinterestMedia` unchanged (public API - breaking change not worth it)
+- [ ] Update all import sites
+
+**Rationale:** Keep `PinterestMedia` because:
+- Most visible public API
+- Users already using it
+- Context is clear from import: `from pinterest_dl import PinterestMedia`
+- Breaking this needs 3.0.0, not 2.0.0
+
+**Files Changed:**
+- MODIFIED: `api/client.py` (class rename)
+- MODIFIED: `webdriver/driver.py` (class rename)
+- MODIFIED: `download/media.py` (class rename)
+- MODIFIED: All files importing these classes (10+ files)
+
+**Success Criteria:**
+- ✅ No redundant prefixes on internal classes
+- ✅ `PinterestMedia` kept for public API
+- ✅ All tests passing
+
+---
+
+#### Task 2.0.4: Convert Static-Only Classes to Modules
+
+**Priority:** MEDIUM  
+**Effort:** 2-3 hours  
+**Status:** ⏳ PENDING
+
+**Problem:** Classes with only `@staticmethod` violate "Simplicity" principle
+
+**Changes:**
+- [ ] Convert `RequestBuilder` to module functions in `download/requests.py`
+  - `RequestBuilder.build_post()` → `build_post_request()`
+  - `RequestBuilder.build_get()` → `build_get_request()`
+- [ ] Already done: `MediaFileHandler` → module functions (Task 1.1 ✅)
+- [ ] Update all call sites
+
+**Before:**
+```python
+# download/request_builder.py
+class RequestBuilder:
+    @staticmethod
+    def build_post(url, data, headers):
+        # ...
+```
+
+**After:**
+```python
+# download/requests.py
+def build_post_request(url: str, data: dict, headers: dict) -> dict:
+    """Build POST request configuration."""
+    # ...
+```
+
+**Files Changed:**
+- RENAME: `download/request_builder.py` → `download/requests.py`
+- MODIFIED: All files calling `RequestBuilder` methods (5+ files)
+
+**Success Criteria:**
+- ✅ No static-only classes (target: 0)
+- ✅ Clear module-level functions
+- ✅ All tests passing
+
+---
+
+#### Task 2.0.5: Update Public API Exports
+
+**Priority:** CRITICAL  
+**Effort:** 1 hour  
+**Status:** ⏳ PENDING (after 2.0.1-2.0.4)
+
+**Changes:**
+- [ ] Update `pinterest_dl/__init__.py` to re-export from new locations
+- [ ] Ensure clean public API: `PinterestDL`, `PinterestMedia`, exceptions
+- [ ] Add `__all__` to control exports
+- [ ] Update version to `2.0.0-dev`
+
+**Public API:**
+```python
+# pinterest_dl/__init__.py
+from pinterest_dl.scrapers.api_scraper import ApiScraper
+from pinterest_dl.scrapers.webdriver_scraper import WebDriverScraper
+from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.exceptions import *
+
+__version__ = "2.0.0-dev"
+
+class PinterestDL:
+    """Factory for creating Pinterest scrapers."""
+    
+    @staticmethod
+    def with_api(...) -> ApiScraper:
+        return ApiScraper(...)
+    
+    @staticmethod
+    def with_browser(...) -> WebDriverScraper:
+        return WebDriverScraper(...)
+
+__all__ = [
+    "PinterestDL",
+    "PinterestMedia",
+    "ApiScraper",
+    "WebDriverScraper",
+    # ... exceptions
+]
+```
+
+**Success Criteria:**
+- ✅ Clean public API
+- ✅ All imports from new locations
+- ✅ Version updated to 2.0.0-dev
+- ✅ Documentation updated
+
+---
+
+### Phase 2: Scraper Decomposition (POSTPONED after Phase 2.0)
 
 **Priority: HIGH**  
-**Estimated Effort:** 2 days
+**Estimated Effort:** 3-4 days  
+**Status:** ⏳ PENDING (after Phase 2.0)
 
-#### Task 4.1: Add Type Hints
+#### Task 2.1: Split scraper_api.py (Now api_scraper.py)
 - [ ] Add type hints to `browser.py` (all methods)
 - [ ] Add type hints to `io.py` (all functions)
 - [ ] Add type hints to `scraper_webdriver.py`

@@ -15,10 +15,10 @@ __all__ = ["ApiScraper", "WebDriverScraper"]
 
 def __getattr__(name: str):
     """Provide backward compatibility with deprecation warnings for old class names.
-    
+
     This function is called when an attribute is not found in the module.
     It provides deprecated aliases for the old underscore-prefixed class names.
-    
+
     Deprecated in 2.0.0, will be removed in 2.1.0:
     - _ScraperAPI -> use ApiScraper instead
     - _ScraperWebdriver -> use WebDriverScraper instead
