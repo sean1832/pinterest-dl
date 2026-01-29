@@ -6,8 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 
+from pinterest_dl.common import io
 from pinterest_dl.domain.browser import BrowserVersion
-from pinterest_dl.utils import io
 from pinterest_dl.webdriver.driver_installer import BrowserDetector, ChromeDriverInstaller
 
 

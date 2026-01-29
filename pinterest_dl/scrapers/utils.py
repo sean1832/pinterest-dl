@@ -11,12 +11,12 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
+from pinterest_dl.common import ensure_executable
+from pinterest_dl.common.progress_bar import TqdmProgressBarCallback
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import USER_AGENT, downloader
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
 from pinterest_dl.storage.media import MediaFileHandler
-from pinterest_dl.utils import ensure_executable
-from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 
 logger = logging.getLogger(__name__)
 

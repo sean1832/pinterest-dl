@@ -6,7 +6,7 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from pinterest_dl.utils import io
+from pinterest_dl.common import io
 from pinterest_dl.webdriver.browser import Browser
 from pinterest_dl.webdriver.pinterest_driver import PinterestDriver, PinterestMedia
 

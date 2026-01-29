@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
+from pinterest_dl.common import io
 from pinterest_dl.download import USER_AGENT, fetch, http_client
 from pinterest_dl.exceptions import InvalidBrowser
-from pinterest_dl.utils import io
 
 # Supported driver target platforms
 DriverPlatform = Literal["win32", "win64", "mac-x64", "mac-arm64", "linux64"]

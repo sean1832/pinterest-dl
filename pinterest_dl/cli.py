@@ -8,9 +8,9 @@ from traceback import print_exc
 from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
+from pinterest_dl.common import io
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.scrapers import utils as scraper_utils
-from pinterest_dl.utils import io
 
 logger = logging.getLogger(__name__)
 
