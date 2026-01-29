@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, TypeVar
 
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import HttpClient
 from pinterest_dl.exceptions import DownloadError
 

@@ -8,11 +8,11 @@ from tqdm import tqdm
 
 from pinterest_dl.api.bookmark_manager import BookmarkManager
 from pinterest_dl.api.pinterest_api import PinterestAPI
-from pinterest_dl.data_model.cookie import PinterestCookieJar
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
-from pinterest_dl.data_model.response_parser import ResponseParser
+from pinterest_dl.domain.cookies import PinterestCookieJar
+from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import EmptyResponseError
+from pinterest_dl.parsers.response import ResponseParser
 from pinterest_dl.utils import io
 
 from . import utils

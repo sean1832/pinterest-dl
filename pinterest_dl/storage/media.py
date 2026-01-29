@@ -11,7 +11,7 @@ from typing import Tuple
 import pyexiv2
 from PIL import Image
 
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.exceptions import UnsupportedMediaTypeError
 
 

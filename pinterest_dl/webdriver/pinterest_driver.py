@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from tqdm import tqdm
 
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia
 
 
 class PinterestDriver:

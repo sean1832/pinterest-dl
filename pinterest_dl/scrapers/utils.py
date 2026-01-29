@@ -11,10 +11,10 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
-from pinterest_dl.data_model.media_file_handler import MediaFileHandler
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import USER_AGENT, downloader
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
+from pinterest_dl.storage.media import MediaFileHandler
 from pinterest_dl.utils import ensure_executable
 from pinterest_dl.utils.progress_bar import TqdmProgressBarCallback
 

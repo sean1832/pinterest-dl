@@ -6,7 +6,7 @@ Separated from the data model to maintain clear separation of concerns.
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from pinterest_dl.data_model.pinterest_media import PinterestMedia, VideoStreamInfo
+from pinterest_dl.domain.media import PinterestMedia, VideoStreamInfo
 from pinterest_dl.exceptions import EmptyResponseError
 
 

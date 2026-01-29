@@ -8,7 +8,8 @@ from traceback import print_exc
 from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
-from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.scrapers import utils as scraper_utils
 from pinterest_dl.utils import io
 
 logger = logging.getLogger(__name__)
@@ -271,19 +272,19 @@ def main() -> None:
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = PinterestDL.download_media(images, output_dir, args.video)
+            downloaded_imgs = scraper_utils.download_media(images, output_dir, args.video)
 
             # post process
-            kept = PinterestDL.prune_images(downloaded_imgs, args.resolution, args.verbose)
+            kept = scraper_utils.prune_images(downloaded_imgs, args.resolution, args.verbose)
             if args.caption == "txt" or args.caption == "json":
-                PinterestDL.add_captions_to_file(
+                scraper_utils.add_captions_to_file(
                     kept,
                     output_dir,
                     args.caption,
                     args.verbose,
                 )
             elif args.caption == "metadata":
-                PinterestDL.add_captions_to_meta(kept, args.verbose)
+                scraper_utils.add_captions_to_meta(kept, args.verbose)
             elif args.caption != "none":
                 raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
             print("\nDone.")
