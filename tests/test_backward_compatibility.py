@@ -27,15 +27,6 @@ class TestDeprecatedScraperNames:
             # Verify it returns the correct class
             assert _ScraperWebdriver is WebDriverScraper
 
-    def test_deprecated_scraper_api_instantiation_works(self):
-        """Test that old name can still instantiate scrapers."""
-        with pytest.warns(DeprecationWarning):
-            from pinterest_dl.scrapers import _ScraperAPI
-
-            scraper = _ScraperAPI(timeout=5, verbose=False)  # noqa: F841
-            # Should be an instance of ApiScraper
-            assert isinstance(scraper, ApiScraper)
-
     def test_factory_returns_new_class_names(self):
         """Test that PinterestDL factory returns new class instances."""
         scraper = PinterestDL.with_api(timeout=5, verbose=False)

@@ -34,7 +34,7 @@ class _ConcurrentCoordinator:
         total = len(items)
         done = 0
         results: List[Optional[T]] = [None] * total
-        errors: Dict[str, Exception] = {}
+        errors: Dict[str, tuple] = {}
 
         def submit_tasks(executor: ThreadPoolExecutor):
             futures = {}
@@ -53,7 +53,7 @@ class _ConcurrentCoordinator:
                 except Exception as e:
                     # Store error with item identifier for better error reporting
                     item_id = getattr(item, "id", None) or getattr(item, "url", str(item)[:50])
-                    errors[item] = (item_id, e)
+                    errors[str(item_id)] = (item_id, e)
                     if fail_fast:
                         # cancel others
                         for f in future_to_meta:
