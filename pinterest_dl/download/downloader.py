@@ -75,7 +75,7 @@ class _ConcurrentCoordinator:
         return [r for r in results if r is not None]
 
 
-class PinterestMediaDownloader:
+class MediaDownloader:
     """Handles downloading media files from Pinterest"""
 
     def __init__(
@@ -85,7 +85,7 @@ class PinterestMediaDownloader:
         max_retries: int = 3,
         progress_callback: Optional[ProgressCallback] = None,
     ):
-        """Initialize the PinterestMediaDownloader with user agent and optional parameters."""
+        """Initialize the MediaDownloader with user agent and optional parameters."""
         self.http_client = HttpClient(user_agent, timeout, max_retries)
         self.progress_callback = progress_callback
 

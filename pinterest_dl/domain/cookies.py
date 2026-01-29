@@ -4,7 +4,7 @@ import requests
 import requests.cookies
 
 
-class PinterestCookieJar(requests.cookies.RequestsCookieJar):
+class CookieJar(requests.cookies.RequestsCookieJar):
     def to_selenium_cookies(self) -> List[dict]:
         """Convert each cookie in the RequestsCookieJar to Selenium format"""
         pinterest_cookies = []
@@ -21,9 +21,9 @@ class PinterestCookieJar(requests.cookies.RequestsCookieJar):
         return pinterest_cookies
 
     @staticmethod
-    def from_selenium_cookies(cookies: List[dict]) -> "PinterestCookieJar":
+    def from_selenium_cookies(cookies: List[dict]) -> "CookieJar":
         """Convert Selenium cookies to RequestsCookieJar"""
-        jar = PinterestCookieJar()
+        jar = CookieJar()
         for cookie in cookies:
             jar.set(
                 name=cookie.get("name", ""),

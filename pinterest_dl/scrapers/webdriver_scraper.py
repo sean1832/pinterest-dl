@@ -8,7 +8,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from pinterest_dl.common import io
 from pinterest_dl.webdriver.browser import Browser
-from pinterest_dl.webdriver.pinterest_driver import PinterestDriver, PinterestMedia
+from pinterest_dl.webdriver.driver import Driver, PinterestMedia
 
 from . import operations
 
@@ -103,7 +103,7 @@ class WebDriverScraper:
             List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
         try:
-            pin_scraper = PinterestDriver(self.webdriver)
+            pin_scraper = Driver(self.webdriver)
             return pin_scraper.scrape(
                 url, num=num, verbose=self.verbose, timeout=self.timeout, ensure_alt=self.ensure_alt
             )
@@ -166,7 +166,7 @@ class WebDriverScraper:
 
         return kept_imgs
 
-    def login(self, email: str, password: str) -> PinterestDriver:
+    def login(self, email: str, password: str) -> Driver:
         """Login to Pinterest using the given credentials.
 
         Args:
@@ -177,7 +177,7 @@ class WebDriverScraper:
             Pinterest: Pinterest object.
         """
         try:
-            return PinterestDriver(self.webdriver).login(email, password)
+            return Driver(self.webdriver).login(email, password)
         except Exception as e:
             raise RuntimeError(f"Failed to login to Pinterest: {e}") from e
 

@@ -5,7 +5,7 @@ import requests
 
 from pinterest_dl.api.endpoints import Endpoint
 from pinterest_dl.api.pinterest_response import PinResponse
-from pinterest_dl.domain.cookies import PinterestCookieJar
+from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
@@ -14,7 +14,7 @@ from pinterest_dl.exceptions import (
 )
 
 
-class PinterestAPI:
+class Api:
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 6.1; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
@@ -23,14 +23,14 @@ class PinterestAPI:
     def __init__(
         self,
         url: str,
-        cookies: Optional[PinterestCookieJar] = None,
+        cookies: Optional[CookieJar] = None,
         timeout: float = 5,
     ) -> None:
         """Pinterest API client.
 
         Args:
             url (str): Pinterest URL. (e.g. "https://www.pinterest.com/pin/123456789/")
-            cookies (Optional[PinterestCookieJar], optional): Pinterest cookies. Defaults to None.
+            cookies (Optional[CookieJar], optional): Pinterest cookies. Defaults to None.
             timeout (float, optional): Request timeout in seconds. Defaults to 5.
         """
         self.url = url

@@ -6,10 +6,10 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 from tqdm import tqdm
 
+from pinterest_dl.api.api import Api
 from pinterest_dl.api.bookmark_manager import BookmarkManager
-from pinterest_dl.api.pinterest_api import PinterestAPI
 from pinterest_dl.common import io
-from pinterest_dl.domain.cookies import PinterestCookieJar
+from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download.request_builder import RequestBuilder
 from pinterest_dl.exceptions import EmptyResponseError
@@ -54,7 +54,7 @@ class ApiScraper:
             raise ValueError(
                 "Invalid cookies format. Expected a list of dictionary. In Selenium format."
             )
-        self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
+        self.cookies = CookieJar().from_selenium_cookies(cookies)
         return self
 
     def with_cookies_path(self, cookies_path: Optional[Union[str, Path]]) -> "ApiScraper":
@@ -78,7 +78,7 @@ class ApiScraper:
                 "Invalid cookies file format. Expected a list of dictionary. In Selenium format."
             )
 
-        self.cookies = PinterestCookieJar().from_selenium_cookies(cookies)
+        self.cookies = CookieJar().from_selenium_cookies(cookies)
         return self
 
     def scrape(
@@ -101,7 +101,7 @@ class ApiScraper:
         """
 
         medias: List[PinterestMedia] = []
-        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
+        api = Api(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(3)
 
         if api.is_pin:
@@ -232,7 +232,7 @@ class ApiScraper:
 
         if self.verbose:
             print(f"Scraping URL: {url}")
-        api = PinterestAPI(url, self.cookies, timeout=self.timeout)
+        api = Api(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(bookmarksCount)
 
         with tqdm(total=num, desc="Scraping Search", disable=self.verbose) as pbar:
@@ -372,7 +372,7 @@ class ApiScraper:
 
     def _scrape_pins(
         self,
-        api: PinterestAPI,
+        api: Api,
         num: int,
         min_resolution: Tuple[int, int],
         delay: float,
@@ -433,7 +433,7 @@ class ApiScraper:
 
     def _scrape_board(
         self,
-        api: PinterestAPI,
+        api: Api,
         num: int,
         min_resolution: Tuple[int, int],
         delay: float,
@@ -509,7 +509,7 @@ class ApiScraper:
 
     def _get_images(
         self,
-        api: PinterestAPI,
+        api: Api,
         batch_size: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
@@ -550,7 +550,7 @@ class ApiScraper:
 
     def _search_images(
         self,
-        api: PinterestAPI,
+        api: Api,
         batch_size: int,
         bookmarks: BookmarkManager,
         min_resolution: Tuple[int, int],
@@ -582,7 +582,7 @@ class ApiScraper:
 
     def _handle_missing_search_images(
         self,
-        api: PinterestAPI,
+        api: Api,
         batch_size: int,
         remains: int,
         bookmarks: BookmarkManager,
@@ -608,7 +608,7 @@ class ApiScraper:
 
     def _handle_missing_images(
         self,
-        api: PinterestAPI,
+        api: Api,
         batch_size: int,
         remains: int,
         bookmarks: BookmarkManager,

@@ -14,7 +14,7 @@ from tqdm import tqdm
 from pinterest_dl.domain.media import PinterestMedia
 
 
-class PinterestDriver:
+class Driver:
     def __init__(self, webdriver: WebDriver) -> None:
         self.webdriver: WebDriver = webdriver
 
@@ -24,7 +24,7 @@ class PinterestDriver:
 
     def login(
         self, email: str, password: str, url: str = "https://www.pinterest.com/login/"
-    ) -> "PinterestDriver":
+    ) -> "Driver":
         """Login to Pinterest.
 
         Args:
@@ -33,7 +33,7 @@ class PinterestDriver:
             url (str): Pinterest login page url. Defaults to "https://www.pinterest.com/login/".
 
         Returns:
-            Pinterest: Pinterest object.
+            Driver: Driver object.
         """
         self.webdriver.get(url)
         email_field = self.webdriver.find_element(By.ID, "email")
