@@ -5,6 +5,7 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
+from pinterest_dl.data_model.media_file_handler import MediaFileHandler
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
 from pinterest_dl.low_level.http import USER_AGENT, downloader
@@ -65,7 +66,7 @@ class _ScraperBase:
             item.set_local_path(path)
             if item.resolution is None or item.resolution == (0, 0):
                 try:
-                    item.set_local_resolution(path)
+                    MediaFileHandler.set_local_resolution(item, path)
                 except FileNotFoundError:
                     print(f"Warning: Local path '{path}' does not exist. Skipping resolution set.")
                 except UnsupportedMediaTypeError as ve:
@@ -136,11 +137,11 @@ class _ScraperBase:
                         print(f"Skipping captioning for {img.local_path} (GIF)")
                     continue
                 if img.origin:
-                    img.meta_write_comment(img.origin)
+                    MediaFileHandler.write_exif_comment(img, img.origin)
                     if verbose:
                         print(f"Origin added to {img.local_path}: '{img.origin}'")
                 if img.alt:
-                    img.meta_write_subject(img.alt)
+                    MediaFileHandler.write_exif_subject(img, img.alt)
                     if verbose:
                         print(f"Caption added to {img.local_path}: '{img.alt}'")
 

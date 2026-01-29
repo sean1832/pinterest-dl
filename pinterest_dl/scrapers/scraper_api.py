@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from pinterest_dl.data_model.cookie import PinterestCookieJar
 from pinterest_dl.data_model.pinterest_media import PinterestMedia
+from pinterest_dl.data_model.response_parser import ResponseParser
 from pinterest_dl.exceptions import EmptyResponseError
 from pinterest_dl.low_level.api.bookmark_manager import BookmarkManager
 from pinterest_dl.low_level.api.pinterest_api import PinterestAPI
@@ -521,7 +522,7 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", [])
         try:
-            img_batch = PinterestMedia.from_responses(
+            img_batch = ResponseParser.from_responses(
                 response_data, min_resolution, caption_from_title=caption_from_title
             )
         except EmptyResponseError:
@@ -557,7 +558,7 @@ class _ScraperAPI(_ScraperBase):
         # parse response data
         response_data = response.resource_response.get("data", {}).get("results", [])
 
-        img_batch = PinterestMedia.from_responses(
+        img_batch = ResponseParser.from_responses(
             response_data, min_resolution, caption_from_title=caption_from_title
         )
         if self.ensure_alt:
@@ -591,7 +592,7 @@ class _ScraperAPI(_ScraperBase):
         while difference > 0 and remains > 0:
             next_response = api.get_search(difference, bookmarks.get())
             next_response_data = next_response.resource_response.get("data", {}).get("results", [])
-            additional_images = PinterestMedia.from_responses(next_response_data, min_resolution)
+            additional_images = ResponseParser.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
@@ -622,7 +623,7 @@ class _ScraperAPI(_ScraperBase):
                 else api.get_board_feed(board_id, difference, bookmarks.get())
             )
             next_response_data = next_response.resource_response.get("data", [])
-            additional_images = PinterestMedia.from_responses(next_response_data, min_resolution)
+            additional_images = ResponseParser.from_responses(next_response_data, min_resolution)
             images.extend(additional_images)
             bookmarks.add_all(next_response.get_bookmarks())
             remains -= len(additional_images)
