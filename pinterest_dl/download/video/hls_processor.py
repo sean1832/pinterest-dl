@@ -226,31 +226,26 @@ class HlsProcessor:
             output_mp4 (Path): Path to the output MP4 file.
 
         Raises:
-            HlsDownloadError: If ffmpeg remux fails. Consider using --skip-remux flag.
+            HlsDownloadError: If ffmpeg remux fails.
         """
-        try:
-            self._run_cmd(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-loglevel",
-                    "info",
-                    "-f",
-                    "concat",
-                    "-safe",
-                    "0",
-                    "-i",
-                    str(concat_list),
-                    "-c",
-                    "copy",
-                    str(output_mp4),
-                ],
-                "remux to mp4",
-            )
-        except HlsDownloadError as e:
-            raise HlsDownloadError(
-                f"{e}\n\nHint: If remux fails, try using --skip-remux to output raw .ts file."
-            ) from e
+        self._run_cmd(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel",
+                "info",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_list),
+                "-c",
+                "copy",
+                str(output_mp4),
+            ],
+            "remux to mp4",
+        )
 
     # TODO: Expose reencode_to_mp4 via CLI flag (e.g. --reencode) for guaranteed mp4 output
     def reencode_to_mp4(self, concat_list: Path, output_mp4: Path) -> None:

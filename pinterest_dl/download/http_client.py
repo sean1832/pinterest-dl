@@ -110,9 +110,13 @@ class HttpClient:
                 self.hls_processor.concat_to_ts(segment_paths, output_ts)
                 return output_ts
             else:
-                # Remux to .mp4 using ffmpeg
+                # Remux to .mp4 using ffmpeg, fallback to re-encode if remux fails
                 output_mp4 = output_path.with_suffix(".mp4")
                 concat_list = temp_dir / "concat_list.txt"
                 self.hls_processor.build_concat_list(segment_paths, concat_list)
-                self.hls_processor.remux_to_mp4(concat_list, output_mp4)
+                try:
+                    self.hls_processor.remux_to_mp4(concat_list, output_mp4)
+                except Exception:
+                    print("Warning: Remux failed, re-encoding video (this may take longer)...")
+                    self.hls_processor.reencode_to_mp4(concat_list, output_mp4)
                 return output_mp4
