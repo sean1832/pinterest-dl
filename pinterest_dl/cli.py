@@ -52,6 +52,48 @@ def sanitize_url(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
+def validate_cookies_authenticated(cookies: list[dict]) -> bool:
+    """Check if cookies contain authenticated Pinterest session.
+
+    Args:
+        cookies: List of cookie dictionaries in Selenium format.
+
+    Returns:
+        bool: True if cookies indicate authenticated session (_auth=1), False otherwise.
+    """
+    for cookie in cookies:
+        if cookie.get("name") == "_auth":
+            # Pinterest uses _auth=1 for authenticated, _auth=0 for not authenticated
+            return cookie.get("value") == "1"
+    return False
+
+
+def check_and_warn_invalid_cookies(cookies_path: str) -> None:
+    """Load and validate cookies file, warning user if authentication is invalid.
+
+    Args:
+        cookies_path: Path to cookies JSON file.
+    """
+    if not cookies_path or not Path(cookies_path).exists():
+        return
+
+    try:
+        cookies = io.read_json(cookies_path)
+        if not isinstance(cookies, list):
+            logger.warning(
+                f"Invalid cookies format in '{cookies_path}': expected list, got {type(cookies).__name__}"
+            )
+            return
+        if not validate_cookies_authenticated(cookies):
+            print(f"\n[WARNING] Cookies in '{cookies_path}' are NOT authenticated!")
+            print("The _auth cookie is set to 0, which means you're not logged in.")
+            print("This will likely fail for private boards/pins.")
+            print("To fix this, run: pinterest-dl login -o cookies.json")
+            print("")
+    except Exception as e:
+        logger.warning(f"Could not validate cookies: {e}")
+
+
 # fmt: off
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__description__ + " v" + __version__)
@@ -158,7 +200,7 @@ def main() -> None:
                         incognito=args.incognito,
                         verbose=args.verbose,
                     )
-                cookies = scraper.login(email, password).get_cookies(after_sec=7)
+                cookies = scraper.login(email, password).get_cookies(after_sec=10)
             else:
                 # Default: Playwright
                 scraper = PinterestDL.with_browser(
@@ -167,12 +209,28 @@ def main() -> None:
                     incognito=args.incognito,
                     verbose=args.verbose,
                 )
-                cookies = scraper.login(email, password).get_cookies(after_sec=7)
+                cookies = scraper.login(email, password).get_cookies(after_sec=10)
                 scraper.close()
+
+            # Validate cookies are authenticated
+            if not validate_cookies_authenticated(cookies):
+                print("\n[WARNING] Login may have failed!")
+                print("The captured cookies do not indicate an authenticated session (_auth != 1).")
+                print("This usually means:")
+                print("  - Login credentials were incorrect")
+                print("  - Pinterest blocked the login (captcha, verification required)")
+                print(
+                    "  - Not enough time to complete login (try --headful to see what's happening)"
+                )
+                print(
+                    "\nCookies will still be saved, but they likely won't work for private boards."
+                )
+                print(f"Saved to: '{args.output}'\n")
+                sys.exit(1)
 
             # save cookies
             io.write_json(cookies, args.output, 4)
-            print(f"Cookies saved to '{args.output}'")
+            print(f"\n[SUCCESS] Authenticated cookies saved to '{args.output}'")
 
             # print instructions
             print("\nNote:")
@@ -190,6 +248,11 @@ def main() -> None:
             if not urls:
                 print("No URLs provided. Please provide at least one URL.")
                 return
+
+            # Check cookies validity if provided
+            if args.cookies:
+                check_and_warn_invalid_cookies(args.cookies)
+
             for url in urls:
                 url = sanitize_url(url)
                 print(f"Scraping {url}...")
@@ -286,6 +349,11 @@ def main() -> None:
             if not querys:
                 print("No queries provided. Please provide at least one query.")
                 return
+
+            # Check cookies validity if provided
+            if args.cookies:
+                check_and_warn_invalid_cookies(args.cookies)
+
             for query in querys:
                 print(f"Searching {query}...")
                 if args.client in ["chromium", "firefox"]:
