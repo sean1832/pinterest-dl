@@ -648,6 +648,9 @@ class ApiScraper:
         return unique
 
     def _display_images(self, images: List[PinterestMedia]):
-        """Print scraped image URLs if verbosity is enabled."""
+        """Print scraped media URLs if verbosity is enabled."""
         for i, img in enumerate(images):
-            print(f"({i + 1}) {img.src}")
+            if img.video_stream:
+                print(f"({i + 1}) [VIDEO] {img.video_stream.url}")
+            else:
+                print(f"({i + 1}) {img.src}")
