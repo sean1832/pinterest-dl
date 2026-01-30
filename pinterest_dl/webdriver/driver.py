@@ -97,13 +97,26 @@ class Driver:
                         if self._is_div_ad(div) or len(unique_results) >= num:
                             continue
                         images = div.find_elements(By.TAG_NAME, "img")
-                        href = div.find_element(By.TAG_NAME, "a").get_attribute("href")
+                        link_elem = div.find_element(By.TAG_NAME, "a")
+                        href = link_elem.get_attribute("href")
+                        aria_label = link_elem.get_attribute("aria-label") or ""
+
+                        # Clean up aria-label: remove " Pin page" suffix
+                        if aria_label.endswith(" Pin page"):
+                            aria_label = aria_label[: -len(" Pin page")]
+
                         id = div.get_attribute("data-test-pin-id")
                         if not id:
                             continue
                         for image in images:
-                            alt = image.get_attribute("alt")
-                            if ensure_alt and (not alt or not alt.strip()):
+                            # Try aria-label first (cleaner), then fall back to img alt
+                            alt = aria_label or image.get_attribute("alt") or ""
+
+                            # Strip "This may contain: " prefix from alt text
+                            if alt.startswith("This may contain: "):
+                                alt = alt[len("This may contain: ") :]
+
+                            if ensure_alt and not alt.strip():
                                 continue
                             src = image.get_attribute("src")
                             if src and "/236x/" in src:

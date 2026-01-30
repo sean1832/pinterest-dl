@@ -183,14 +183,24 @@ class PlaywrightDriver:
                         if not pin_id:
                             continue
 
-                        # Get link
+                        # Get link and aria-label (cleaner alt text source)
                         link_elem = div.locator("a").first
                         href = link_elem.get_attribute("href") if link_elem else None
+                        aria_label = link_elem.get_attribute("aria-label") if link_elem else ""
+
+                        # Clean up aria-label: remove " Pin page" suffix
+                        if aria_label and aria_label.endswith(" Pin page"):
+                            aria_label = aria_label[: -len(" Pin page")]
 
                         # Get images
                         images = div.locator("img").all()
                         for image in images:
-                            alt = image.get_attribute("alt") or ""
+                            # Try aria-label first (cleaner), then fall back to img alt
+                            alt = aria_label or image.get_attribute("alt") or ""
+
+                            # Strip "This may contain: " prefix from alt text
+                            if alt.startswith("This may contain: "):
+                                alt = alt[len("This may contain: ") :]
 
                             if ensure_alt and not alt.strip():
                                 continue
