@@ -11,9 +11,7 @@ from pinterest_dl import PinterestDL
 # ============================================================================
 # Configuration - Change these to your actual Pinterest links/queries
 # ============================================================================
-VIDEO_PIN_URL = (
-    "https://au.pinterest.com/pin/900438519273272242/"  # Replace with pin that has videos
-)
+VIDEO_PIN_URL = "https://www.pinterest.com/pin/12345678/"  # Replace with pin that has videos
 VIDEO_SEARCH_QUERY = "cooking tutorials"  # Change to your search query
 
 

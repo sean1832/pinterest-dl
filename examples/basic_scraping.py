@@ -11,8 +11,8 @@ from pinterest_dl import PinterestDL
 # ============================================================================
 # Configuration - Change these URLs to your actual Pinterest links
 # ============================================================================
-PIN_URL = "https://au.pinterest.com/pin/900438519273272242/"
-BOARD_URL = "https://au.pinterest.com/pin/900438519273272242/"  # Replace with actual board URL
+PIN_URL = "https://www.pinterest.com/pin/12345678/"
+BOARD_URL = "https://www.pinterest.com/username/board-name/"  # Replace with actual board URL
 
 
 def example_1_simple_pin_scrape():

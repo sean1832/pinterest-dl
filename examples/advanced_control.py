@@ -15,7 +15,7 @@ from pinterest_dl.scrapers import operations
 # ============================================================================
 # Configuration - Change these URLs to your actual Pinterest links
 # ============================================================================
-PIN_URL = "https://au.pinterest.com/pin/900438519273272242/"
+PIN_URL = "https://www.pinterest.com/pin/12345678/"
 SEARCH_QUERY = "mountain landscapes"
 
 

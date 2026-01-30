@@ -16,11 +16,9 @@ from pinterest_dl import PinterestDL
 # Configuration - Change these URLs to your actual Pinterest links
 # ============================================================================
 PRIVATE_BOARD_URL = (
-    "https://au.pinterest.com/pin/900438519273272242/"  # Replace with your private board
+    "https://www.pinterest.com/username/private-board/"  # Replace with your private board
 )
-PRIVATE_PIN_URL = (
-    "https://au.pinterest.com/pin/900438519273272242/"  # Replace with your private pin
-)
+PRIVATE_PIN_URL = "https://www.pinterest.com/pin/12345678/"  # Replace with your private pin
 SEARCH_QUERY = "my private collection"  # Change to your search query
 
 

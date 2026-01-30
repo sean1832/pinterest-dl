@@ -13,7 +13,7 @@ from pinterest_dl import PinterestDL
 # ============================================================================
 # Configuration - Change these URLs/queries to your actual Pinterest links
 # ============================================================================
-PIN_URL = "https://au.pinterest.com/pin/900438519273272242/"
+PIN_URL = "https://www.pinterest.com/pin/12345678/"
 INVALID_URL = "https://www.pinterest.com/pin/invalid/"
 SEARCH_QUERY = "cats"
 

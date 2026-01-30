@@ -135,14 +135,22 @@ python examples/video_downloading.py
 
 ### Modify for Your Use Case
 
-All examples use placeholder URLs like `https://www.pinterest.com/pin/1234567`. Replace these with real Pinterest URLs:
+**Important:** All examples use placeholder URLs. You MUST change these constants at the top of each file to real Pinterest URLs before running:
 
 ```python
-# Change this:
-url="https://www.pinterest.com/pin/1234567",
+# At the top of each example file, change:
+PIN_URL = "https://www.pinterest.com/pin/12345678/"  # <- Change to your actual Pinterest URL
+BOARD_URL = "https://www.pinterest.com/username/board-name/"  # <- Change to your actual board URL
+SEARCH_QUERY = "your search term"  # <- Change to your search query
+```
+
+Example:
+```python
+# Change from:
+PIN_URL = "https://www.pinterest.com/pin/12345678/"
 
 # To a real URL:
-url="https://www.pinterest.com/pin/900438519273272242/",
+PIN_URL = "https://www.pinterest.com/pin/900438519273272242/"
 ```
 
 ### Comment Out Unused Examples
