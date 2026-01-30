@@ -41,13 +41,14 @@ pinterest-dl login [选项]
 
 #### 选项
 
-| 选项                        | 说明             | 默认值         |
-| --------------------------- | ---------------- | -------------- |
-| `-o`, `--output [文件]`     | cookies 保存路径 | `cookies.json` |
-| `--client [chrome/firefox]` | 使用的浏览器类型 | `chrome`       |
-| `--headful`                 | 显示浏览器窗口   | 无             |
-| `--incognito`               | 启用无痕模式     | 无             |
-| `--verbose`                 | 显示调试信息     | 无             |
+| 选项                              | 说明             | 默认值         |
+| --------------------------------- | ---------------- | -------------- |
+| `-o`, `--output [文件]`           | cookies 保存路径 | `cookies.json` |
+| `--client [chromium/firefox]`     | 使用的浏览器类型 | `chromium`     |
+| `--backend [playwright/selenium]` | 浏览器自动化后端 | `playwright`   |
+| `--headful`                       | 显示浏览器窗口   | 无             |
+| `--incognito`                     | 启用无痕模式     | 无             |
+| `--verbose`                       | 显示调试信息     | 无             |
 
 #### 使用示例
 
@@ -104,7 +105,8 @@ cat urls.txt | pinterest-dl scrape -f - [选项]
 | `--cache [路径]`                     | 保存抓取结果到 JSON                | 无             |
 | `--caption [txt/json/metadata/none]` | 标题保存格式                       | `none`         |
 | `--ensure-cap`                       | 要求每张图都有 alt 文本            | 无             |
-| `--client [api/chrome/firefox]`      | 抓取方式                           | `api`          |
+| `--client [api/chromium/firefox]`    | 抓取方式                           | `api`          |
+| `--backend [playwright/selenium]`    | 浏览器自动化后端（浏览器模式）     | `playwright`   |
 | `--headful`                          | 显示浏览器窗口（浏览器模式）       | 无             |
 | `--incognito`                        | 无痕模式（浏览器模式）             | 无             |
 | `--verbose`                          | 调试输出                           | 无             |

@@ -7,9 +7,12 @@ You can use the `PinterestDL` class directly in your Python code to scrape and d
   - [1a. Scrape with Cookies for Private Boards](#1a-scrape-with-cookies-for-private-boards)
 - [2. Detailed Scraping with Lower-Level Control](#2-detailed-scraping-with-lower-level-control)
   - [2a. With API](#2a-with-api)
-  - [2b. With Browser](#2b-with-browser)
+  - [2b. With Browser (Playwright)](#2b-with-browser-playwright)
+  - [2c. With Browser (Selenium - Legacy)](#2c-with-browser-selenium---legacy)
 
 ---
+
+> **Note:** Browser automation now uses **Playwright** by default, which is faster and more reliable. Selenium is still available as a fallback via `PinterestDL.with_selenium()` for backward compatibility.
 
 ## 1. High-level Scrape and Download
 
@@ -78,9 +81,9 @@ from pinterest_dl import PinterestDL
 email = input("Enter Pinterest email: ")
 password = os.getenv("PINTEREST_PASSWORD")
 
-# Initialize browser and login to Pinterest
+# Initialize browser and login to Pinterest (uses Playwright by default)
 cookies = PinterestDL.with_browser(
-    browser_type="chrome",
+    browser_type="chromium",  # 'chromium' or 'firefox'
     headless=True,
 ).login(email, password).get_cookies(
     after_sec=7,  # Time to wait before capturing cookies. Login may take time.
@@ -182,16 +185,18 @@ scraped_medias = PinterestDL.with_api().search(
 # Download, save to JSON, add captions, etc.
 ```
 
-### 2b. With Browser
+### 2b. With Browser (Playwright)
+
+Playwright is the default browser automation backend, offering faster and more reliable scraping.
 
 ```python
 import json
 
 from pinterest_dl import PinterestDL
 
-# 1. Initialize PinterestDL with Browser
+# 1. Initialize PinterestDL with Browser (Playwright - default)
 scraped_medias = PinterestDL.with_browser(
-    browser_type="chrome",  # Browser type to use ('chrome' or 'firefox')
+    browser_type="chromium",  # Browser type to use ('chromium' or 'firefox')
     headless=True,  # Run browser in headless mode
     ensure_alt=True,  # Ensure every image has alt text (default: False)
 ).scrape(
@@ -225,4 +230,32 @@ PinterestDL.add_captions_to_meta(images=kept_media)
 # 6. Add Alt Text as text file (Optional)
 # Extract `alt` text from media and save it as a text file in the downloaded directory
 PinterestDL.add_captions_to_file(kept_media, output_dir, extension="txt")
+```
+
+### 2c. With Browser (Selenium - Legacy)
+
+Selenium is available as a fallback for backward compatibility.
+
+```python
+import json
+import warnings
+
+from pinterest_dl import PinterestDL
+
+# Suppress deprecation warning (Selenium will be deprecated in 1.1.0)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    
+    # Initialize PinterestDL with Selenium
+    scraped_medias = PinterestDL.with_selenium(
+        browser_type="chrome",  # Browser type to use ('chrome' or 'firefox')
+        headless=True,  # Run browser in headless mode
+        ensure_alt=True,  # Ensure every image has alt text (default: False)
+    ).scrape(
+        url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
+        num=30,  # Maximum number of images to scrape
+    )
+
+# Continue with download, save to JSON, add captions, etc.
+```
 ```

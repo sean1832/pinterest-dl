@@ -13,7 +13,7 @@
 > [!NOTE]
 > **Version 1.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
 
-This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and [Selenium](https://selenium.dev) for automation, it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
+This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and browser automation ([Playwright](https://playwright.dev) by default, with [Selenium](https://selenium.dev) as fallback), it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
 
 It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python-api) for programmatic access. The tool supports scraping medias from public and private boards and pins using browser cookies. It also allows users to save scraped URLs to a JSON file for future access.
 
@@ -59,13 +59,15 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Support multiple urls and queries in a single command.
 - ✅ Support for batch processing of URLs and queries from files.
 - ✅ Download video streams if available.
+- ✅ **Playwright support** - faster and more reliable browser automation (default), with Selenium as fallback (`--backend selenium`).
 
 ## 🚩 Known Issues
 - 🔲 Not able to scrape nested boards yet.
 
 ## 📋 Requirements
 - Python 3.10 or newer
-- (Optional) Chrome or Firefox browser
+- (Optional) Playwright browsers: `playwright install chromium` or `playwright install firefox`
+- (Optional) For Selenium backend: Chrome or Firefox browser with matching WebDriver
 - [ffmpeg](https://ffmpeg.org/) added to your PATH for video stream downloading (with `--video` option)
 
 ## 📥 Installation

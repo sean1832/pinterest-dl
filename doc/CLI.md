@@ -26,13 +26,14 @@ pinterest-dl login [options]
 
 ![login](images/pinterest-dl-login.gif)
 
-| Options                     | Description               | Default        |
-| --------------------------- | ------------------------- | -------------- |
-| `-o`, `--output [file]`     | Path to save cookies file | `cookies.json` |
-| `--client [chrome/firefox]` | Browser client to use     | `chrome`       |
-| `--headful`                 | Show browser window       | -              |
-| `--incognito`               | Use incognito mode        | -              |
-| `--verbose`                 | Enable debug output       | -              |
+| Options                           | Description                | Default        |
+| --------------------------------- | -------------------------- | -------------- |
+| `-o`, `--output [file]`           | Path to save cookies file  | `cookies.json` |
+| `--client [chromium/firefox]`     | Browser type to use        | `chromium`     |
+| `--backend [playwright/selenium]` | Browser automation backend | `playwright`   |
+| `--headful`                       | Show browser window        | -              |
+| `--incognito`                     | Use incognito mode         | -              |
+| `--verbose`                       | Enable debug output        | -              |
 
 > [!TIP]
 >  After running `login`, you'll be prompted for your Pinterest email/password. Cookies are then saved to the specified file.
@@ -70,9 +71,10 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--cache [path]`                     | Save scraped URLs to JSON                                | -              |
 | `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, `metadata`, or `none`     | `none`         |
 | `--ensure-cap`                       | Require alt text on every image                          | -              |
-| `--client [api/chrome/firefox]`      | Scraper backend                                          | `api`          |
-| `--headful`                          | Show browser window (chrome/firefox only)                | -              |
-| `--incognito`                        | Use incognito mode (chrome/firefox only)                 | -              |
+| `--client [api/chromium/firefox]`    | Scraper backend                                          | `api`          |
+| `--backend [playwright/selenium]`    | Browser automation backend (for browser clients)         | `playwright`   |
+| `--headful`                          | Show browser window (browser clients only)               | -              |
+| `--incognito`                        | Use incognito mode (browser clients only)                | -              |
 | `--verbose`                          | Enable debug output                                      | -              |
 
 ---

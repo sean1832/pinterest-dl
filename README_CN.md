@@ -10,7 +10,7 @@
 **[English](README.md) | 中文**
 
 
-本工具库用于从 [Pinterest](https://pinterest.com) 抓取和下载媒体内容（包括图片和视频流）。通过 [Selenium](https://selenium.dev) 和逆向工程的 Pinterest API 实现自动化，支持从指定 Pinterest URL 提取图片并保存到指定目录。
+本工具库用于从 [Pinterest](https://pinterest.com) 抓取和下载媒体内容（包括图片和视频流）。通过浏览器自动化（默认使用 [Playwright](https://playwright.dev)，[Selenium](https://selenium.dev) 作为备用）和逆向工程的 Pinterest API 实现自动化，支持从指定 Pinterest URL 提取图片并保存到指定目录。
 
 提供 [命令行工具](#-命令行使用) 直接使用，也支持 [Python API](#️-python-api) 编程调用。支持通过浏览器 cookies 获取私密画板和图钉中的媒体内容，并可将抓取的 URL 保存为 JSON 文件供后续使用。
 
@@ -55,13 +55,16 @@
 - ✅ 单命令支持多 URL 和多查询
 - ✅ 支持从文件批量处理 URL 和查询
 - ✅ 下载视频流（如可用）
+- ✅ **Playwright 支持** - 更快速、更可靠的浏览器自动化（默认），Selenium 作为备用（`--backend selenium`）
 
 ## 🚩 已知问题
 - 🔲 一些嵌套 Pinterest 板块无法正确抓取
 
 ## 📋 环境要求
 - Python 3.10 或更高版本
-- （可选）Chrome 或 Firefox 浏览器
+- （可选）Playwright 浏览器：`playwright install chromium` 或 `playwright install firefox`
+- （可选）Selenium 后端：Chrome 或 Firefox 浏览器及对应 WebDriver
+- （可选）[ffmpeg](https://ffmpeg.org/) 用于视频流下载（`--video` 选项）
 
 ## 📥 安装指南
 
