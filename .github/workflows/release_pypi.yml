@@ -13,6 +13,7 @@ jobs:
       url: https://pypi.org/p/pinterest-dl
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -33,6 +34,12 @@ jobs:
       - name: Build package
         run: |
           python -m build
+      - name: Upload distributions to GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
