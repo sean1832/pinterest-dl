@@ -126,6 +126,7 @@ class ApiScraper:
         output_dir: Optional[Union[str, Path]],
         num: int,
         download_streams: bool = False,
+        skip_remux: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
@@ -139,6 +140,7 @@ class ApiScraper:
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
             download_streams (bool): Whether to download video streams if available.
+            skip_remux (bool): If True, output raw .ts file without ffmpeg remux.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -178,7 +180,7 @@ class ApiScraper:
 
         try:
             downloaded_items = operations.download_media(
-                scraped_outputs, output_dir, download_streams
+                scraped_outputs, output_dir, download_streams, skip_remux
             )
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
@@ -298,6 +300,7 @@ class ApiScraper:
         output_dir: Optional[Union[str, Path]],
         num: int,
         download_streams: bool = False,
+        skip_remux: bool = False,
         min_resolution: Tuple[int, int] = (0, 0),
         cache_path: Optional[Union[str, Path]] = None,
         caption: Literal["txt", "json", "metadata", "none"] = "none",
@@ -311,6 +314,7 @@ class ApiScraper:
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
             num (int): Maximum number of images to scrape.
             download_streams (bool): Whether to download video streams if available.
+            skip_remux (bool): If True, output raw .ts file without ffmpeg remux.
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
@@ -345,7 +349,7 @@ class ApiScraper:
 
         try:
             downloaded_items = operations.download_media(
-                scraped_outputs, output_dir, download_streams
+                scraped_outputs, output_dir, download_streams, skip_remux
             )
         except Exception as e:
             logger.error(f"Failed to download media: {e}", exc_info=self.verbose)

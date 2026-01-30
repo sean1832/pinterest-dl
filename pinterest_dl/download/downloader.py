@@ -90,7 +90,11 @@ class MediaDownloader:
         self.progress_callback = progress_callback
 
     def download(
-        self, pin_media: PinterestMedia, output_dir: Path, download_streams: bool = False
+        self,
+        pin_media: PinterestMedia,
+        output_dir: Path,
+        download_streams: bool = False,
+        skip_remux: bool = False,
     ) -> Path:
         """Download a media file (video stream or image) to the given directory.
 
@@ -98,6 +102,7 @@ class MediaDownloader:
             pin_media (PinterestMedia): Media descriptor.
             output_dir (Path): Destination directory.
             download_streams (bool): If True and a video stream exists, prefer that over the image.
+            skip_remux (bool): If True, output raw .ts file without ffmpeg remux.
 
         Returns:
             Path: Path to the downloaded file.
@@ -112,10 +117,10 @@ class MediaDownloader:
             if Path(stream_url).suffix.lower() == ".mp4":
                 # Direct MP4 download
                 self.http_client.download_blob(stream_url, target_path, chunk_size=2048)
+                return target_path
             else:
-                # HLS stream: download and remux to MP4
-                self.http_client.download_streams(stream_url, target_path)
-            return target_path
+                # HLS stream: download and optionally remux to MP4
+                return self.http_client.download_streams(stream_url, target_path, skip_remux)
 
         # Fallback to image
         image_url = pin_media.src
@@ -131,6 +136,7 @@ class MediaDownloader:
         media_list: List[PinterestMedia],
         output_dir: Path,
         download_streams: bool = False,
+        skip_remux: bool = False,
         max_workers: int = 8,
         fail_fast: bool = False,
     ) -> List[Path]:
@@ -140,6 +146,7 @@ class MediaDownloader:
             media_list (List[PinterestMedia]): List of PinterestMedia objects to download.
             output_dir (Path): Directory to save downloaded media.
             download_streams (bool): If True, prefer video streams over images.
+            skip_remux (bool): If True, output raw .ts file without ffmpeg remux.
             max_workers (int): Maximum number of worker threads.
             fail_fast (bool): If True, stop on first download failure.
 
@@ -148,7 +155,7 @@ class MediaDownloader:
         """
 
         def worker(media: PinterestMedia, outdir: Path) -> Path:
-            return self.download(media, outdir, download_streams)
+            return self.download(media, outdir, download_streams, skip_remux)
 
         stream_coordinator = _ConcurrentCoordinator(progress_callback=self.progress_callback)
         return stream_coordinator.run(

@@ -26,6 +26,7 @@ def download_media(
     media: List[PinterestMedia],
     output_dir: Union[str, Path],
     download_streams: bool,
+    skip_remux: bool = False,
 ) -> List[PinterestMedia]:
     """Download media from Pinterest using given URLs and fallbacks.
 
@@ -33,6 +34,7 @@ def download_media(
         media: List of PinterestMedia objects to download.
         output_dir: Directory to store downloaded media.
         download_streams: Whether to download video streams.
+        skip_remux: If True, output raw .ts file without ffmpeg remux.
 
     Returns:
         List of PinterestMedia objects with local paths set.
@@ -48,16 +50,17 @@ def download_media(
         progress_callback=TqdmProgressBarCallback(description="Downloading Media"),
     )
 
-    if download_streams:
+    if download_streams and not skip_remux:
         try:
             ensure_executable.ensure_executable("ffmpeg")
         except ExecutableNotFoundError as e:
             logger.warning(f"ffmpeg not found: {e}. Falling back to images.")
             print(f"Warning: {e}. Video streams will not be downloaded, falling back to images.")
+            print("Hint: Use --skip-remux to download videos as raw .ts files without ffmpeg.")
             download_streams = False
 
     try:
-        local_paths = dl.download_concurrent(media, output_dir, download_streams)
+        local_paths = dl.download_concurrent(media, output_dir, download_streams, skip_remux)
     except Exception as e:
         # Log the error and re-raise for CLI to handle
         logger.error(f"Download failed: {e}")

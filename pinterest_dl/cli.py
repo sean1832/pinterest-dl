@@ -78,6 +78,7 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     scrape_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     scrape_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
+    scrape_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
     scrape_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     scrape_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     scrape_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
@@ -100,6 +101,7 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of image to scrape (default: 100)")
     search_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
     search_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
+    search_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
     search_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
     search_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
     search_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
@@ -119,6 +121,7 @@ def get_parser() -> argparse.ArgumentParser:
     download_cmd.add_argument("-o", "--output", help="Output directory (default: ./<json_filename>)")
     download_cmd.add_argument("-r", "--resolution", type=str, help="minimum resolution to keep (e.g. 512x512).")
     download_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
+    download_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
     download_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
     download_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     download_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
@@ -254,6 +257,7 @@ def main() -> None:
                             args.output,
                             args.num,
                             download_streams=args.video,
+                            skip_remux=args.skip_remux,
                             min_resolution=parse_resolution(args.resolution)
                             if args.resolution
                             else (0, 0),
@@ -294,6 +298,7 @@ def main() -> None:
                             args.output,
                             args.num,
                             download_streams=args.video,
+                            skip_remux=args.skip_remux,
                             min_resolution=parse_resolution(args.resolution)
                             if args.resolution
                             else (0, 0),
@@ -320,7 +325,9 @@ def main() -> None:
 
             # download images
             output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = operations.download_media(images, output_dir, args.video)
+            downloaded_imgs = operations.download_media(
+                images, output_dir, args.video, args.skip_remux
+            )
 
             # post process
             kept = operations.prune_images(downloaded_imgs, args.resolution, args.verbose)

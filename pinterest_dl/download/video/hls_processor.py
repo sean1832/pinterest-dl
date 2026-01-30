@@ -206,17 +206,28 @@ class HlsProcessor:
             for p in segment_paths:
                 f.write(f"file '{p.as_posix()}'\n")
 
-    def concat_and_remux(
-        self, concat_list: Path, output_mp4: Path, reencode_fallback: bool = True
-    ) -> None:
-        """Concatenate segments and remux to MP4 using ffmpeg in a single step. (use this for better performance)
+    @staticmethod
+    def concat_to_ts(segment_paths: List[Path], output_ts: Path) -> None:
+        """Binary concatenate .ts segments into a single .ts file without ffmpeg.
+
+        Args:
+            segment_paths (List[Path]): List of segment file paths.
+            output_ts (Path): Path to output .ts file.
+        """
+        with output_ts.open("wb") as out:
+            for seg_path in segment_paths:
+                out.write(seg_path.read_bytes())
+
+    def remux_to_mp4(self, concat_list: Path, output_mp4: Path) -> None:
+        """Concatenate segments and remux to MP4 using ffmpeg (stream copy, no re-encode).
 
         Args:
             concat_list (Path): Path to the file containing the list of segments.
             output_mp4 (Path): Path to the output MP4 file.
-            reencode_fallback (bool, optional): Whether to re-encode if remuxing fails. Defaults to True.
+
+        Raises:
+            HlsDownloadError: If ffmpeg remux fails. Consider using --skip-remux flag.
         """
-        # Try direct remux (concat into mp4)
         try:
             self._run_cmd(
                 [
@@ -234,38 +245,50 @@ class HlsProcessor:
                     "copy",
                     str(output_mp4),
                 ],
-                "concat and remux",
+                "remux to mp4",
             )
-        except HlsDownloadError:
-            if not reencode_fallback:
-                raise
-            # Fallback: re-encode video/audio while concatenating
-            self._run_cmd(
-                [
-                    "ffmpeg",
-                    "-y",
-                    "-loglevel",
-                    "info",
-                    "-f",
-                    "concat",
-                    "-safe",
-                    "0",
-                    "-i",
-                    str(concat_list),
-                    "-c:v",
-                    "libx264",
-                    "-preset",
-                    "medium",
-                    "-crf",
-                    "23",
-                    "-c:a",
-                    "aac",
-                    "-b:a",
-                    "128k",
-                    str(output_mp4),
-                ],
-                "concat and re-encode",
-            )
+        except HlsDownloadError as e:
+            raise HlsDownloadError(
+                f"{e}\n\nHint: If remux fails, try using --skip-remux to output raw .ts file."
+            ) from e
+
+    # TODO: Expose reencode_to_mp4 via CLI flag (e.g. --reencode) for guaranteed mp4 output
+    def reencode_to_mp4(self, concat_list: Path, output_mp4: Path) -> None:
+        """Concatenate segments and re-encode to MP4 using ffmpeg (slower but more compatible).
+
+        Args:
+            concat_list (Path): Path to the file containing the list of segments.
+            output_mp4 (Path): Path to the output MP4 file.
+
+        Raises:
+            HlsDownloadError: If ffmpeg re-encode fails.
+        """
+        self._run_cmd(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel",
+                "info",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_list),
+                "-c:v",
+                "libx264",
+                "-preset",
+                "medium",
+                "-crf",
+                "23",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                str(output_mp4),
+            ],
+            "re-encode to mp4",
+        )
 
     def _run_cmd(self, cmd: List[str], phase: str) -> None:
         """Run ffmpeg command and raise detailed error on failure."""
