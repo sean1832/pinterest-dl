@@ -44,7 +44,7 @@ class PlaywrightDriver:
     def login(
         self, email: str, password: str, url: str = "https://www.pinterest.com/login/"
     ) -> "PlaywrightDriver":
-        """Login to Pinterest.
+        """Login to Pinterest with human-like behavior.
 
         Args:
             email: Pinterest email.
@@ -54,22 +54,43 @@ class PlaywrightDriver:
         Returns:
             PlaywrightDriver: Self for method chaining.
         """
+        print("Navigating to login page...")
         self.page.goto(url)
+        self.randdelay(2, 3)  # Wait for page to fully load
 
-        # Fill login form
+        print("Filling in email...")
+
+        # Click email field and fill (like pasting)
         email_field = self.page.locator("#email")
+        email_field.click()
+        self.randdelay(0.1, 0.5)  # Pause after clicking
         email_field.fill(email)
 
+        self.randdelay(0.1, 0.5)  # Important: delay between email and password fields
+
+        print("Filling in password...")
+
+        # Click password field and fill (like pasting)
         password_field = self.page.locator("#password")
+        password_field.click()
+        self.randdelay(0.1, 0.5)  # Pause after clicking
         password_field.fill(password)
 
-        self.randdelay(1, 2)
+        self.randdelay(0.3, 1.0)  # Pause before submitting (humans review before clicking)
 
-        # Submit form
-        password_field.press("Enter")
+        print("Submitting login...")
+
+        # Try to find and click the login button
+        try:
+            login_button = self.page.locator('button[type="submit"]').first
+            login_button.click()
+        except Exception:
+            # Fallback to Enter key if button not found
+            password_field.press("Enter")
 
         # Wait for navigation - use 'load' instead of 'networkidle' since Pinterest
         # keeps making background requests that prevent networkidle from resolving
+        print("Waiting for login to process...")
         self.page.wait_for_load_state("load")
 
         # Give a moment for redirect to happen after login

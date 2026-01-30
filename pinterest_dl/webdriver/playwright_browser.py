@@ -52,12 +52,35 @@ class PlaywrightBrowser:
         else:
             browser_launcher = self._playwright.chromium
 
-        # Launch browser
-        self._browser = browser_launcher.launch(headless=headless)
+        # Browser launch arguments to appear more like a real browser
+        launch_args = []
+        if browser_type == "chromium":
+            launch_args = [
+                "--disable-blink-features=AutomationControlled",  # Hide automation
+                "--disable-dev-shm-usage",
+                "--no-sandbox",
+                "--disable-web-security",
+                "--disable-features=IsolateOrigins,site-per-process",
+            ]
 
-        # Create context (incognito is default behavior in Playwright contexts)
+        # Launch browser
+        self._browser = browser_launcher.launch(
+            headless=headless,
+            args=launch_args if launch_args else None,
+        )
+
+        # Create context with stealth settings to avoid detection
         # Each context is isolated like an incognito window
-        self._context = self._browser.new_context()
+        context_options = {
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "viewport": {"width": 1366, "height": 768},
+            "locale": "en-US",
+            "timezone_id": "America/New_York",
+            "permissions": ["geolocation", "notifications"],
+            "color_scheme": "light",
+        }
+
+        self._context = self._browser.new_context(**context_options)
 
         # Disable images if requested (via route interception)
         if not image_enable:

@@ -206,12 +206,13 @@ def main() -> None:
                     )
                 cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
             else:
-                # Default: Playwright
+                # Default: Playwright - ENABLE images for login (needed for anti-bot)
                 scraper = PinterestDL.with_browser(
                     browser_type=args.client,
                     headless=not args.headful,
                     incognito=args.incognito,
                     verbose=args.verbose,
+                    enable_images=True,  # Required for login to work properly
                 )
                 cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
                 scraper.close()
@@ -227,6 +228,9 @@ def main() -> None:
                 print(
                     f"  - Current wait time: {args.wait} seconds (increase with --wait 30 or higher)"
                 )
+                if args.backend == "playwright":
+                    print("\nTip: Try using Selenium backend if Playwright is being detected:")
+                    print("  pinterest-dl login --backend selenium --headful --wait 30")
                 print(
                     "\nCookies will still be saved, but they likely won't work for private boards."
                 )
@@ -291,7 +295,7 @@ def main() -> None:
                                 )
                             )
                     else:
-                        # Playwright backend (default)
+                        # Playwright backend (default) - DISABLE images for scraping performance
                         scraper = PinterestDL.with_browser(
                             browser_type=args.client,
                             timeout=args.timeout,
@@ -299,6 +303,7 @@ def main() -> None:
                             incognito=args.incognito,
                             verbose=args.verbose,
                             ensure_alt=args.ensure_cap,
+                            enable_images=False,  # Disable images for faster scraping
                         )
                         try:
                             imgs = scraper.with_cookies_path(args.cookies).scrape_and_download(

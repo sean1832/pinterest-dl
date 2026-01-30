@@ -69,6 +69,7 @@ class PlaywrightScraper:
         incognito: bool = True,
         verbose: bool = False,
         ensure_alt: bool = False,
+        enable_images: bool = False,
     ) -> "PlaywrightScraper":
         """Factory method to create a PlaywrightScraper with initialized browser.
 
@@ -79,6 +80,7 @@ class PlaywrightScraper:
             incognito: Use incognito/private browsing mode.
             verbose: Enable verbose logging.
             ensure_alt: Only include images that have alt text.
+            enable_images: Enable image loading (needed for login, disabled for performance).
 
         Returns:
             PlaywrightScraper instance ready for use.
@@ -88,7 +90,7 @@ class PlaywrightScraper:
             browser_type=browser_type,
             headless=headless,
             incognito=incognito,
-            image_enable=False,  # Disable images for performance
+            image_enable=enable_images,  # Control image loading
         )
         return cls(
             browser=browser,

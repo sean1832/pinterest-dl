@@ -76,6 +76,7 @@ class PinterestDL:
         incognito: bool = True,
         verbose: bool = False,
         ensure_alt: bool = False,
+        enable_images: bool = True,
     ) -> "PlaywrightScraper":
         """Scrape Pinterest using Playwright browser automation.
 
@@ -90,6 +91,7 @@ class PinterestDL:
             incognito (bool): Use incognito mode in the browser.
             verbose (bool): Enable verbose logging.
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
+            enable_images (bool): Enable image loading (default: True for login, can disable for scraping).
 
         Returns:
             PlaywrightScraper: Instance of PlaywrightScraper with Playwright browser.
@@ -104,6 +106,7 @@ class PinterestDL:
             incognito=incognito,
             verbose=verbose,
             ensure_alt=ensure_alt,
+            enable_images=enable_images,
         )
 
     @staticmethod
