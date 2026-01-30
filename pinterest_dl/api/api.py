@@ -341,8 +341,8 @@ class Api:
 
     @staticmethod
     def _parse_search_query(url: str) -> str:
-        # /search/pins/?q={query}%26rs=typed
-        result = re.search(r"/search/pins/\?q=([A-Za-z0-9%]+)&rs=typed", url)
+        # /search/pins/?q={query} - query can contain Unicode chars or percent-encoded text
+        result = re.search(r"/search/pins/\?q=([^&]+)", url)
         if not result:
             raise InvalidSearchUrlError(f"Invalid Pinterest search URL: {url}")
         query = result.group(1)
