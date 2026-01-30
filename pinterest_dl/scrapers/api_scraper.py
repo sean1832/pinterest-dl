@@ -532,10 +532,14 @@ class ApiScraper:
                 remains -= new_images_count
                 pbar.update(new_images_count)
 
+                # Check if we've reached the end before trying to fetch more
                 if "-end-" in bookmarks.get():
+                    logger.debug("Reached end of board (bookmark indicates no more items)")
                     break
 
                 time.sleep(delay)
+
+                # Only try to fetch missing images if we haven't reached the end
                 try:
                     remains = self._handle_missing_images(
                         api,
@@ -552,7 +556,9 @@ class ApiScraper:
                     logger.error(f"Scraping error: {e}", exc_info=self.verbose)
                     break
                 except EmptyResponseError as e:
-                    logger.warning(f"Empty response error: {e}")
+                    # Empty response when trying to fill gaps - likely reached the end
+                    logger.debug(f"Empty response while filling batch gaps: {e}")
+                    # Don't break - we got some images, just can't fill the gap
                     break
 
         return medias
@@ -719,22 +725,49 @@ class ApiScraper:
         delay: float,
         board_id: Optional[str] = None,
     ) -> int:
-        """Handle cases where a batch does not return enough images."""
+        """Handle cases where a batch does not return enough images.
+
+        Returns the updated remains count.
+        """
         difference = batch_size - len(images[-batch_size:])
+
         while difference > 0 and remains > 0:
-            next_response = (
-                api.get_related_images(difference, bookmarks.get())
-                if not board_id
-                else api.get_board_feed(board_id, difference, bookmarks.get())
-            )
-            next_response_data = next_response.resource_response.get("data", [])
-            additional_images = ResponseParser.from_responses(next_response_data, min_resolution)
-            images.extend(additional_images)
-            bookmarks.add_all(next_response.get_bookmarks())
-            remains -= len(additional_images)
-            difference -= len(additional_images)
-            pbar.update(len(additional_images))
-            time.sleep(delay)
+            # Check if we've reached the end before making more requests
+            if "-end-" in bookmarks.get():
+                logger.debug("Cannot fetch more images: reached end of available content")
+                break
+
+            try:
+                next_response = (
+                    api.get_related_images(difference, bookmarks.get())
+                    if not board_id
+                    else api.get_board_feed(board_id, difference, bookmarks.get())
+                )
+                next_response_data = next_response.resource_response.get("data", [])
+
+                # Handle empty response gracefully
+                if not next_response_data:
+                    logger.debug("No additional images available to fill batch")
+                    break
+
+                additional_images = ResponseParser.from_responses(
+                    next_response_data, min_resolution
+                )
+                images.extend(additional_images)
+                bookmarks.add_all(next_response.get_bookmarks())
+                remains -= len(additional_images)
+                difference -= len(additional_images)
+                pbar.update(len(additional_images))
+                time.sleep(delay)
+
+            except EmptyResponseError as e:
+                # Empty response is expected when no more images are available
+                logger.debug(f"No more images to fetch: {e}")
+                break
+            except Exception as e:
+                # Log other errors but don't fail the entire scrape
+                logger.warning(f"Error while fetching additional images: {e}")
+                break
 
         return remains
 
