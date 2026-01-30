@@ -30,6 +30,8 @@ class ApiScraper:
         ensure_alt: bool = False,
         debug_mode: bool = False,
         debug_dir: str = "debug",
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> None:
         """Initialize ApiScraper.
 
@@ -39,12 +41,16 @@ class ApiScraper:
             ensure_alt (bool, optional): whether to remove images without alt text. Defaults to False.
             debug_mode (bool, optional): enable debug mode to dump requests/responses. Defaults to False.
             debug_dir (str, optional): directory to save debug files. Defaults to "debug".
+            max_retries (int, optional): maximum number of retry attempts for failed API calls. Defaults to 3.
+            retry_delay (float, optional): initial delay between retries in seconds (uses exponential backoff). Defaults to 1.0.
         """
         self.timeout = timeout
         self.verbose = verbose
         self.ensure_alt = ensure_alt
         self.debug_mode = debug_mode
         self.debug_dir = debug_dir
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
         self.cookies = None
 
     def with_cookies(self, cookies: list[dict[str, Any]]) -> "ApiScraper":
@@ -476,10 +482,13 @@ class ApiScraper:
             logger.debug(f"Board URL: {api.url}")
 
         with tqdm(total=num, desc="Scraping Board", disable=self.verbose) as pbar:
+            consecutive_empty_responses = 0
+            max_consecutive_failures = 3
+
             while remains > 0:
                 batch_size = min(50, remains)
                 try:
-                    current_img_batch, bookmarks = self._get_images(
+                    current_img_batch, bookmarks = self._get_images_with_retry(
                         api,
                         batch_size,
                         bookmarks,
@@ -487,7 +496,27 @@ class ApiScraper:
                         board_id=board_id,
                         caption_from_title=caption_from_title,
                     )
-                except (ValueError, EmptyResponseError) as e:
+                    # Reset consecutive failure counter on success
+                    consecutive_empty_responses = 0
+                except EmptyResponseError as e:
+                    consecutive_empty_responses += 1
+                    logger.warning(
+                        f"Failed to fetch batch after retries: {e} "
+                        f"(consecutive failures: {consecutive_empty_responses}/{max_consecutive_failures})"
+                    )
+
+                    # Stop if we hit too many consecutive failures
+                    if consecutive_empty_responses >= max_consecutive_failures:
+                        logger.warning(
+                            f"Stopping: {max_consecutive_failures} consecutive empty responses. "
+                            f"Scraped {len(medias)} items so far."
+                        )
+                        break
+
+                    # Continue to next batch - might be a transient issue
+                    time.sleep(delay)
+                    continue
+                except ValueError as e:
                     logger.warning(f"Board scraping interrupted: {e}")
                     break
                 except Exception as e:
@@ -527,6 +556,58 @@ class ApiScraper:
                     break
 
         return medias
+
+    def _get_images_with_retry(
+        self,
+        api: Api,
+        batch_size: int,
+        bookmarks: BookmarkManager,
+        min_resolution: Tuple[int, int],
+        board_id: Optional[str] = None,
+        caption_from_title: bool = False,
+    ) -> Tuple[List[PinterestMedia], BookmarkManager]:
+        """Fetch images with retry logic for transient failures.
+
+        Implements exponential backoff retry strategy for API calls.
+        """
+        last_error = None
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                return self._get_images(
+                    api,
+                    batch_size,
+                    bookmarks,
+                    min_resolution,
+                    board_id=board_id,
+                    caption_from_title=caption_from_title,
+                )
+            except EmptyResponseError as e:
+                last_error = e
+                if attempt < self.max_retries:
+                    # Exponential backoff: 1s, 2s, 4s...
+                    wait_time = self.retry_delay * (2**attempt)
+                    logger.warning(
+                        f"Empty response received (attempt {attempt + 1}/{self.max_retries + 1}). "
+                        f"Retrying in {wait_time:.1f}s..."
+                    )
+                    time.sleep(wait_time)
+                else:
+                    logger.warning(
+                        f"Empty response persists after {self.max_retries + 1} attempts. "
+                        f"Skipping this batch."
+                    )
+            except Exception as e:
+                # For other errors, fail immediately without retry
+                logger.error(f"Non-retryable error during API call: {e}", exc_info=self.verbose)
+                raise
+
+        # If all retries failed, raise the last error
+        if last_error:
+            raise last_error
+
+        # Fallback (shouldn't reach here)
+        raise EmptyResponseError("Failed to fetch images after all retry attempts")
 
     def _get_images(
         self,

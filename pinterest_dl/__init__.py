@@ -47,6 +47,8 @@ class PinterestDL:
         ensure_alt: bool = False,
         debug_mode: bool = False,
         debug_dir: str = "debug",
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> "ApiScraper":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
@@ -56,6 +58,8 @@ class PinterestDL:
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
             debug_mode (bool): Enable debug mode to dump all requests and responses to JSON files.
             debug_dir (str): Directory to save debug files when debug_mode is enabled.
+            max_retries (int): Maximum number of retry attempts for failed API calls. Defaults to 3.
+            retry_delay (float): Initial delay between retries in seconds (uses exponential backoff). Defaults to 1.0.
 
         Returns:
             ApiScraper: Instance of ApiScraper with the requests library.
@@ -66,6 +70,8 @@ class PinterestDL:
             ensure_alt=ensure_alt,
             debug_mode=debug_mode,
             debug_dir=debug_dir,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
         )
 
     @staticmethod
