@@ -23,17 +23,28 @@ logger = get_logger(__name__)
 class ApiScraper:
     """Pinterest scraper using the unofficial Pinterest API."""
 
-    def __init__(self, timeout: float = 5, verbose: bool = False, ensure_alt: bool = False) -> None:
+    def __init__(
+        self,
+        timeout: float = 5,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+        debug_mode: bool = False,
+        debug_dir: str = "debug",
+    ) -> None:
         """Initialize ApiScraper.
 
         Args:
             timeout (float, optional): timeout in seconds. Defaults to 3.
             verbose (bool, optional): show detail messages. Defaults to False.
             ensure_alt (bool, optional): whether to remove images without alt text. Defaults to False.
+            debug_mode (bool, optional): enable debug mode to dump requests/responses. Defaults to False.
+            debug_dir (str, optional): directory to save debug files. Defaults to "debug".
         """
         self.timeout = timeout
         self.verbose = verbose
         self.ensure_alt = ensure_alt
+        self.debug_mode = debug_mode
+        self.debug_dir = debug_dir
         self.cookies = None
 
     def with_cookies(self, cookies: list[dict[str, Any]]) -> "ApiScraper":
@@ -101,7 +112,13 @@ class ApiScraper:
         """
 
         medias: List[PinterestMedia] = []
-        api = Api(url, self.cookies, timeout=self.timeout)
+        api = Api(
+            url,
+            self.cookies,
+            timeout=self.timeout,
+            debug_mode=self.debug_mode,
+            debug_dir=self.debug_dir,
+        )
         bookmarks = BookmarkManager(3)
 
         if api.is_pin:
@@ -234,7 +251,13 @@ class ApiScraper:
         logger.info(f"Starting search scrape for query: '{query}', target: {num} items")
         if self.verbose:
             logger.debug(f"Search URL: {url}")
-        api = Api(url, self.cookies, timeout=self.timeout)
+        api = Api(
+            url,
+            self.cookies,
+            timeout=self.timeout,
+            debug_mode=self.debug_mode,
+            debug_dir=self.debug_dir,
+        )
         bookmarks = BookmarkManager(bookmarksCount)
 
         with tqdm(total=num, desc="Scraping Search", disable=self.verbose) as pbar:

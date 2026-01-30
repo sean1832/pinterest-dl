@@ -85,6 +85,8 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     scrape_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
     scrape_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
+    scrape_cmd.add_argument("--debug", action="store_true", help="Enable debug mode to dump all API requests and responses to JSON files")
+    scrape_cmd.add_argument("--debug-dir", type=str, default="debug", help="Directory to save debug files (default: debug)")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
     scrape_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
@@ -108,6 +110,8 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
     search_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
     search_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
+    search_cmd.add_argument("--debug", action="store_true", help="Enable debug mode to dump all API requests and responses to JSON files")
+    search_cmd.add_argument("--debug-dir", type=str, default="debug", help="Directory to save debug files (default: debug)")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
     search_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
@@ -251,7 +255,11 @@ def main() -> None:
 
                     imgs = (
                         PinterestDL.with_api(
-                            timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                            timeout=args.timeout,
+                            verbose=args.verbose,
+                            ensure_alt=args.ensure_cap,
+                            debug_mode=args.debug,
+                            debug_dir=args.debug_dir,
                         )
                         .with_cookies_path(args.cookies)
                         .scrape_and_download(
@@ -292,7 +300,11 @@ def main() -> None:
 
                     imgs = (
                         PinterestDL.with_api(
-                            timeout=args.timeout, verbose=args.verbose, ensure_alt=args.ensure_cap
+                            timeout=args.timeout,
+                            verbose=args.verbose,
+                            ensure_alt=args.ensure_cap,
+                            debug_mode=args.debug,
+                            debug_dir=args.debug_dir,
                         )
                         .with_cookies_path(args.cookies)
                         .search_and_download(

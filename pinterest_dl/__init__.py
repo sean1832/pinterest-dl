@@ -42,7 +42,11 @@ class PinterestDL:
 
     @staticmethod
     def with_api(
-        timeout: float = 10, verbose: bool = False, ensure_alt: bool = False
+        timeout: float = 10,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+        debug_mode: bool = False,
+        debug_dir: str = "debug",
     ) -> "ApiScraper":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
@@ -50,11 +54,19 @@ class PinterestDL:
             timeout (float): Timeout in seconds for requests.
             verbose (bool): Enable verbose logging.
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
+            debug_mode (bool): Enable debug mode to dump all requests and responses to JSON files.
+            debug_dir (str): Directory to save debug files when debug_mode is enabled.
 
         Returns:
             ApiScraper: Instance of ApiScraper with the requests library.
         """
-        return ApiScraper(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
+        return ApiScraper(
+            verbose=verbose,
+            timeout=timeout,
+            ensure_alt=ensure_alt,
+            debug_mode=debug_mode,
+            debug_dir=debug_dir,
+        )
 
     @staticmethod
     def with_browser(

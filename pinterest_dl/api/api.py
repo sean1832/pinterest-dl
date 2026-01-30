@@ -5,6 +5,7 @@ import requests
 
 from pinterest_dl.api.endpoints import Endpoint
 from pinterest_dl.api.pinterest_response import PinResponse
+from pinterest_dl.common.debug import RequestDebugger
 from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.download import request_builder
@@ -28,6 +29,8 @@ class Api:
         url: str,
         cookies: Optional[CookieJar] = None,
         timeout: float = 5,
+        debug_mode: bool = False,
+        debug_dir: str = "debug",
     ) -> None:
         """Pinterest API client.
 
@@ -35,9 +38,13 @@ class Api:
             url (str): Pinterest URL. (e.g. "https://www.pinterest.com/pin/123456789/")
             cookies (Optional[CookieJar], optional): Pinterest cookies. Defaults to None.
             timeout (float, optional): Request timeout in seconds. Defaults to 5.
+            debug_mode (bool, optional): Enable debug mode to dump requests/responses. Defaults to False.
+            debug_dir (str, optional): Directory to save debug files. Defaults to "debug".
         """
         self.url = url
         self.timeout = timeout
+        self.debug_mode = debug_mode
+        self.debugger = RequestDebugger(debug_dir) if debug_mode else None
         try:
             self.pin_id = self._parse_pin_id(self.url)
         except InvalidPinterestUrlError:
@@ -87,13 +94,35 @@ class Api:
             "top_level_source_depth": 1,
             "is_pdp": False,
         }
+        request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
             logger.debug(f"Fetching related images for pin {self.pin_id} (page_size={num})")
             response_raw = self._session.get(request_url, timeout=self.timeout)
             response_raw.raise_for_status()
+
+            # Debug dump if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_related_images_pin_{self.pin_id}",
+                )
+                logger.info(f"Debug dump saved to: {dump_path}")
+
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed for pin {self.pin_id}: {e}")
+
+            # Debug dump error if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_related_images_pin_{self.pin_id}",
+                )
+                logger.info(f"Error debug dump saved to: {dump_path}")
+
             raise requests.RequestException(f"Failed to request related images: {e}")
 
         try:
@@ -119,10 +148,29 @@ class Api:
             },
         }
 
+        request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Debug dump if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_main_image_pin_{self.pin_id}",
+                )
+                logger.info(f"Debug dump saved to: {dump_path}")
+
         except requests.exceptions.RequestException as e:
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_main_image_pin_{self.pin_id}",
+                )
+                logger.info(f"Error debug dump saved to: {dump_path}")
             raise requests.RequestException(f"Failed to request main image: {e}")
 
         return PinResponse(request_url, response_raw.json())
@@ -142,10 +190,29 @@ class Api:
             "field_set_key": "detailed",
         }
 
+        request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Debug dump if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_board_{username}_{boardname}",
+                )
+                logger.info(f"Debug dump saved to: {dump_path}")
+
         except requests.exceptions.RequestException as e:
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_board_{username}_{boardname}",
+                )
+                logger.info(f"Error debug dump saved to: {dump_path}")
             raise requests.RequestException(f"Failed to request board: {e}")
 
         return PinResponse(request_url, response_raw.json())
@@ -170,10 +237,29 @@ class Api:
             "redux_normalize_feed": True,  # flag to tell the server to return the data in a format that is easy to use in the frontend
         }
 
+        request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Debug dump if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_board_feed_{board_id}",
+                )
+                logger.info(f"Debug dump saved to: {dump_path}")
+
         except requests.exceptions.RequestException as e:
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_board_feed_{board_id}",
+                )
+                logger.info(f"Error debug dump saved to: {dump_path}")
             raise requests.RequestException(f"Failed to request board feed: {e}")
 
         return PinResponse(request_url, response_raw.json())
@@ -198,10 +284,29 @@ class Api:
             "source_url": source_url,
         }
 
+        request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
             response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Debug dump if enabled
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_search_{self.query}",
+                )
+                logger.info(f"Debug dump saved to: {dump_path}")
+
         except requests.exceptions.RequestException as e:
+            if self.debug_mode and self.debugger:
+                dump_path = self.debugger.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_search_{self.query}",
+                )
+                logger.info(f"Error debug dump saved to: {dump_path}")
             raise requests.RequestException(f"Failed to request search: {e}")
         try:
             json_response = response_raw.json()
