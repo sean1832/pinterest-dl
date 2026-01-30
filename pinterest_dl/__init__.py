@@ -1,8 +1,28 @@
+"""Pinterest-DL: An unofficial Pinterest media downloader.
+
+This package provides a simple API for scraping and downloading media from Pinterest.
+
+Example:
+    >>> from pinterest_dl import PinterestDL
+    >>> scraper = PinterestDL.with_api()
+    >>> media = scraper.scrape("https://pinterest.com/pin/123456/")
+    >>> scraper.download(media, "output/")
+"""
+
 __version__ = "0.0.0.dev0"
 __description__ = "An unofficial Pinterest image downloader"
+__all__ = [
+    "PinterestDL",
+    "ApiScraper",
+    "WebDriverScraper",
+    "PinterestMedia",
+    "__version__",
+    "__description__",
+]
 
 from typing import Literal
 
+from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.scrapers.api_scraper import ApiScraper
 from pinterest_dl.scrapers.webdriver_scraper import WebDriverScraper
 
