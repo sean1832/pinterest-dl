@@ -79,12 +79,7 @@ class ResponseParser:
             origin = f"https://www.pinterest.com/pin/{id}/"
 
             # Parse video stream if available
-            video_stream = None
-            is_stream = bool(item.get("should_open_in_stream", False))
-            if is_stream:
-                video_stream = cls._parse_video_stream(item)
-                if not video_stream:
-                    continue  # Skip if video stream parsing failed
+            video_stream = cls._parse_video_stream(item)
 
             media_items.append(
                 PinterestMedia(
@@ -130,21 +125,33 @@ class ResponseParser:
     def _extract_video_list(data_raw: Dict[str, Any]) -> Dict[str, Dict]:
         """Extract video list from Pinterest item.
 
+        Checks multiple locations where video data can appear:
+        1. Regular pins: videos.video_list
+        2. Story pins: story_pin_data.pages[0].blocks[0].video.video_list
+
         Args:
             data_raw: Raw Pinterest API item data.
 
         Returns:
             Dictionary mapping video variant keys to metadata.
         """
+        # Try regular pin structure first: videos.video_list
+        try:
+            video_list = data_raw["videos"]["video_list"]
+            if isinstance(video_list, dict) and video_list:
+                return video_list
+        except (KeyError, TypeError):
+            pass
+
+        # Try story pin structure: story_pin_data.pages[0].blocks[0].video.video_list
         try:
             video_list = data_raw["story_pin_data"]["pages"][0]["blocks"][0]["video"]["video_list"]
+            if isinstance(video_list, dict):
+                return video_list
         except (KeyError, IndexError, TypeError):
-            return {}
+            pass
 
-        if not isinstance(video_list, dict):
-            return {}
-
-        return video_list
+        return {}
 
     @staticmethod
     def _choose_highest_resolution(video_list: Dict[str, Dict]) -> Optional[Dict[str, Any]]:
