@@ -2,9 +2,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, TypeVar
 
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download.http_client import HttpClient
 from pinterest_dl.exceptions import DownloadError
+
+logger = get_logger(__name__)
 
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
 
@@ -53,6 +56,7 @@ class _ConcurrentCoordinator:
                 except Exception as e:
                     # Store error with item identifier for better error reporting
                     item_id = getattr(item, "id", None) or getattr(item, "url", str(item)[:50])
+                    logger.warning(f"Failed to download item {item_id}: {type(e).__name__}: {e}")
                     errors[str(item_id)] = (item_id, e)
                     if fail_fast:
                         # cancel others
@@ -113,6 +117,7 @@ class MediaDownloader:
         if download_streams and pin_media.video_stream:
             stream_url = pin_media.video_stream.url
             target_path = media_base.with_suffix(".mp4")
+            logger.debug(f"Downloading video stream for pin {pin_media.id}: {stream_url[:60]}...")
 
             if Path(stream_url).suffix.lower() == ".mp4":
                 # Direct MP4 download
@@ -124,6 +129,7 @@ class MediaDownloader:
 
         # Fallback to image
         image_url = pin_media.src
+        logger.debug(f"Downloading image for pin {pin_media.id}: {image_url[:60]}...")
         ext = Path(image_url).suffix.lower()
         if not ext:
             ext = ".jpg"  # reasonable default if extension is missing

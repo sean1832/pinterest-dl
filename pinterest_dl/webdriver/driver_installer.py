@@ -7,8 +7,11 @@ from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
 from pinterest_dl.common import io
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.download import USER_AGENT, fetch, http_client
 from pinterest_dl.exceptions import InvalidBrowser
+
+logger = get_logger(__name__)
 
 # Supported driver target platforms
 DriverPlatform = Literal["win32", "win64", "mac-x64", "mac-arm64", "linux64"]
@@ -206,7 +209,7 @@ class ChromeDriverInstaller:
         if platform == "auto":
             target_platform = self._auto_platform
             if verbose:
-                print(f"Auto-detected driver platform: {target_platform}")
+                logger.debug(f"Auto-detected driver platform: {target_platform}")
         else:
             if platform not in self.CHROMEDRIVER_PLATFORMS:
                 raise ValueError(
@@ -216,7 +219,7 @@ class ChromeDriverInstaller:
 
         if version == "latest":
             if verbose:
-                print("Fetching latest stable Chrome for Testing version...")
+                logger.debug("Fetching latest stable Chrome for Testing version...")
             response = fetch(
                 "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json",
                 response_format="json",
@@ -240,7 +243,7 @@ class ChromeDriverInstaller:
             existing_version = marker_file.read_text().strip()
             if existing_version == version and extracted_path.exists():
                 if verbose:
-                    print(
+                    logger.debug(
                         f"ChromeDriver {version} already installed at {extracted_path}. Skipping download."
                     )
                 return extracted_path
@@ -250,13 +253,13 @@ class ChromeDriverInstaller:
         zip_path = self.install_dir / zip_filename
 
         if verbose:
-            print(f"Downloading ChromeDriver from {url} into {zip_path}...")
+            logger.debug(f"Downloading ChromeDriver from {url} into {zip_path}...")
 
         downloader = http_client.HttpClient(user_agent=USER_AGENT, timeout=10, max_retries=3)
         downloader.download_blob(url, zip_path)
 
         if verbose:
-            print(f"Unpacking {zip_path}...")
+            logger.debug(f"Unpacking {zip_path}...")
 
         # On non-Windows the binary inside may already be executable; unzip expects the name inside.
         expected_member = (
@@ -270,7 +273,7 @@ class ChromeDriverInstaller:
                 extracted_path.chmod(extracted_path.stat().st_mode | 0o111)
             except OSError as e:
                 if verbose:
-                    print(f"Warning: failed to set executable bit on {extracted_path}: {e}")
+                    logger.warning(f"Failed to set executable bit on {extracted_path}: {e}")
 
         io.write_text(version, str(marker_file))
 
@@ -278,11 +281,11 @@ class ChromeDriverInstaller:
         try:
             zip_path.unlink()
             if verbose:
-                print("Removed zip archive.")
+                logger.debug("Removed zip archive.")
         except OSError as e:
             if verbose:
-                print(f"Warning: failed to delete archive {zip_path}: {e}")
+                logger.warning(f"Failed to delete archive {zip_path}: {e}")
 
         if verbose:
-            print(f"ChromeDriver {version} installed at {extracted_path}.")
+            logger.info(f"ChromeDriver {version} installed at {extracted_path}.")
         return extracted_path

@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -7,12 +6,13 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from pinterest_dl.common import io
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.webdriver.browser import Browser
 from pinterest_dl.webdriver.driver import Driver, PinterestMedia
 
 from . import operations
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class WebDriverScraper:
@@ -78,7 +78,7 @@ class WebDriverScraper:
             raise ValueError("Invalid cookies file format. Expected a list of cookies.")
 
         if self.verbose:
-            print("Navigate to Pinterest homepage before loading cookies.")
+            logger.debug("Navigate to Pinterest homepage before loading cookies.")
 
         # Navigate to Pinterest homepage to load cookies
         # Selenium requires the page to be loaded before adding cookies
@@ -87,7 +87,7 @@ class WebDriverScraper:
         cookies = self._sanitize_cookies(cookies)
         for cookie in cookies:
             self.webdriver.add_cookie(cookie)
-        print(f"Loaded cookies from {cookies_path}")
+        logger.info(f"Loaded cookies from {cookies_path}")
 
         time.sleep(wait_sec)
         return self
@@ -148,7 +148,7 @@ class WebDriverScraper:
         if cache_path:
             output_path = Path(cache_path)
             io.write_json(imgs_dict, output_path, indent=4)
-            print(f"Scraped data cached to {output_path}")
+            logger.info(f"Cached {len(imgs_dict)} items to {output_path}")
 
         if not output_dir:
             return None

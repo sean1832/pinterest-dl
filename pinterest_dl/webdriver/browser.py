@@ -7,8 +7,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from pinterest_dl.common import io
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.browser import BrowserVersion
 from pinterest_dl.webdriver.driver_installer import BrowserDetector, ChromeDriverInstaller
+
+logger = get_logger(__name__)
 
 
 class Browser:
@@ -30,7 +33,7 @@ class Browser:
         with open(version_file, "r") as f:
             version_str = f.read().strip()
             current_version = BrowserVersion.from_str(version_str)
-        print(f"Current Chrome driver version: {current_version}")
+        logger.debug(f"Current Chrome driver version: {current_version}")
         if self.version.Major != current_version.Major:
             return False
         if self.version.Minor != current_version.Minor:
@@ -53,7 +56,7 @@ class Browser:
         self.version = BrowserVersion.from_str(version)
 
         if not os.path.exists(exe_path) or not self._validate_chrome_driver_version():
-            print(f"Installing latest Chrome driver for version {self.version}")
+            logger.info(f"Installing latest Chrome driver for version {self.version}")
             driver_installer.install(version="latest", platform="auto")
 
         service = Service(str(exe_path))
@@ -68,10 +71,10 @@ class Browser:
         )
         chrome_options.add_argument("--log-level=3")  # Suppress most logs
         if incognito:
-            print("Running in incognito mode")
+            logger.debug("Running in incognito mode")
             chrome_options.add_argument("--incognito")
         if not headful:
-            print("Running in headless mode")
+            logger.debug("Running in headless mode")
             chrome_options.add_argument("--headless=new")
         try:
             browser = webdriver.Chrome(options=chrome_options, service=service)
@@ -98,7 +101,7 @@ class Browser:
         if incognito:
             firefox_options.set_preference("browser.privatebrowsing.autostart", True)
         if not headful:
-            print("Running in headless mode")
+            logger.debug("Running in headless mode")
             firefox_options.add_argument("--headless")
         try:
             browser = webdriver.Firefox(options=firefox_options)

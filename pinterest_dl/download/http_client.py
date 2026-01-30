@@ -5,7 +5,10 @@ from typing import Iterable, List, Union
 import requests
 import requests.adapters
 
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.download.video.hls_processor import HlsProcessor
+
+logger = get_logger(__name__)
 
 
 class HttpClient:
@@ -117,6 +120,6 @@ class HttpClient:
                 try:
                     self.hls_processor.remux_to_mp4(concat_list, output_mp4)
                 except Exception:
-                    print("Warning: Remux failed, re-encoding video (this may take longer)...")
+                    logger.warning("Remux failed, re-encoding video (this may take longer)...")
                     self.hls_processor.reencode_to_mp4(concat_list, output_mp4)
                 return output_mp4

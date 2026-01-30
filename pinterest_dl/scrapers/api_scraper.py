@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -9,6 +8,7 @@ from tqdm import tqdm
 from pinterest_dl.api.api import Api
 from pinterest_dl.api.bookmark_manager import BookmarkManager
 from pinterest_dl.common import io
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import request_builder
@@ -17,7 +17,7 @@ from pinterest_dl.parsers.response import ResponseParser
 
 from . import operations
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ApiScraper:
@@ -116,8 +116,7 @@ class ApiScraper:
         if self.verbose:
             self._display_images(medias)
 
-        if self.verbose:
-            self._display_images(medias)
+        logger.info(f"Successfully scraped {len(medias[:num])} media items from {url}")
         return medias[:num]
 
     def scrape_and_download(
@@ -173,7 +172,7 @@ class ApiScraper:
         if cache_path:
             output_path = Path(cache_path)
             io.write_json(items_as_dict, output_path, indent=4)
-            print(f"Scraped data cached to {output_path}")
+            logger.info(f"Cached {len(items_as_dict)} items to {output_path}")
 
         if not output_dir:
             return None
@@ -232,8 +231,9 @@ class ApiScraper:
             query = request_builder.url_encode(query)
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
 
+        logger.info(f"Starting search scrape for query: '{query}', target: {num} items")
         if self.verbose:
-            print(f"Scraping URL: {url}")
+            logger.debug(f"Search URL: {url}")
         api = Api(url, self.cookies, timeout=self.timeout)
         bookmarks = BookmarkManager(bookmarksCount)
 
@@ -250,7 +250,6 @@ class ApiScraper:
                     )
                 except (ValueError, EmptyResponseError) as e:
                     logger.warning(f"Search scraping interrupted: {e}")
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except Exception as e:
                     logger.error(
@@ -270,8 +269,8 @@ class ApiScraper:
 
                 if self.verbose:
                     for img in current_img_batch:
-                        print(f"[Batch {batch_count}] ({img.src})")
-                    print(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
+                        logger.debug(f"[Batch {batch_count}] ({img.src})")
+                    logger.debug(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
 
                 time.sleep(delay)
                 try:
@@ -282,7 +281,6 @@ class ApiScraper:
                     logger.warning(
                         f"Search scraping interrupted while handling missing images: {e}"
                     )
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except Exception as e:
                     logger.error(
@@ -342,7 +340,7 @@ class ApiScraper:
         if cache_path:
             output_path = Path(cache_path)
             io.write_json(items_as_dict, output_path, indent=4)
-            print(f"Scraped data cached to {output_path}")
+            logger.info(f"Cached {len(items_as_dict)} search results to {output_path}")
 
         if not output_dir:
             return None
@@ -400,7 +398,6 @@ class ApiScraper:
                     )
                 except (ValueError, EmptyResponseError) as e:
                     logger.warning(f"Scraping interrupted: {e}")
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except Exception as e:
                     logger.error(f"Unexpected error while scraping: {e}", exc_info=self.verbose)
@@ -416,7 +413,7 @@ class ApiScraper:
                 if "-end-" in bookmarks.get():
                     break
                 if self.verbose:
-                    print(f"bookmarks: {bookmarks.get()}")
+                    logger.debug(f"bookmarks: {bookmarks.get()}")
                 time.sleep(delay)
                 try:
                     remains = self._handle_missing_images(
@@ -424,7 +421,6 @@ class ApiScraper:
                     )
                 except (ValueError, EmptyResponseError) as e:
                     logger.warning(f"Scraping interrupted while handling missing images: {e}")
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except Exception as e:
                     logger.error(
@@ -452,8 +448,9 @@ class ApiScraper:
         num = min(num, pin_count)
         remains = num
 
+        logger.info(f"Scraping board with {pin_count} pins (ID: {board_id}), target: {num} items")
         if self.verbose:
-            print(f"Scraping board resource with {pin_count} pins (ID: {board_id})...")
+            logger.debug(f"Board URL: {api.url}")
 
         with tqdm(total=num, desc="Scraping Board", disable=self.verbose) as pbar:
             while remains > 0:
@@ -469,7 +466,6 @@ class ApiScraper:
                     )
                 except (ValueError, EmptyResponseError) as e:
                     logger.warning(f"Board scraping interrupted: {e}")
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except Exception as e:
                     logger.error(
@@ -502,11 +498,9 @@ class ApiScraper:
                     )
                 except ValueError as e:
                     logger.error(f"Scraping error: {e}", exc_info=self.verbose)
-                    print(f"\nError: {e}. Exiting scraping.")
                     break
                 except EmptyResponseError as e:
                     logger.warning(f"Empty response error: {e}")
-                    print(f"\nEmptyResponseError: {e}. Exiting scraping.")
                     break
 
         return medias
@@ -535,7 +529,6 @@ class ApiScraper:
             )
         except EmptyResponseError:
             logger.warning("Empty response received from Pinterest API")
-            print("Empty response received.")
             return [], bookmarks
         except Exception as e:
             # Log unexpected errors during response parsing
@@ -548,7 +541,7 @@ class ApiScraper:
             if self.verbose:
                 culled_count = batch_count - len(img_batch)
                 if culled_count:
-                    print(f"Removed {culled_count} images with no alt text from batch.")
+                    logger.debug(f"Removed {culled_count} images with no alt text from batch.")
         bookmarks.add_all(response.get_bookmarks())
         return img_batch, bookmarks
 
@@ -576,7 +569,7 @@ class ApiScraper:
             if self.verbose:
                 culled_count = batch_count - len(img_batch)
                 if culled_count:
-                    print(f"Removed {culled_count} images with no alt text from batch.")
+                    logger.debug(f"Removed {culled_count} images with no alt text from batch.")
         bookmarks.add_all(response.get_bookmarks())
         return img_batch, bookmarks
 
@@ -655,6 +648,6 @@ class ApiScraper:
         """Print scraped media URLs if verbosity is enabled."""
         for i, img in enumerate(images):
             if img.video_stream:
-                print(f"({i + 1}) [VIDEO] {img.video_stream.url}")
+                logger.debug(f"({i + 1}) [VIDEO] {img.video_stream.url}")
             else:
-                print(f"({i + 1}) {img.src}")
+                logger.debug(f"({i + 1}) {img.src}")

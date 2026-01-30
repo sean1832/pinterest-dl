@@ -12,7 +12,10 @@ from playwright.sync_api import Page
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from tqdm import tqdm
 
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.media import PinterestMedia
+
+logger = get_logger(__name__)
 
 
 class PlaywrightDriver:
@@ -153,7 +156,7 @@ class PlaywrightDriver:
                 self.page.locator("div[data-test-id='pin']").first.wait_for(timeout=15000)
             except PlaywrightTimeoutError:
                 if verbose:
-                    print("No pins found on initial load, continuing anyway...")
+                    logger.debug("No pins found on initial load, continuing anyway...")
 
             while len(unique_results) < num:
                 try:
@@ -174,7 +177,9 @@ class PlaywrightDriver:
                         tries = 0
 
                     if tries > timeout:
-                        print(f"\nTimeout: no new images in ({timeout}) seconds.")
+                        logger.warning(
+                            f"Scraping timeout: no new pins found after {timeout} seconds on {url}. Collected {len(unique_results)} images so far."
+                        )
                         break
 
                     # Process each pin div
@@ -232,7 +237,7 @@ class PlaywrightDriver:
                                     pbar.update(1)
 
                                     if verbose:
-                                        print(src, alt)
+                                        logger.debug(f"{src} {alt}")
 
                                     if len(unique_results) >= num:
                                         break
@@ -245,14 +250,17 @@ class PlaywrightDriver:
 
                 except PlaywrightTimeoutError:
                     if verbose:
-                        print("\nTimeout waiting for elements")
+                        logger.debug("Timeout waiting for elements")
 
         except Exception as e:
-            print(f"Error during scraping: {e}")
+            logger.error(
+                f"Unexpected error during scraping of {url}: {type(e).__name__}: {e}",
+                exc_info=verbose,
+            )
         finally:
             pbar.close()
             if verbose:
-                print(f"Scraped {len(imgs_data)} images")
+                logger.debug(f"Scraped {len(imgs_data)} images")
 
         return imgs_data
 

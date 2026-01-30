@@ -1,18 +1,17 @@
 import argparse
-import logging
 import sys
 from contextlib import nullcontext
 from getpass import getpass
 from pathlib import Path
-from traceback import print_exc
 from typing import List
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.common import io
+from pinterest_dl.common.logging import get_logger, setup_logging
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.scrapers import operations
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def parse_resolution(resolution: str) -> tuple[int, int]:
@@ -133,6 +132,9 @@ def get_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = get_parser()
     args = parser.parse_args()
+
+    # Setup logging early - verbose mode shows DEBUG, otherwise WARNING only
+    setup_logging(verbose=getattr(args, "verbose", False))
 
     try:
         if args.cmd == "login":
@@ -349,11 +351,9 @@ def main() -> None:
         print("\nOperation cancelled by user.")
         sys.exit(1)
     except Exception as e:
-        # Log with full traceback, show user-friendly message
-        logger.error(f"An error occurred: {e}", exc_info=True)
-        if args.verbose:
-            print("\nFull traceback:")
-            print_exc()
+        # Log with full traceback when verbose, show user-friendly message otherwise
+        if getattr(args, "verbose", False):
+            logger.error(f"An error occurred: {e}", exc_info=True)
         else:
             print(f"\nError: {e}")
             print("\nRun with --verbose for full traceback.")
@@ -361,6 +361,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # Configure logging - only WARNING and above to avoid noise
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s [%(name)s]: %(message)s")
     main()

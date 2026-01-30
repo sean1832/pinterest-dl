@@ -4,6 +4,10 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from pinterest_dl.common.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 def get_appdata_dir(path_under: Optional[str] = None) -> Path:
     if path_under:
@@ -69,11 +73,11 @@ def unzip(
                     if dir_path != extract_to:  # Check to avoid deleting the extract_to dir
                         os.removedirs(dir_path)
                     if verbose:
-                        print(f"{target_file} has been extracted to {final_path}")
+                        logger.debug(f"{target_file} has been extracted to {final_path}")
                     break
             else:
-                print(f"{target_file} was not found in the zip file.")
+                logger.warning(f"{target_file} was not found in the zip file.")
         else:
             # No specific file to extract, extract everything
             zip_ref.extractall(extract_to)
-            print(f"All files have been extracted to {extract_to}")
+            logger.debug(f"All files have been extracted to {extract_to}")

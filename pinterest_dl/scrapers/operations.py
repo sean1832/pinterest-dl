@@ -5,13 +5,13 @@ Functions are module-level to avoid unnecessary inheritance hierarchies.
 """
 
 import json
-import logging
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Union
 
 import tqdm
 
 from pinterest_dl.common import ensure_executable
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.common.progress_bar import TqdmProgressBarCallback
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.download import USER_AGENT
@@ -19,7 +19,7 @@ from pinterest_dl.download.downloader import MediaDownloader
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
 from pinterest_dl.storage import media as media_storage
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def download_media(
@@ -55,15 +55,17 @@ def download_media(
             ensure_executable.ensure_executable("ffmpeg")
         except ExecutableNotFoundError as e:
             logger.warning(f"ffmpeg not found: {e}. Falling back to images.")
-            print(f"Warning: {e}. Video streams will not be downloaded, falling back to images.")
-            print("Hint: Use --skip-remux to download videos as raw .ts files without ffmpeg.")
+            logger.info(
+                "Hint: Use --skip-remux to download videos as raw .ts files without ffmpeg."
+            )
             download_streams = False
 
     try:
         local_paths = dl.download_concurrent(media, output_dir, download_streams, skip_remux)
+        logger.info(f"Successfully downloaded {len(local_paths)}/{len(media)} media items")
     except Exception as e:
         # Log the error and re-raise for CLI to handle
-        logger.error(f"Download failed: {e}")
+        logger.error(f"Download operation failed: {type(e).__name__}: {e}")
         raise
 
     for item, path in zip(media, local_paths):
@@ -72,9 +74,9 @@ def download_media(
             try:
                 media_storage.set_local_resolution(item, path)
             except FileNotFoundError:
-                print(f"Warning: Local path '{path}' does not exist. Skipping resolution set.")
+                logger.warning(f"Local path '{path}' does not exist. Skipping resolution set.")
             except UnsupportedMediaTypeError as ve:
-                print(f"Warning: {ve}. Skipping resolution set for '{path}'.")
+                logger.warning(f"{ve}. Skipping resolution set for '{path}'.")
 
     return media
 
@@ -100,7 +102,7 @@ def add_captions_to_file(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if verbose:
-        print(f"Saving captions to {output_dir}...")
+        logger.debug(f"Saving captions to {output_dir}...")
 
     for img in tqdm.tqdm(images, desc="Captioning to file", disable=verbose):
         if not img.local_path:
@@ -115,12 +117,12 @@ def add_captions_to_file(
                     f.write(img.alt)
             else:
                 if verbose:
-                    print(f"No alt text for {img.local_path}")
+                    logger.debug(f"No alt text for {img.local_path}")
         else:
             raise ValueError("Invalid file extension. Use 'txt' or 'json'.")
 
         if verbose:
-            print(f"Caption saved for {img.local_path}: '{img.alt}'")
+            logger.debug(f"Caption saved for {img.local_path}: '{img.alt}'")
 
 
 def add_captions_to_meta(
@@ -150,18 +152,18 @@ def add_captions_to_meta(
 
             if img.local_path.suffix == ".gif":
                 if verbose:
-                    print(f"Skipping captioning for {img.local_path} (GIF)")
+                    logger.debug(f"Skipping captioning for {img.local_path} (GIF)")
                 continue
 
             if img.origin:
                 media_storage.write_exif_comment(img, img.origin)
                 if verbose:
-                    print(f"Origin added to {img.local_path}: '{img.origin}'")
+                    logger.debug(f"Origin added to {img.local_path}: '{img.origin}'")
 
             if img.alt:
                 media_storage.write_exif_subject(img, img.alt)
                 if verbose:
-                    print(f"Caption added to {img.local_path}: '{img.alt}'")
+                    logger.debug(f"Caption added to {img.local_path}: '{img.alt}'")
 
         except Exception as e:
             # Log metadata errors but continue processing other images
@@ -170,8 +172,6 @@ def add_captions_to_meta(
                     f"Failed to add metadata to {img.local_path}: {e}",
                     exc_info=verbose,
                 )
-                if verbose:
-                    print(f"Error captioning {img.local_path}: {e}")
             else:
                 logger.warning(
                     f"Failed to add metadata to image at index {index}: {e}",
@@ -201,6 +201,6 @@ def prune_images(
 
     pruned_count = len(images) - len(kept)
     if verbose:
-        print(f"Pruned ({pruned_count}) images")
+        logger.debug(f"Pruned ({pruned_count}) images")
 
     return kept

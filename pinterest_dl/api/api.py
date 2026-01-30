@@ -5,6 +5,7 @@ import requests
 
 from pinterest_dl.api.endpoints import Endpoint
 from pinterest_dl.api.pinterest_response import PinResponse
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.cookies import CookieJar
 from pinterest_dl.download import request_builder
 from pinterest_dl.exceptions import (
@@ -12,6 +13,8 @@ from pinterest_dl.exceptions import (
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
 )
+
+logger = get_logger(__name__)
 
 
 class Api:
@@ -86,8 +89,11 @@ class Api:
         }
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
+            logger.debug(f"Fetching related images for pin {self.pin_id} (page_size={num})")
             response_raw = self._session.get(request_url, timeout=self.timeout)
+            response_raw.raise_for_status()
         except requests.exceptions.RequestException as e:
+            logger.error(f"API request failed for pin {self.pin_id}: {e}")
             raise requests.RequestException(f"Failed to request related images: {e}")
 
         try:
@@ -200,8 +206,11 @@ class Api:
         try:
             json_response = response_raw.json()
         except requests.exceptions.JSONDecodeError as e:
-            print(response_raw.text)
-            raise requests.JSONDecodeError(f"Failed to decode JSON response: {e}")
+            # Include response snippet in exception for debugging
+            response_snippet = response_raw.text[:500] if response_raw.text else "<empty>"
+            raise requests.JSONDecodeError(
+                f"Failed to decode JSON response: {e}. Response snippet: {response_snippet}"
+            )
         return PinResponse(request_url, json_response)
 
     def _validate_num(self, num: int) -> None:

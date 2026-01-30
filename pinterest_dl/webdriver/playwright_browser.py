@@ -8,6 +8,10 @@ from typing import Literal, Tuple
 
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
 
+from pinterest_dl.common.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class PlaywrightBrowser:
     """Browser initialization using Playwright.
@@ -69,9 +73,9 @@ class PlaywrightBrowser:
         self._page = self._context.new_page()
 
         if not headless:
-            print("Running in headful mode (browser window will open)")
+            logger.debug("Running in headful mode (browser window will open)")
         if incognito:
-            print("Running in incognito mode (isolated context)")
+            logger.debug("Running in incognito mode (isolated context)")
 
         return self
 

@@ -11,7 +11,10 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from tqdm import tqdm
 
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.media import PinterestMedia
+
+logger = get_logger(__name__)
 
 
 class Driver:
@@ -90,7 +93,9 @@ class Driver:
                     else:
                         tries = 0
                     if tries > timeout:
-                        print(f"\nTimeout: no new images in ({timeout}) seconds.")
+                        logger.warning(
+                            f"Scraping timeout: no new pins found after {timeout} seconds on {url}. Collected {len(unique_results)} images so far."
+                        )
                         break
 
                     for div in divs:
@@ -136,7 +141,7 @@ class Driver:
                                     imgs_data.append(img_data)
                                     pbar.update(1)
                                     if verbose:
-                                        print(src, alt)
+                                        logger.debug(f"{src} {alt}")
                                     if len(unique_results) >= num:
                                         break
 
@@ -149,14 +154,14 @@ class Driver:
 
                 except StaleElementReferenceException:
                     if verbose:
-                        print("\nStaleElementReferenceException")
+                        logger.debug("StaleElementReferenceException")
 
-        except (socket.error, socket.timeout):
-            print("Socket Error")
+        except (socket.error, socket.timeout) as e:
+            logger.error(f"Network error during scraping of {url}: {type(e).__name__}")
         finally:
             pbar.close()
             if verbose:
-                print(f"Scraped {len(imgs_data)} images")
+                logger.debug(f"Scraped {len(imgs_data)} images")
             return imgs_data
 
     def _is_div_ad(self, div: WebElement) -> bool:

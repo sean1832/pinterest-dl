@@ -11,8 +11,11 @@ from typing import Tuple
 import pyexiv2
 from PIL import Image
 
+from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.exceptions import UnsupportedMediaTypeError
+
+logger = get_logger(__name__)
 
 
 def set_local_resolution(media: PinterestMedia, path: Path) -> None:
@@ -59,20 +62,22 @@ def prune_local(
     Args:
         media: PinterestMedia object with local file.
         resolution: Minimum resolution threshold as (width, height).
-        verbose: Whether to print removal message.
+        verbose: Whether to log removal message.
 
     Returns:
         True if file was removed, False otherwise.
     """
     if not media.local_path or not media.resolution:
         if verbose:
-            print(f"Local path or size not set for {media.src}")
+            logger.debug(f"Local path or size not set for {media.src}")
         return False
 
     if media.resolution < resolution:
         media.local_path.unlink()
         if verbose:
-            print(f"Removed {media.local_path}, resolution: {media.resolution} < {resolution}")
+            logger.debug(
+                f"Removed {media.local_path}, resolution: {media.resolution} < {resolution}"
+            )
         return True
 
     return False
