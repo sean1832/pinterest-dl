@@ -95,7 +95,7 @@ pinterest-dl search "自然摄影" -o output_folder -n 30
 pinterest-dl login -o cookies.json
 ```
 
-**📖 [查看完整命令行文档 →](doc/CLI_CN.md)**
+**📖 [查看完整命令行文档 ->](doc/CLI_CN.md)**
 
 可用命令：`login`、`scrape`、`search`、`download`
 
@@ -123,7 +123,7 @@ images = PinterestDL.with_api().search_and_download(
 )
 ```
 
-**📖 [查看完整 API 文档 →](doc/API_CN.md)**
+**📖 [查看完整 API 文档 ->](doc/API_CN.md)**
 
 包含：高级 API、私密画板访问、高级抓取模式
 

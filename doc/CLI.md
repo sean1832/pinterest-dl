@@ -45,7 +45,7 @@ Download images from a Pin, Board URL, or a list of URLs.
 
 ```bash
 # Single or multiple URLs:
-pinterest-dl scrape <url1> <url2> …
+pinterest-dl scrape <url1> <url2> ...
 
 # From one or more files (one URL per line):
 pinterest-dl scrape -f urls.txt [options]
@@ -58,22 +58,22 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 
 | Options                              | Description                                              | Default        |
 | ------------------------------------ | -------------------------------------------------------- | -------------- |
-| `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin | –              |
-| `<url>`                              | One or more Pinterest URLs                               | –              |
-| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)             | –              |
+| `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin | -              |
+| `<url>`                              | One or more Pinterest URLs                               | -              |
+| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)             | -              |
 | `-c`, `--cookies [file]`             | Path to cookies file (for private content)               | `cookies.json` |
 | `-n`, `--num [number]`               | Maximum images to download                               | `100`          |
-| `-r`, `--resolution [WxH]`           | Minimum image resolution (e.g. `512x512`)                | –              |
-| `--video`                            | Download video stream (if available)                     | –              |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution (e.g. `512x512`)                | -              |
+| `--video`                            | Download video stream (if available)                     | -              |
 | `--timeout [seconds]`                | Request timeout                                          | `3`            |
 | `--delay [seconds]`                  | Delay between requests                                   | `0.2`          |
-| `--cache [path]`                     | Save scraped URLs to JSON                                | –              |
+| `--cache [path]`                     | Save scraped URLs to JSON                                | -              |
 | `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, `metadata`, or `none`     | `none`         |
-| `--ensure-cap`                       | Require alt text on every image                          | –              |
+| `--ensure-cap`                       | Require alt text on every image                          | -              |
 | `--client [api/chrome/firefox]`      | Scraper backend                                          | `api`          |
-| `--headful`                          | Show browser window (chrome/firefox only)                | –              |
-| `--incognito`                        | Use incognito mode (chrome/firefox only)                 | –              |
-| `--verbose`                          | Enable debug output                                      | –              |
+| `--headful`                          | Show browser window (chrome/firefox only)                | -              |
+| `--incognito`                        | Use incognito mode (chrome/firefox only)                 | -              |
+| `--verbose`                          | Enable debug output                                      | -              |
 
 ---
 
@@ -96,19 +96,19 @@ cat queries.txt | pinterest-dl search -f - [options]
 
 | Options                              | Description                                                 | Default        |
 | ------------------------------------ | ----------------------------------------------------------- | -------------- |
-| `-f`, `--file [file]`                | Path to file with queries (one per line); use `-` for stdin | –              |
-| `<query>`                            | One or more search terms                                    | –              |
-| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)                | –              |
+| `-f`, `--file [file]`                | Path to file with queries (one per line); use `-` for stdin | -              |
+| `<query>`                            | One or more search terms                                    | -              |
+| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)                | -              |
 | `-c`, `--cookies [file]`             | Path to cookies file                                        | `cookies.json` |
 | `-n`, `--num [number]`               | Maximum images to download                                  | `100`          |
-| `-r`, `--resolution [WxH]`           | Minimum image resolution                                    | –              |
-| `--video`                            | Download video stream (if available)                        | –              |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution                                    | -              |
+| `--video`                            | Download video stream (if available)                        | -              |
 | `--timeout [seconds]`                | Request timeout                                             | `3`            |
 | `--delay [seconds]`                  | Delay between requests                                      | `0.2`          |
-| `--cache [path]`                     | Save results to JSON                                        | –              |
+| `--cache [path]`                     | Save results to JSON                                        | -              |
 | `--caption [txt/json/metadata/none]` | Caption format                                              | `none`         |
-| `--ensure-cap`                       | Require alt text on every image                             | –              |
-| `--verbose`                          | Enable debug output                                         | –              |
+| `--ensure-cap`                       | Require alt text on every image                             | -              |
+| `--verbose`                          | Enable debug output                                         | -              |
 
 ---
 

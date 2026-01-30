@@ -95,7 +95,7 @@ pinterest-dl search "nature photography" -o output_folder -n 30
 pinterest-dl login -o cookies.json
 ```
 
-**📖 [View Full CLI Documentation →](doc/CLI.md)**
+**📖 [View Full CLI Documentation ->](doc/CLI.md)**
 
 Available commands: `login`, `scrape`, `search`, `download`
 
@@ -123,7 +123,7 @@ images = PinterestDL.with_api().search_and_download(
 )
 ```
 
-**📖 [View Full API Documentation →](doc/API.md)**
+**📖 [View Full API Documentation ->](doc/API.md)**
 
 Includes: High-level API, private board access, advanced scraping patterns
 

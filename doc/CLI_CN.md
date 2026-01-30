@@ -76,7 +76,7 @@ pinterest-dl login --headful
 
 ```bash
 # 单个或多个 URL：
-pinterest-dl scrape <url1> <url2> …
+pinterest-dl scrape <url1> <url2> ...
 
 # 从文件（每行一个 URL）：
 pinterest-dl scrape -f urls.txt [选项]
