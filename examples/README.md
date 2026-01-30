@@ -144,15 +144,6 @@ BOARD_URL = "https://www.pinterest.com/username/board-name/"  # <- Change to you
 SEARCH_QUERY = "your search term"  # <- Change to your search query
 ```
 
-Example:
-```python
-# Change from:
-PIN_URL = "https://www.pinterest.com/pin/12345678/"
-
-# To a real URL:
-PIN_URL = "https://www.pinterest.com/pin/900438519273272242/"
-```
-
 ### Comment Out Unused Examples
 
 Each example file runs multiple sub-examples. Comment out the ones you don't need:
