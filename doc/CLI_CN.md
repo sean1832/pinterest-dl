@@ -91,25 +91,26 @@ cat urls.txt | pinterest-dl scrape -f - [选项]
 
 #### 选项
 
-| 选项                                 | 说明                               | 默认值         |
-| ------------------------------------ | ---------------------------------- | -------------- |
-| `-f`, `--file [文件]`                | URL 列表文件路径（`-` 表示 stdin） | 无             |
-| `<url>`                              | Pinterest URL                      | 必填           |
-| `-o`, `--output [目录]`              | 保存目录（不指定则输出到 stdout）  | 无             |
-| `-c`, `--cookies [文件]`             | cookies 文件路径                   | `cookies.json` |
-| `-n`, `--num [数量]`                 | 最大下载数量                       | `100`          |
-| `-r`, `--resolution [宽x高]`         | 最低分辨率（如 `512x512`）         | 无             |
-| `--video`                            | 下载视频流（如可用）               | 无             |
-| `--timeout [秒]`                     | 请求超时时间                       | `3`            |
-| `--delay [秒]`                       | 请求间隔延迟                       | `0.2`          |
-| `--cache [路径]`                     | 保存抓取结果到 JSON                | 无             |
-| `--caption [txt/json/metadata/none]` | 标题保存格式                       | `none`         |
-| `--ensure-cap`                       | 要求每张图都有 alt 文本            | 无             |
-| `--client [api/chromium/firefox]`    | 抓取方式                           | `api`          |
-| `--backend [playwright/selenium]`    | 浏览器自动化后端（浏览器模式）     | `playwright`   |
-| `--headful`                          | 显示浏览器窗口（浏览器模式）       | 无             |
-| `--incognito`                        | 无痕模式（浏览器模式）             | 无             |
-| `--verbose`                          | 调试输出                           | 无             |
+| 选项                                 | 说明                                                 | 默认值         |
+| ------------------------------------ | ---------------------------------------------------- | -------------- |
+| `-f`, `--file [文件]`                | URL 列表文件路径（`-` 表示 stdin）                   | 无             |
+| `<url>`                              | Pinterest URL                                        | 必填           |
+| `-o`, `--output [目录]`              | 保存目录（不指定则输出到 stdout）                    | 无             |
+| `-c`, `--cookies [文件]`             | cookies 文件路径                                     | `cookies.json` |
+| `-n`, `--num [数量]`                 | 最大下载数量                                         | `100`          |
+| `-r`, `--resolution [宽x高]`         | 最低分辨率（如 `512x512`）                           | 无             |
+| `--video`                            | 下载视频流（如可用）                                 | 无             |
+| `--skip-remux`                       | 跳过 ffmpeg 转封装，输出原始 .ts 文件（无需 ffmpeg） | 无             |
+| `--timeout [秒]`                     | 请求超时时间                                         | `3`            |
+| `--delay [秒]`                       | 请求间隔延迟                                         | `0.2`          |
+| `--cache [路径]`                     | 保存抓取结果到 JSON                                  | 无             |
+| `--caption [txt/json/metadata/none]` | 标题保存格式                                         | `none`         |
+| `--ensure-cap`                       | 要求每张图都有 alt 文本                              | 无             |
+| `--client [api/chromium/firefox]`    | 抓取方式                                             | `api`          |
+| `--backend [playwright/selenium]`    | 浏览器自动化后端（浏览器模式）                       | `playwright`   |
+| `--headful`                          | 显示浏览器窗口（浏览器模式）                         | 无             |
+| `--incognito`                        | 无痕模式（浏览器模式）                               | 无             |
+| `--verbose`                          | 调试输出                                             | 无             |
 
 #### 使用示例
 
@@ -126,8 +127,11 @@ pinterest-dl scrape https://www.pinterest.com/pin/private-pin -c cookies.json -o
 # 设置最低分辨率过滤
 pinterest-dl scrape <url> -o output -r 1024x768
 
-# 同时下载视频流
+# 同时下载视频流（转换为 MP4，需要 ffmpeg）
 pinterest-dl scrape <url> -o output --video
+
+# 下载视频为原始 .ts 文件（无需 ffmpeg）
+pinterest-dl scrape <url> -o output --video --skip-remux
 
 # 保存元数据到文本文件
 pinterest-dl scrape <url> -o output --caption txt
@@ -161,21 +165,22 @@ cat queries.txt | pinterest-dl search -f - [选项]
 
 #### 选项
 
-| 选项                                 | 说明                                 | 默认值         |
-| ------------------------------------ | ------------------------------------ | -------------- |
-| `-f`, `--file [文件]`                | 关键词列表文件路径（`-` 表示 stdin） | 无             |
-| `<query>`                            | 搜索关键词                           | 必填           |
-| `-o`, `--output [目录]`              | 保存目录（不指定则输出到 stdout）    | 无             |
-| `-c`, `--cookies [文件]`             | cookies 文件路径                     | `cookies.json` |
-| `-n`, `--num [数量]`                 | 最大下载数量                         | `100`          |
-| `-r`, `--resolution [宽x高]`         | 最低分辨率                           | 无             |
-| `--video`                            | 下载视频流（如可用）                 | 无             |
-| `--timeout [秒]`                     | 请求超时时间                         | `3`            |
-| `--delay [秒]`                       | 请求间隔延迟                         | `0.2`          |
-| `--cache [路径]`                     | 保存结果到 JSON                      | 无             |
-| `--caption [txt/json/metadata/none]` | 标题保存格式                         | `none`         |
-| `--ensure-cap`                       | 要求每张图都有 alt 文本              | 无             |
-| `--verbose`                          | 调试输出                             | 无             |
+| 选项                                 | 说明                                                 | 默认值         |
+| ------------------------------------ | ---------------------------------------------------- | -------------- |
+| `-f`, `--file [文件]`                | 关键词列表文件路径（`-` 表示 stdin）                 | 无             |
+| `<query>`                            | 搜索关键词                                           | 必填           |
+| `-o`, `--output [目录]`              | 保存目录（不指定则输出到 stdout）                    | 无             |
+| `-c`, `--cookies [文件]`             | cookies 文件路径                                     | `cookies.json` |
+| `-n`, `--num [数量]`                 | 最大下载数量                                         | `100`          |
+| `-r`, `--resolution [宽x高]`         | 最低分辨率                                           | 无             |
+| `--video`                            | 下载视频流（如可用）                                 | 无             |
+| `--skip-remux`                       | 跳过 ffmpeg 转封装，输出原始 .ts 文件（无需 ffmpeg） | 无             |
+| `--timeout [秒]`                     | 请求超时时间                                         | `3`            |
+| `--delay [秒]`                       | 请求间隔延迟                                         | `0.2`          |
+| `--cache [路径]`                     | 保存结果到 JSON                                      | 无             |
+| `--caption [txt/json/metadata/none]` | 标题保存格式                                         | `none`         |
+| `--ensure-cap`                       | 要求每张图都有 alt 文本                              | 无             |
+| `--verbose`                          | 调试输出                                             | 无             |
 
 #### 使用示例
 

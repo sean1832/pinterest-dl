@@ -166,7 +166,11 @@ Optional: Caption embedding (metadata/txt/json)
 
 - `download/video/hls_processor.py`: HLS video stream downloader
   - M3U8 playlist parsing, AES-128 decryption
-  - Requires **ffmpeg** in PATH
+  - Three explicit methods for deterministic output:
+    - `concat_to_ts()`: Binary concat, no ffmpeg (used with `--skip-remux`)
+    - `remux_to_mp4()`: ffmpeg stream copy (default, requires ffmpeg)
+    - `reencode_to_mp4()`: ffmpeg re-encode (internal, for future CLI exposure)
+  - Optional ffmpeg requirement (not needed with `--skip-remux` flag)
 - `download/video/key_cache.py`: Decryption key cache
 - `download/video/segment_info.py`: Segment metadata
 
@@ -430,15 +434,28 @@ __version__ = "1.0.0"  # Increment here
 3. Implement scraping logic in `scrapers/api_scraper.py` or `scrapers/webdriver_scraper.py`
 4. Handle in `download/downloader.py` `MediaDownloader.download()`
 
+### Video Download Modes
+
+- **Default mode** (`--video`): Downloads HLS streams, remuxes to .mp4 using ffmpeg
+- **Skip remux mode** (`--video --skip-remux`): Downloads HLS streams, outputs raw .ts file (no ffmpeg needed)
+- **Future** (`--video --reencode`): Force re-encoding for guaranteed .mp4 compatibility (TODO)
+
+**Flag flow**: CLI -> ApiScraper -> operations.download_media() -> MediaDownloader -> HttpClient -> HlsProcessor
+
 ### Extending HLS Processing
 
 - Modify `download/video/hls_processor.py` for new encryption methods
 - Update `decrypt()` method for additional cipher modes
+- Three separate output methods for explicit control:
+  - `concat_to_ts()`: No ffmpeg, raw .ts output
+  - `remux_to_mp4()`: ffmpeg remux (stream copy)
+  - `reencode_to_mp4()`: ffmpeg re-encode (TODO: expose via `--reencode` flag)
 - Test with `--video` flag in CLI
+- Test `--skip-remux` for ffmpeg-free video downloads
 
 ## Common Pitfalls
 
-1. **Forgetting ffmpeg check**: Always check `ensure_executable.ensure_executable("ffmpeg")` before HLS downloads
+1. **Forgetting ffmpeg check**: Check `ensure_executable.ensure_executable("ffmpeg")` before HLS remux (not needed with `--skip-remux`)
 2. **Cookie format confusion**: Selenium format (list of dicts) ≠ browser export format
 3. **Resolution tuple order**: Always `(width, height)` not `(height, width)`
 4. **URL sanitization**: CLI adds trailing slash via `sanitize_url()`, API parser expects it

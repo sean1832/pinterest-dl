@@ -64,7 +64,7 @@
 - Python 3.10 或更高版本
 - （可选）Playwright 浏览器：`playwright install chromium` 或 `playwright install firefox`
 - （可选）Selenium 后端：Chrome 或 Firefox 浏览器及对应 WebDriver
-- （可选）[ffmpeg](https://ffmpeg.org/) 用于视频流下载（`--video` 选项）
+- （可选）[ffmpeg](https://ffmpeg.org/) 用于视频转封装为 MP4（`--video` 选项）。使用 `--skip-remux` 可以下载原始 .ts 文件无需 ffmpeg。
 
 ## 📥 安装指南
 
@@ -90,6 +90,12 @@ pip install .
 ```bash
 # 从 Pinterest 画板或图钉抓取
 pinterest-dl scrape <url> -o output_folder -n 50
+
+# 下载视频为 MP4（需要 ffmpeg）
+pinterest-dl scrape <url> --video -o output_folder
+
+# 下载视频为原始 .ts 文件（无需 ffmpeg）
+pinterest-dl scrape <url> --video --skip-remux -o output_folder
 
 # 搜索图片
 pinterest-dl search "自然摄影" -o output_folder -n 30
