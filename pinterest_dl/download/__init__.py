@@ -33,12 +33,14 @@ def __getattr__(name: str):
     """Provide backward compatibility and lazy imports to avoid circular dependencies."""
     if name == "HttpClient":
         from pinterest_dl.download.http_client import HttpClient
+
         return HttpClient
-    
+
     if name == "MediaDownloader":
         from pinterest_dl.download.downloader import MediaDownloader
+
         return MediaDownloader
-    
+
     if name == "PinterestMediaDownloader":
         warnings.warn(
             "PinterestMediaDownloader has been renamed to MediaDownloader and will be removed in version 2.1.0. "
@@ -47,6 +49,7 @@ def __getattr__(name: str):
             stacklevel=2,
         )
         from pinterest_dl.download.downloader import MediaDownloader
+
         return MediaDownloader
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

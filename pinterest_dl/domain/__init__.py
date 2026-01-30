@@ -21,5 +21,5 @@ def __getattr__(name: str):
             stacklevel=2,
         )
         return CookieJar
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

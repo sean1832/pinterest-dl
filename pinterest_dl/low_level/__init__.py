@@ -20,19 +20,23 @@ def __getattr__(name: str):
         DeprecationWarning,
         stacklevel=2,
     )
-    
+
     # Try to provide the actual module if possible
     if name == "api":
         import pinterest_dl.api as api
+
         return api
     elif name == "http":
         import pinterest_dl.download as download
+
         return download
     elif name == "hls":
         import pinterest_dl.download.video as video
+
         return video
     elif name == "webdriver":
         import pinterest_dl.webdriver as webdriver
+
         return webdriver
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

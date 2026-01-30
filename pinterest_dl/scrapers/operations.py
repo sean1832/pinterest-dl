@@ -14,7 +14,8 @@ import tqdm
 from pinterest_dl.common import ensure_executable
 from pinterest_dl.common.progress_bar import TqdmProgressBarCallback
 from pinterest_dl.domain.media import PinterestMedia
-from pinterest_dl.download import USER_AGENT, downloader
+from pinterest_dl.download import USER_AGENT
+from pinterest_dl.download.downloader import MediaDownloader
 from pinterest_dl.exceptions import ExecutableNotFoundError, UnsupportedMediaTypeError
 from pinterest_dl.storage import media as media_storage
 
@@ -40,7 +41,7 @@ def download_media(
         output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    dl = downloader.PinterestMediaDownloader(
+    dl = MediaDownloader(
         user_agent=USER_AGENT,
         timeout=10,
         max_retries=3,

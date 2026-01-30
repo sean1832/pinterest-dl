@@ -20,5 +20,5 @@ def __getattr__(name: str):
             stacklevel=2,
         )
         return Driver
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -2,7 +2,7 @@
 
 The data_model module has been split into more specific modules:
 - pinterest_dl.domain.media for PinterestMedia
-- pinterest_dl.parsers.response for ResponseParser  
+- pinterest_dl.parsers.response for ResponseParser
 - pinterest_dl.storage.media for media file operations
 
 This backward compatibility module will be removed in version 2.1.0.
@@ -21,8 +21,9 @@ def __getattr__(name: str):
             stacklevel=2,
         )
         from pinterest_dl.domain.media import PinterestMedia
+
         return PinterestMedia
-    
+
     if name == "VideoStreamInfo":
         warnings.warn(
             "Importing from pinterest_dl.data_model is deprecated and will be removed in version 2.1.0. "
@@ -31,6 +32,7 @@ def __getattr__(name: str):
             stacklevel=2,
         )
         from pinterest_dl.domain.media import VideoStreamInfo
+
         return VideoStreamInfo
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

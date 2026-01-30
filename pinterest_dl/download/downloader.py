@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, TypeVar
 
 from pinterest_dl.domain.media import PinterestMedia
-from pinterest_dl.download import HttpClient
+from pinterest_dl.download.http_client import HttpClient
 from pinterest_dl.exceptions import DownloadError
 
 ProgressCallback = Callable[[int, int], None]  # downloaded_segments, total_segments
