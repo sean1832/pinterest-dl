@@ -9,6 +9,9 @@ dist
 output
 .vscode
 
+# Dump directory for API requests/responses (may contain sensitive data)
+.dump/
+
 cookies.json
 test_output/
 .examples/

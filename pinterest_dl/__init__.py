@@ -1,45 +1,134 @@
+"""Pinterest-DL: An unofficial Pinterest media downloader.
+
+This package provides a simple API for scraping and downloading media from Pinterest.
+
+Example:
+    >>> from pinterest_dl import PinterestDL
+    >>> scraper = PinterestDL.with_api()
+    >>> media = scraper.scrape("https://pinterest.com/pin/123456/")
+    >>> scraper.download(media, "output/")
+"""
+
+import warnings
+from typing import Optional
+
 __version__ = "0.0.0.dev0"
 __description__ = "An unofficial Pinterest image downloader"
+__all__ = [
+    "PinterestDL",
+    "ApiScraper",
+    "PlaywrightScraper",
+    "WebDriverScraper",
+    "PinterestMedia",
+    "__version__",
+    "__description__",
+]
 
 from typing import Literal
 
-from pinterest_dl.scrapers import _ScraperAPI, _ScraperBase, _ScraperWebdriver
+from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.scrapers.api_scraper import ApiScraper
+from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
+from pinterest_dl.scrapers.webdriver_scraper import WebDriverScraper
 
 
-class PinterestDL(_ScraperBase):
-    """PinterestDL is a class for scraping, downloading, and managing images from Pinterest.
-    Users can scrape pins, download images, add captions, and prune by resolution.
+class PinterestDL:
+    """Factory for creating Pinterest scrapers.
+
+    PinterestDL provides multiple scraping strategies:
+    - API-based: Fast, uses reverse-engineered Pinterest API (default)
+    - Playwright-based: Browser automation, stable and cross-platform (recommended for browser mode)
+    - Selenium-based: Legacy browser automation (for backward compatibility)
     """
 
     @staticmethod
     def with_api(
-        timeout: float = 10, verbose: bool = False, ensure_alt: bool = False
-    ) -> "_ScraperAPI":
+        timeout: float = 10,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+        dump: Optional[str] = None,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ) -> "ApiScraper":
         """Scrape pinterest using unofficial API. This is faster than but may be less reliable.
 
         Args:
             timeout (float): Timeout in seconds for requests.
             verbose (bool): Enable verbose logging.
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
+            dump (Optional[str]): Directory to dump API requests/responses. None to disable (default).
+            max_retries (int): Maximum number of retry attempts for failed API calls. Defaults to 3.
+            retry_delay (float): Initial delay between retries in seconds (uses exponential backoff). Defaults to 1.0.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with the requests library.
+            ApiScraper: Instance of ApiScraper with the requests library.
         """
-        return _ScraperAPI(verbose=verbose, timeout=timeout, ensure_alt=ensure_alt)
+        return ApiScraper(
+            verbose=verbose,
+            timeout=timeout,
+            ensure_alt=ensure_alt,
+            dump=dump,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
+        )
 
     @staticmethod
     def with_browser(
-        browser_type: Literal["chrome", "firefox"],
+        browser_type: Literal["chromium", "firefox"] = "chromium",
         timeout: float = 3,
         headless: bool = True,
         incognito: bool = True,
         verbose: bool = False,
         ensure_alt: bool = False,
-    ) -> "_ScraperWebdriver":
-        """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
+        enable_images: bool = True,
+    ) -> "PlaywrightScraper":
+        """Scrape Pinterest using Playwright browser automation.
+
+        This is the recommended browser-based scraping method. Playwright provides
+        better stability, automatic browser management, and cross-platform support
+        (including headless servers like Alpine/Ubuntu).
 
         Args:
-            browser_type (Literal["chrome", "firefox"]): Browser type to use ('chrome' or 'firefox').
+            browser_type: Browser to use ('chromium' or 'firefox').
+            timeout (float): Timeout in seconds for browser operations.
+            headless (bool): Run browser in headless mode.
+            incognito (bool): Use incognito mode in the browser.
+            verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
+            enable_images (bool): Enable image loading (default: True for login, can disable for scraping).
+
+        Returns:
+            PlaywrightScraper: Instance of PlaywrightScraper with Playwright browser.
+
+        Note:
+            Requires `playwright install chromium` (or firefox) to be run first.
+        """
+        return PlaywrightScraper.create(
+            browser_type=browser_type,
+            timeout=timeout,
+            headless=headless,
+            incognito=incognito,
+            verbose=verbose,
+            ensure_alt=ensure_alt,
+            enable_images=enable_images,
+        )
+
+    @staticmethod
+    def with_selenium(
+        browser_type: Literal["chrome", "firefox"] = "chrome",
+        timeout: float = 3,
+        headless: bool = True,
+        incognito: bool = True,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+    ) -> "WebDriverScraper":
+        """Scrape Pinterest using Selenium WebDriver (legacy).
+
+        This method is provided for backward compatibility. For new projects,
+        consider using `with_browser()` which uses Playwright instead.
+
+        Args:
+            browser_type: Browser type to use ('chrome' or 'firefox').
             timeout (float): Timeout in seconds for browser operations.
             headless (bool): Run browser in headless mode.
             incognito (bool): Use incognito mode in the browser.
@@ -47,7 +136,18 @@ class PinterestDL(_ScraperBase):
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
-            PinterestDL: Instance of PinterestDL with an initialized browser.
+            WebDriverScraper: Instance of WebDriverScraper with Selenium WebDriver.
+
+        Note:
+            Selenium requires separate driver installation (ChromeDriver/GeckoDriver).
+            For easier setup, use `with_browser()` which uses Playwright.
         """
-        webdriver = _ScraperWebdriver._initialize_webdriver(browser_type, headless, incognito)
-        return _ScraperWebdriver(webdriver, timeout, verbose, ensure_alt=ensure_alt)
+        warnings.warn(
+            "with_selenium() uses Selenium which requires manual driver setup. "
+            "Consider using with_browser() which uses Playwright for easier setup. "
+            "Selenium support may be removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        webdriver = WebDriverScraper._initialize_webdriver(browser_type, headless, incognito)
+        return WebDriverScraper(webdriver, timeout, verbose, ensure_alt=ensure_alt)

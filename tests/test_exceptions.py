@@ -58,7 +58,7 @@ class TestExceptionRaising:
         """Test HlsProcessor validates URL starts with http/https."""
         import requests
 
-        from pinterest_dl.low_level.hls.hls_processor import HlsProcessor
+        from pinterest_dl.download.video.hls_processor import HlsProcessor
 
         processor = HlsProcessor(requests.Session(), "test-agent")
 
@@ -69,7 +69,7 @@ class TestExceptionRaising:
         """Test HlsProcessor validates .m3u8 extension."""
         import requests
 
-        from pinterest_dl.low_level.hls.hls_processor import HlsProcessor
+        from pinterest_dl.download.video.hls_processor import HlsProcessor
 
         processor = HlsProcessor(requests.Session(), "test-agent")
 

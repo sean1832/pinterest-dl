@@ -11,6 +11,7 @@ jobs:
       url: https://pypi.org/p/pinterest-dl
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,10 +21,12 @@ jobs:
         with:
           python-version: "3.10"
       - name: Update version from latest tag
+        id: get_version
         run: |
           VERSION=$(git describe --tags --abbrev=0)
           VERSION="${VERSION#v}"
           echo "Updating version to: $VERSION"
+          echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
           sed -i "s/__version__ = \"0.0.0.dev0\"/__version__ = \"$VERSION\"/" pinterest_dl/__init__.py
           cat pinterest_dl/__init__.py | head -n 1
       - name: Install dependencies
@@ -33,6 +36,13 @@ jobs:
       - name: Build package
         run: |
           python -m build
+      - name: Upload distributions to latest GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 

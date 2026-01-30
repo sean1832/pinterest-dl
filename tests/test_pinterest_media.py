@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pinterest_dl.data_model.pinterest_media import PinterestMedia, VideoStreamInfo
+from pinterest_dl.domain.media import PinterestMedia, VideoStreamInfo
 
 
 class TestVideoStreamInfo:
