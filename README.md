@@ -10,6 +10,8 @@
 
 **English | [中文](README_CN.md)**
 
+> [!NOTE]
+> **Version 2.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
 
 This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and [Selenium](https://selenium.dev) for automation, it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
 
