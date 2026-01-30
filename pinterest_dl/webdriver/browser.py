@@ -73,7 +73,19 @@ class Browser:
         if not headful:
             print("Running in headless mode")
             chrome_options.add_argument("--headless=new")
-        browser = webdriver.Chrome(options=chrome_options, service=service)
+        try:
+            browser = webdriver.Chrome(options=chrome_options, service=service)
+        except Exception as e:
+            if "cannot find Chrome binary" in str(e):
+                raise RuntimeError(
+                    "Chrome browser not found. Selenium requires Chrome to be installed.\n"
+                    "Options:\n"
+                    "  1. Install Chrome browser: https://www.google.com/chrome/\n"
+                    "  2. Use Playwright instead (recommended, no browser install needed):\n"
+                    "     pinterest-dl scrape <url> --client chromium\n"
+                    "     (remove --backend selenium)"
+                ) from e
+            raise
         return browser
 
     def Firefox(self, image_enable=False, incognito=False, headful=False) -> WebDriver:
@@ -88,5 +100,17 @@ class Browser:
         if not headful:
             print("Running in headless mode")
             firefox_options.add_argument("--headless")
-        browser = webdriver.Firefox(options=firefox_options)
+        try:
+            browser = webdriver.Firefox(options=firefox_options)
+        except Exception as e:
+            if "Cannot find firefox binary" in str(e) or "geckodriver" in str(e).lower():
+                raise RuntimeError(
+                    "Firefox browser not found. Selenium requires Firefox to be installed.\n"
+                    "Options:\n"
+                    "  1. Install Firefox browser: https://www.mozilla.org/firefox/\n"
+                    "  2. Use Playwright instead (recommended, no browser install needed):\n"
+                    "     pinterest-dl scrape <url> --client firefox\n"
+                    "     (remove --backend selenium)"
+                ) from e
+            raise
         return browser
