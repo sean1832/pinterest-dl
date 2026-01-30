@@ -57,11 +57,7 @@ class PlaywrightBrowser:
 
         # Disable images if requested (via route interception)
         if not image_enable:
-            self._context.route(
-                "**/*.{png,jpg,jpeg,gif,webp,svg,ico}",
-                lambda route: route.abort(),
-            )
-            # Also block image requests by resource type
+            # Block by resource type - more efficient than pattern matching
             self._context.route(
                 "**/*",
                 lambda route: route.abort()

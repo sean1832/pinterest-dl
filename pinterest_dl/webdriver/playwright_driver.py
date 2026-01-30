@@ -145,8 +145,15 @@ class PlaywrightDriver:
         pbar = tqdm(total=num, desc="Scraping")
 
         try:
-            self.page.goto(url)
-            self.page.wait_for_load_state("networkidle")
+            self.page.goto(url, wait_until="domcontentloaded")
+
+            # Wait for pin elements to appear instead of networkidle
+            # Pinterest never reaches networkidle due to constant background requests
+            try:
+                self.page.locator("div[data-test-id='pin']").first.wait_for(timeout=15000)
+            except PlaywrightTimeoutError:
+                if verbose:
+                    print("No pins found on initial load, continuing anyway...")
 
             while len(unique_results) < num:
                 try:
