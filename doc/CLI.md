@@ -73,8 +73,7 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--caption [txt/json/metadata/none]`        | Caption format: `txt`, `json`, `metadata`, or `none`      | `none`         |
 | `--ensure-cap`                              | Require alt text on every image                           | -              |
 | `--cap-from-title`                          | Use image title as caption                                | -              |
-| `--debug` (**NEW**)                         | Dump API requests/responses to JSON files                 | -              |
-| `--debug-dir [path]` (**NEW**)              | Directory for debug files                                 | `debug`        |
+| `--dump [PATH]` (**NEW**)                   | Dump API requests/responses to PATH (default: `.dump`)    | -              |
 | `--client [api/chromium/firefox]`           | Scraper backend                                           | `api`          |
 | `--backend [playwright/selenium]` (**NEW**) | Browser automation backend (for browser clients)          | `playwright`   |
 | `--headful`                                 | Show browser window (browser clients only)                | -              |
@@ -116,8 +115,7 @@ cat queries.txt | pinterest-dl search -f - [options]
 | `--caption [txt/json/metadata/none]` | Caption format                                              | `none`         |
 | `--ensure-cap`                       | Require alt text on every image                             | -              |
 | `--cap-from-title`                   | Use image title as caption                                  | -              |
-| `--debug` (**NEW**)                  | Dump API requests/responses to JSON files                   | -              |
-| `--debug-dir [path]` (**NEW**)       | Directory for debug files                                   | `debug`        |
+| `--dump [PATH]` (**NEW**)            | Dump API requests/responses to PATH (default: `.dump`)      | -              |
 | `--verbose`                          | Enable debug output                                         | -              |
 
 ---

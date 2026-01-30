@@ -1,8 +1,8 @@
-# Debug Mode Documentation
+# Dump Mode Documentation
 
 ## Overview
 
-Pinterest-DL includes a comprehensive debug mode that automatically dumps all API requests and responses to JSON files. This is invaluable for:
+Pinterest-DL includes a comprehensive dump mode that automatically dumps all API requests and responses to JSON files. This is invaluable for:
 
 - Troubleshooting API failures
 - Understanding Pinterest's API structure
@@ -14,17 +14,17 @@ Pinterest-DL includes a comprehensive debug mode that automatically dumps all AP
 
 ### CLI Usage
 
-Add the `--debug` flag to any scrape or search command:
+Add the `--dump` flag to any scrape or search command:
 
 ```bash
-# Enable debug mode with default debug directory
-pinterest-dl scrape <URL> --debug
+# Enable dump mode (dumps to .dump directory by default)
+pinterest-dl scrape <URL> --dump
 
-# Specify custom debug directory
-pinterest-dl scrape <URL> --debug --debug-dir my_debug_logs
+# Specify custom dump directory
+pinterest-dl scrape <URL> --dump custom_logs
 
 # Example with search
-pinterest-dl search "cats" -n 50 --debug
+pinterest-dl search "cats" -n 50 --dump
 ```
 
 ### Python API Usage
@@ -32,19 +32,18 @@ pinterest-dl search "cats" -n 50 --debug
 ```python
 from pinterest_dl import PinterestDL
 
-# Create scraper with debug mode enabled
+# Create scraper with dump mode enabled (uses .dump directory)
 scraper = PinterestDL.with_api(
-    debug_mode=True,
-    debug_dir="debug"  # Optional, defaults to "debug"
+    dump=".dump"  # Specify dump directory, or None to disable
 )
 
 # All API calls will now be logged
 medias = scraper.scrape("https://pinterest.com/pin/123456/", num=10)
 ```
 
-## Debug File Structure
+## Dump File Structure
 
-When debug mode is enabled, JSON files are created in the debug directory with the following naming patterns:
+When dump mode is enabled, JSON files are created in the dump directory with the following naming patterns:
 
 ### Successful Requests
 
@@ -65,9 +64,9 @@ Examples:
 - `error_get_related_images_pin_123456.json`
 - `error_get_search_dogs.json`
 
-## Debug File Contents
+## Dump File Contents
 
-Each debug file contains comprehensive request and response information:
+Each dump file contains comprehensive request and response information:
 
 ```json
 {
@@ -138,47 +137,47 @@ Error files include additional error information:
 When scraping private boards fails:
 
 ```bash
-pinterest-dl scrape <PRIVATE_BOARD_URL> -c cookies.json --debug
+pinterest-dl scrape <PRIVATE_BOARD_URL> -c cookies.json --dump
 ```
 
-Check the debug files to see if:
+Check the dump files to see if:
 - Cookies are being sent correctly (`request.headers`)
 - Authentication errors are returned (`response.json.message`)
 - Rate limiting is triggered (`response.headers.x-ratelimit-remaining`)
 
 ### 2. Analyzing API Changes
 
-Pinterest's unofficial API can change without notice. Debug files help you:
+Pinterest's unofficial API can change without notice. Dump files help you:
 
 ```python
-# Scrape with debug enabled
-scraper = PinterestDL.with_api(debug_mode=True)
+# Scrape with dump enabled
+scraper = PinterestDL.with_api(dump=".dump")
 medias = scraper.scrape(url, num=5)
 
-# Check debug/ directory for response structure changes
+# Check .dump/ directory for response structure changes
 ```
 
 ### 3. Reporting Issues
 
-When reporting bugs, include debug files:
+When reporting bugs, include dump files:
 
 ```bash
-# Generate debug files
-pinterest-dl scrape <URL> --debug --debug-dir issue_123_logs
+# Generate dump files
+pinterest-dl scrape <URL> --dump
 
-# Attach files from issue_123_logs/ to your GitHub issue
+# Check .dump/ directory and attach relevant files to your GitHub issue
 ```
 
 ### 4. Development and Testing
 
-During development, use debug mode to verify API interactions:
+During development, use dump mode to verify API interactions:
 
 ```python
-from pinterest_dl.common.debug import RequestDebugger
+from pinterest_dl.common.dump import RequestDumper
 
-debugger = RequestDebugger("my_tests")
+dumper = RequestDumper("my_tests")
 # Manual usage in custom code
-dump_path = debugger.dump_request_response(
+dump_path = dumper.dump_request_response(
     request_url="https://api.example.com",
     response=response_obj,
     filename="custom_test"
@@ -189,26 +188,26 @@ dump_path = debugger.dump_request_response(
 
 ### Programmatic Access
 
-The debug utility can be used standalone:
+The dump utility can be used standalone:
 
 ```python
-from pinterest_dl.common.debug import RequestDebugger
+from pinterest_dl.common.dump import RequestDumper
 import requests
 
-debugger = RequestDebugger("debug_output")
+dumper = RequestDumper(".dump")
 
 # Make a request
 response = requests.get("https://api.example.com/data")
 
 # Dump it
-debug_file = debugger.dump_request_response(
+dump_file = dumper.dump_request_response(
     request_url=response.url,
     response=response,
     filename="my_api_call",
     metadata={"test_case": "rate_limit_test"}
 )
 
-print(f"Debug saved to: {debug_file}")
+print(f"Dump saved to: {dump_file}")
 ```
 
 ### Dump API Calls with Custom Metadata
@@ -218,8 +217,7 @@ from pinterest_dl.api.api import Api
 
 api = Api(
     url="https://pinterest.com/pin/123456/",
-    debug_mode=True,
-    debug_dir="custom_debug"
+    dump=".dump"
 )
 
 # All API calls automatically logged with endpoint and options
@@ -228,19 +226,19 @@ response = api.get_related_images(num=10, bookmark=[])
 
 ### Error-Only Logging
 
-For production use, you can enable debug mode only on errors:
+For production use, you can enable dump mode only on errors:
 
 ```python
-from pinterest_dl.common.debug import RequestDebugger
+from pinterest_dl.common.dump import RequestDumper
 
-debugger = RequestDebugger("error_logs")
+dumper = RequestDumper("error_logs")
 
 try:
     # Your API calls
     pass
 except Exception as e:
     # Dump only failures
-    debugger.dump_error(
+    dumper.dump_error(
         error=e,
         request_url=url,
         response=response if 'response' in locals() else None
@@ -249,34 +247,34 @@ except Exception as e:
 
 ## Privacy and Security
 
-**Warning:** Debug files contain:
+**Warning:** Dump files contain:
 - Full request URLs (including query parameters)
 - All request and response headers
 - Complete response bodies
-- Cookie values (if debug mode is enabled at a low level)
+- Cookie values (if dumping is enabled at API level)
 
 **Best Practices:**
-1. Never commit debug files to version control
-2. Sanitize debug files before sharing publicly
-3. Delete debug files after troubleshooting
-4. Add `debug/` to your `.gitignore`
+1. Never commit dump files to version control
+2. Sanitize dump files before sharing publicly
+3. Delete dump files after troubleshooting
+4. Add `.dump/` to your `.gitignore`
 
 ## Performance Considerations
 
-Debug mode has minimal performance impact:
-- JSON dumping is asynchronous (non-blocking)
+Dump mode has minimal performance impact:
+- JSON dumping is synchronous but fast
 - Files are written only after response is received
 - Typical overhead: < 10ms per request
 
-For production scraping of thousands of items, consider disabling debug mode.
+For production scraping of thousands of items, consider disabling dump mode.
 
 ## Troubleshooting
 
-### Debug files not created
+### Dump files not created
 
 1. Check directory permissions
-2. Ensure debug_mode=True is set
-3. Verify the debug directory path is writable
+2. Ensure dump parameter is set (e.g., `dump=".dump"`)
+3. Verify the dump directory path is writable
 
 ### Files are empty or truncated
 
@@ -285,24 +283,25 @@ This shouldn't happen, but if it does:
 - Verify JSON encoding issues (non-ASCII characters)
 - Check file system limits (FAT32 has 4GB limit)
 
-### Too many debug files
+### Too many dump files
 
-Use custom debug directories per operation:
+Dump files accumulate in the `.dump/` directory. Clean them up periodically:
 
-```python
-# Different directory per scraping session
-scraper = PinterestDL.with_api(
-    debug_mode=True,
-    debug_dir=f"debug/session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-)
+```bash
+# Remove all dump files
+rm -rf .dump/*
+
+# Or organize by date
+mkdir .dump/archive_2026_01_30
+mv .dump/*.json .dump/archive_2026_01_30/
 ```
 
 ## Contributing
 
-When contributing debug-related improvements:
+When contributing dump-related improvements:
 
-1. Follow the existing pattern in `common/debug.py`
-2. Add tests for new debug scenarios
+1. Follow the existing pattern in `common/dump.py`
+2. Add tests for new dump scenarios
 3. Update this documentation
 4. Ensure backward compatibility
 

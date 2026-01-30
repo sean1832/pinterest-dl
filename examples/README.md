@@ -104,20 +104,20 @@ python examples/video_downloading.py
 
 ---
 
-### 6. `debug_mode_example.py`
-**Debug mode for API inspection**
+### 6. `dump_mode.py`
+**Dump mode for API inspection**
 
 Examples included:
-- Basic debug mode
-- Custom debug directory
-- Debug with cookies
+- Basic dump mode
+- Custom dump directory
+- Dump with cookies
 - Error debugging
 - Search debugging
-- Manual debug utilities
+- Manual dump utilities
 
 **Quick start:**
 ```bash
-python examples/debug_mode_example.py
+python examples/dump_mode.py
 ```
 
 ---

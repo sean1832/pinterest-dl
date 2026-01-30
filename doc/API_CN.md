@@ -36,8 +36,7 @@ images = PinterestDL.with_api(
     timeout=3,        # 每个请求的超时时间（秒）（默认：3）
     verbose=False,    # 启用详细日志用于调试（默认：False）
     ensure_alt=True,  # 确保每张图片都有 alt 文本（默认：False）
-    debug_mode=False, # 将 API 请求/响应保存到 JSON 文件（默认：False）
-    debug_dir="debug", # 调试文件保存目录（默认："debug"）
+    dump=None,        # 将 API 请求/响应导出到目录（默认：None/禁用）
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # 要抓取的 Pinterest URL
     output_dir="images/art",                       # 保存下载图片的目录
@@ -65,8 +64,7 @@ images = PinterestDL.with_api(
     timeout=3,        # 每个请求的超时时间（秒）（默认：3）
     verbose=False,    # 启用详细日志用于调试（默认：False）
     ensure_alt=True,  # 确保每张图片都有 alt 文本（默认：False）
-    debug_mode=False, # 将 API 请求/响应保存到 JSON 文件（默认：False）
-    debug_dir="debug", # 调试文件保存目录（默认："debug"）
+    dump=None,        # 将 API 请求/响应导出到目录（默认：None/禁用）
 ).search_and_download(
     query="艺术",                       # Pinterest 搜索关键词
     output_dir="images/art",            # 保存下载图片的目录

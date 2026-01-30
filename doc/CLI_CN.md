@@ -80,8 +80,7 @@ cat urls.txt | pinterest-dl scrape -f - [选项]
 | `--caption [txt/json/metadata/none]` | 标题保存格式                                         | `none`         |
 | `--ensure-cap`                       | 要求每张图都有 alt 文本                              | -              |
 | `--cap-from-title`                   | 使用图片标题作为说明                                 | -              |
-| `--debug`                            | 启用调试模式，将 API 请求/响应保存到 JSON 文件       | -              |
-| `--debug-dir [路径]`                 | 调试文件保存目录                                     | `debug`        |
+| `--dump [路径]` (**NEW**)            | 将 API 请求/响应导出到指定目录（默认：`.dump`）      | -              |
 | `--client [api/chromium/firefox]`    | 抓取方式                                             | `api`          |
 | `--backend [playwright/selenium]`    | 浏览器自动化后端（浏览器模式）                       | `playwright`   |
 | `--headful`                          | 显示浏览器窗口（浏览器模式）                         | -              |
