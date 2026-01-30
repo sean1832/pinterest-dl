@@ -10,6 +10,7 @@ Example:
 """
 
 import warnings
+from typing import Optional
 
 __version__ = "0.0.0.dev0"
 __description__ = "An unofficial Pinterest image downloader"
@@ -45,8 +46,7 @@ class PinterestDL:
         timeout: float = 10,
         verbose: bool = False,
         ensure_alt: bool = False,
-        debug_mode: bool = False,
-        debug_dir: str = "debug",
+        dump: Optional[str] = None,
         max_retries: int = 3,
         retry_delay: float = 1.0,
     ) -> "ApiScraper":
@@ -56,8 +56,7 @@ class PinterestDL:
             timeout (float): Timeout in seconds for requests.
             verbose (bool): Enable verbose logging.
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
-            debug_mode (bool): Enable debug mode to dump all requests and responses to JSON files.
-            debug_dir (str): Directory to save debug files when debug_mode is enabled.
+            dump (Optional[str]): Directory to dump API requests/responses. None to disable (default).
             max_retries (int): Maximum number of retry attempts for failed API calls. Defaults to 3.
             retry_delay (float): Initial delay between retries in seconds (uses exponential backoff). Defaults to 1.0.
 
@@ -68,8 +67,7 @@ class PinterestDL:
             verbose=verbose,
             timeout=timeout,
             ensure_alt=ensure_alt,
-            debug_mode=debug_mode,
-            debug_dir=debug_dir,
+            dump=dump,
             max_retries=max_retries,
             retry_delay=retry_delay,
         )

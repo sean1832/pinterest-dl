@@ -28,8 +28,7 @@ class ApiScraper:
         timeout: float = 5,
         verbose: bool = False,
         ensure_alt: bool = False,
-        debug_mode: bool = False,
-        debug_dir: str = "debug",
+        dump: Optional[str] = None,
         max_retries: int = 3,
         retry_delay: float = 1.0,
     ) -> None:
@@ -39,16 +38,14 @@ class ApiScraper:
             timeout (float, optional): timeout in seconds. Defaults to 3.
             verbose (bool, optional): show detail messages. Defaults to False.
             ensure_alt (bool, optional): whether to remove images without alt text. Defaults to False.
-            debug_mode (bool, optional): enable debug mode to dump requests/responses. Defaults to False.
-            debug_dir (str, optional): directory to save debug files. Defaults to "debug".
+            dump (Optional[str], optional): directory to dump API requests/responses. None to disable (default).
             max_retries (int, optional): maximum number of retry attempts for failed API calls. Defaults to 3.
             retry_delay (float, optional): initial delay between retries in seconds (uses exponential backoff). Defaults to 1.0.
         """
         self.timeout = timeout
         self.verbose = verbose
         self.ensure_alt = ensure_alt
-        self.debug_mode = debug_mode
-        self.debug_dir = debug_dir
+        self.dump = dump
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.cookies = None
@@ -122,8 +119,7 @@ class ApiScraper:
             url,
             self.cookies,
             timeout=self.timeout,
-            debug_mode=self.debug_mode,
-            debug_dir=self.debug_dir,
+            dump=self.dump,
         )
         bookmarks = BookmarkManager(3)
 
@@ -261,8 +257,7 @@ class ApiScraper:
             url,
             self.cookies,
             timeout=self.timeout,
-            debug_mode=self.debug_mode,
-            debug_dir=self.debug_dir,
+            dump=self.dump,
         )
         bookmarks = BookmarkManager(bookmarksCount)
 

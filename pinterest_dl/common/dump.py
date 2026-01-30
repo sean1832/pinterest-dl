@@ -1,4 +1,4 @@
-"""Debug utilities for dumping request and response data."""
+"""Utilities for dumping API request and response data to JSON files."""
 
 import json
 from datetime import datetime
@@ -8,17 +8,17 @@ from typing import Any, Dict, Optional, Union
 import requests
 
 
-class RequestDebugger:
-    """Utility class for dumping HTTP request and response data to JSON files for debugging."""
+class RequestDumper:
+    """Utility class for dumping HTTP request and response data to JSON files."""
 
-    def __init__(self, debug_dir: Union[str, Path] = "debug"):
-        """Initialize the debugger with a directory for debug files.
+    def __init__(self, dump_dir: Union[str, Path] = ".dump"):
+        """Initialize the dumper with a directory for dump files.
 
         Args:
-            debug_dir (Union[str, Path], optional): Directory to save debug files. Defaults to "debug".
+            dump_dir (Union[str, Path], optional): Directory to save dump files. Defaults to ".dump".
         """
-        self.debug_dir = Path(debug_dir)
-        self.debug_dir.mkdir(parents=True, exist_ok=True)
+        self.dump_dir = Path(dump_dir)
+        self.dump_dir.mkdir(parents=True, exist_ok=True)
 
     def dump_request_response(
         self,
@@ -38,7 +38,7 @@ class RequestDebugger:
             metadata (Optional[Dict[str, Any]], optional): Additional metadata to include. Defaults to None.
 
         Returns:
-            Path: Path to the created debug file.
+            Path: Path to the created dump file.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
 
@@ -47,10 +47,10 @@ class RequestDebugger:
         elif not filename.endswith(".json"):
             filename = f"{filename}.json"
 
-        dump_path = self.debug_dir / filename
+        dump_path = self.dump_dir / filename
 
-        # Build debug data structure
-        debug_data = {
+        # Build dump data structure
+        dump_data = {
             "timestamp": datetime.now().isoformat(),
             "request": {
                 "url": request_url,
@@ -68,32 +68,32 @@ class RequestDebugger:
 
         # Add request data if provided
         if request_data:
-            debug_data["request"]["data"] = request_data
+            dump_data["request"]["data"] = request_data
 
         # Add request body if it exists
         if response.request and response.request.body:
             try:
-                debug_data["request"]["body"] = (
+                dump_data["request"]["body"] = (
                     response.request.body.decode("utf-8")
                     if isinstance(response.request.body, bytes)
                     else response.request.body
                 )
             except (UnicodeDecodeError, AttributeError):
-                debug_data["request"]["body"] = "<binary data>"
+                dump_data["request"]["body"] = "<binary data>"
 
         # Add response content
         try:
-            debug_data["response"]["json"] = response.json()
+            dump_data["response"]["json"] = response.json()
         except (ValueError, requests.exceptions.JSONDecodeError):
-            debug_data["response"]["text"] = response.text[:5000]  # Limit text size
+            dump_data["response"]["text"] = response.text[:5000]  # Limit text size
 
         # Add metadata if provided
         if metadata:
-            debug_data["metadata"] = metadata
+            dump_data["metadata"] = metadata
 
         # Write to file
         with open(dump_path, "w", encoding="utf-8") as f:
-            json.dump(debug_data, f, indent=4, ensure_ascii=False)
+            json.dump(dump_data, f, indent=4, ensure_ascii=False)
 
         return dump_path
 
@@ -113,7 +113,7 @@ class RequestDebugger:
             filename (Optional[str], optional): Custom filename. Defaults to None.
 
         Returns:
-            Path: Path to the created debug file.
+            Path: Path to the created dump file.
         """
         metadata = {
             "api_endpoint": endpoint,
@@ -143,7 +143,7 @@ class RequestDebugger:
             filename (Optional[str], optional): Custom filename. Defaults to None.
 
         Returns:
-            Path: Path to the created debug file.
+            Path: Path to the created dump file.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
 
@@ -152,9 +152,9 @@ class RequestDebugger:
         elif not filename.endswith(".json"):
             filename = f"{filename}.json"
 
-        dump_path = self.debug_dir / filename
+        dump_path = self.dump_dir / filename
 
-        debug_data = {
+        dump_data = {
             "timestamp": datetime.now().isoformat(),
             "error": {
                 "type": type(error).__name__,
@@ -163,10 +163,10 @@ class RequestDebugger:
         }
 
         if request_url:
-            debug_data["request"] = {"url": request_url}
+            dump_data["request"] = {"url": request_url}
 
         if response:
-            debug_data["response"] = {
+            dump_data["response"] = {
                 "status_code": response.status_code,
                 "reason": response.reason,
                 "headers": dict(response.headers),
@@ -174,34 +174,34 @@ class RequestDebugger:
             }
 
             try:
-                debug_data["response"]["json"] = response.json()
+                dump_data["response"]["json"] = response.json()
             except (ValueError, requests.exceptions.JSONDecodeError):
-                debug_data["response"]["text"] = response.text[:5000]
+                dump_data["response"]["text"] = response.text[:5000]
 
         # Write to file
         with open(dump_path, "w", encoding="utf-8") as f:
-            json.dump(debug_data, f, indent=4, ensure_ascii=False)
+            json.dump(dump_data, f, indent=4, ensure_ascii=False)
 
         return dump_path
 
 
 # Singleton instance for convenient access
-_default_debugger: Optional[RequestDebugger] = None
+_default_dumper: Optional[RequestDumper] = None
 
 
-def get_debugger(debug_dir: Union[str, Path] = "debug") -> RequestDebugger:
-    """Get or create the default debugger instance.
+def get_dumper(dump_dir: Union[str, Path] = ".dump") -> RequestDumper:
+    """Get or create the default dumper instance.
 
     Args:
-        debug_dir (Union[str, Path], optional): Directory for debug files. Defaults to "debug".
+        dump_dir (Union[str, Path], optional): Directory for dump files. Defaults to ".dump".
 
     Returns:
-        RequestDebugger: The debugger instance.
+        RequestDumper: The dumper instance.
     """
-    global _default_debugger
-    if _default_debugger is None:
-        _default_debugger = RequestDebugger(debug_dir)
-    return _default_debugger
+    global _default_dumper
+    if _default_dumper is None:
+        _default_dumper = RequestDumper(dump_dir)
+    return _default_dumper
 
 
 def dump_request_response(
@@ -210,16 +210,16 @@ def dump_request_response(
     filename: Optional[str] = None,
     **kwargs,
 ) -> Path:
-    """Convenience function to dump request/response using the default debugger.
+    """Convenience function to dump request/response using the default dumper.
 
     Args:
         request_url (str): The URL that was requested.
         response (requests.Response): The response object.
         filename (Optional[str], optional): Custom filename. Defaults to None.
-        **kwargs: Additional arguments passed to RequestDebugger.dump_request_response().
+        **kwargs: Additional arguments passed to RequestDumper.dump_request_response().
 
     Returns:
-        Path: Path to the created debug file.
+        Path: Path to the created dump file.
     """
-    debugger = get_debugger()
-    return debugger.dump_request_response(request_url, response, filename, **kwargs)
+    dumper = get_dumper()
+    return dumper.dump_request_response(request_url, response, filename, **kwargs)
