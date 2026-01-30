@@ -139,6 +139,16 @@ images = PinterestDL.with_api().search_and_download(
 
 Includes: High-level API, private board access, advanced scraping patterns
 
+**💡 [See Complete Examples ->](examples/)**
+
+Working examples covering:
+- Basic scraping and downloading
+- Search functionality  
+- Cookie authentication for private boards
+- Video downloading
+- Advanced control with lower-level API
+- Debug mode and troubleshooting
+
 ---
 
 ## 📚 Documentation

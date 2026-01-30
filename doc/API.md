@@ -2,13 +2,21 @@
 
 You can use the `PinterestDL` class directly in your Python code to scrape and download images programmatically.
 
+> **💡 Prefer examples?** Check out the [examples/](../examples/) directory for runnable examples covering all use cases.
+
 ## Table of Contents
-- [1. High-level Scrape and Download](#1-high-level-scrape-and-download)
-  - [1a. Scrape with Cookies for Private Boards](#1a-scrape-with-cookies-for-private-boards)
-- [2. Detailed Scraping with Lower-Level Control](#2-detailed-scraping-with-lower-level-control)
-  - [2a. With API](#2a-with-api)
-  - [2b. With Browser (Playwright)](#2b-with-browser-playwright)
-  - [2c. With Browser (Selenium - Legacy)](#2c-with-browser-selenium---legacy)
+- [Python API Guide](#python-api-guide)
+  - [Table of Contents](#table-of-contents)
+  - [1. High-level Scrape and Download](#1-high-level-scrape-and-download)
+    - [Scrape from URL](#scrape-from-url)
+    - [Search and Download](#search-and-download)
+    - [1a. Scrape with Cookies for Private Boards](#1a-scrape-with-cookies-for-private-boards)
+  - [2. Detailed Scraping with Lower-Level Control](#2-detailed-scraping-with-lower-level-control)
+    - [2a. With API](#2a-with-api)
+      - [Scrape Media](#scrape-media)
+      - [Search Media](#search-media)
+    - [2b. With Browser (Playwright)](#2b-with-browser-playwright)
+    - [2c. With Browser (Selenium - Legacy)](#2c-with-browser-selenium---legacy)
 
 ---
 
