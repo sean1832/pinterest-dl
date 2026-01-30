@@ -15,7 +15,7 @@ def __getattr__(name: str):
     """Provide backward compatibility with deprecation warnings for old module structure."""
     if name == "PinterestMedia":
         warnings.warn(
-            "Importing from pinterest_dl.data_model is deprecated and will be removed in version 2.1.0. "
+            "Importing from pinterest_dl.data_model is deprecated and will be removed in version 1.1.0. "
             "Use: from pinterest_dl.domain.media import PinterestMedia",
             DeprecationWarning,
             stacklevel=2,

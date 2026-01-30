@@ -43,6 +43,7 @@ class Driver:
         self.randdelay(1, 2)  # delay between 1 and 2 seconds
         password_field.send_keys(Keys.RETURN)
         print("Login Successful")
+        print("(If prompted, please complete any CAPTCHA or 2FA in the browser window)")
         return self
 
     def get_cookies(self, after_sec: float = 5) -> List[dict]:
@@ -52,8 +53,15 @@ class Driver:
             out_path (str | Path, optional): output file path. Defaults to "cookies.json".
             after_sec (float, optional): time in second to wait before capturing cookies. Defaults to 5.
         """
-        print(f"Waiting for {after_sec} seconds before capturing cookies...")
-        time.sleep(after_sec)
+        print(f"Waiting {after_sec} seconds before capturing cookies...")
+        print("(Complete any verification steps in the browser if needed)")
+        for remaining in range(int(after_sec), 0, -1):
+            print(f"  Capturing in {remaining}...", end="\r")
+            time.sleep(1)
+        # Handle fractional seconds
+        if after_sec % 1 > 0:
+            time.sleep(after_sec % 1)
+        print(" " * 30, end="\r")  # Clear the countdown line
         cookies = self.webdriver.get_cookies()
         print("Cookies Captured")
         return cookies

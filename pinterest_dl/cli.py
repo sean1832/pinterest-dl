@@ -63,7 +63,8 @@ def get_parser() -> argparse.ArgumentParser:
     # login command
     login_cmd = cmd.add_parser("login", help="Login to Pinterest and capture cookies")
     login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
-    login_cmd.add_argument("--client", default="chrome", choices=["chrome", "firefox"], help="Browser client to login")
+    login_cmd.add_argument("--client", default="chromium", choices=["chromium", "firefox"], help="Browser client to login (Playwright)")
+    login_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend to use (default: playwright)")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
@@ -85,9 +86,10 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
     scrape_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
 
-    scrape_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
-    scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
-    scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
+    scrape_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
+    scrape_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
+    scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for browser clients)")
+    scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for browser clients)")
 
     # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
@@ -106,9 +108,10 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
     search_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
 
-    search_cmd.add_argument("--client", default="api", choices=["api", "chrome", "firefox"], help="Client to use for scraping. Chrome/Firefox is slower but more reliable.")
-    search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for chrome/firefox)")
-    search_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for chrome/firefox)")
+    search_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
+    search_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
+    search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for browser clients)")
+    search_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for browser clients)")
 
     # download command
     download_cmd = cmd.add_parser("download", help="Download images")
@@ -132,16 +135,31 @@ def main() -> None:
         if args.cmd == "login":
             email = input("Enter Pinterest email: ")
             password = getpass("Enter Pinterest password: ")
-            cookies = (
-                PinterestDL.with_browser(
+
+            if args.backend == "selenium":
+                # Map chromium -> chrome for Selenium compatibility
+                browser_type = "chrome" if args.client == "chromium" else args.client
+                import warnings
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    scraper = PinterestDL.with_selenium(
+                        browser_type=browser_type,
+                        headless=not args.headful,
+                        incognito=args.incognito,
+                        verbose=args.verbose,
+                    )
+                cookies = scraper.login(email, password).get_cookies(after_sec=7)
+            else:
+                # Default: Playwright
+                scraper = PinterestDL.with_browser(
                     browser_type=args.client,
                     headless=not args.headful,
                     incognito=args.incognito,
                     verbose=args.verbose,
                 )
-                .login(email, password)
-                .get_cookies(after_sec=7)
-            )
+                cookies = scraper.login(email, password).get_cookies(after_sec=7)
+                scraper.close()
 
             # save cookies
             io.write_json(cookies, args.output, 4)
@@ -166,9 +184,38 @@ def main() -> None:
             for url in urls:
                 url = sanitize_url(url)
                 print(f"Scraping {url}...")
-                if args.client in ["chrome", "firefox"]:
-                    imgs = (
-                        PinterestDL.with_browser(
+                if args.client in ["chromium", "firefox"]:
+                    if args.backend == "selenium":
+                        # Selenium backend (legacy)
+                        browser_type = "chrome" if args.client == "chromium" else args.client
+                        import warnings
+
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", DeprecationWarning)
+                            imgs = (
+                                PinterestDL.with_selenium(
+                                    browser_type=browser_type,
+                                    timeout=args.timeout,
+                                    headless=not args.headful,
+                                    incognito=args.incognito,
+                                    verbose=args.verbose,
+                                    ensure_alt=args.ensure_cap,
+                                )
+                                .with_cookies_path(args.cookies)
+                                .scrape_and_download(
+                                    url,
+                                    args.output,
+                                    args.num,
+                                    min_resolution=parse_resolution(args.resolution)
+                                    if args.resolution
+                                    else None,
+                                    cache_path=args.cache,
+                                    caption=args.caption,
+                                )
+                            )
+                    else:
+                        # Playwright backend (default)
+                        scraper = PinterestDL.with_browser(
                             browser_type=args.client,
                             timeout=args.timeout,
                             headless=not args.headful,
@@ -176,24 +223,25 @@ def main() -> None:
                             verbose=args.verbose,
                             ensure_alt=args.ensure_cap,
                         )
-                        .with_cookies_path(args.cookies)
-                        .scrape_and_download(
-                            url,
-                            args.output,
-                            args.num,
-                            min_resolution=parse_resolution(args.resolution)
-                            if args.resolution
-                            else None,
-                            cache_path=args.cache,
-                            caption=args.caption,
-                        )
-                    )
+                        try:
+                            imgs = scraper.with_cookies_path(args.cookies).scrape_and_download(
+                                url,
+                                args.output,
+                                args.num,
+                                min_resolution=parse_resolution(args.resolution)
+                                if args.resolution
+                                else None,
+                                cache_path=args.cache,
+                                caption=args.caption,
+                            )
+                        finally:
+                            scraper.close()
                     if imgs and len(imgs) != args.num:
                         print(f"Warning: Only ({len(imgs)}) images were scraped from {url}.")
                 else:
                     if args.incognito or args.headful:
                         print(
-                            "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                            "Warning: Incognito and headful mode is only available for browser clients."
                         )
 
                     imgs = (
@@ -226,14 +274,14 @@ def main() -> None:
                 return
             for query in querys:
                 print(f"Searching {query}...")
-                if args.client in ["chrome", "firefox"]:
+                if args.client in ["chromium", "firefox"]:
                     raise NotImplementedError(
                         "Search is currently not available for browser clients."
                     )
                 else:
                     if args.incognito or args.headful:
                         print(
-                            "Warning: Incognito and headful mode is only available for Chrome/Firefox."
+                            "Warning: Incognito and headful mode is only available for browser clients."
                         )
 
                     imgs = (

@@ -24,17 +24,19 @@ class TestPublicAPIStability:
             assert isinstance(scraper, ApiScraper)
 
     def test_pinterest_dl_factory_browser(self):
-        """Test PinterestDL.with_browser() factory method (skip if Chrome unavailable)."""
+        """Test PinterestDL.with_browser() factory method (skip if Chromium unavailable)."""
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error")  # Turn warnings into errors
-                scraper = PinterestDL.with_browser(browser_type="chrome", headless=True)
+                scraper = PinterestDL.with_browser(browser_type="chromium", headless=True)
                 assert scraper is not None
-                assert isinstance(scraper, WebDriverScraper)
-                scraper.webdriver.quit()  # Clean up
+                from pinterest_dl.scrapers import PlaywrightScraper
+
+                assert isinstance(scraper, PlaywrightScraper)
+                scraper.close()  # Clean up
         except Exception:
-            # Skip test if Chrome is not available - not a backward compatibility issue
-            pytest.skip("Chrome not available for testing")
+            # Skip test if Chromium is not available - not a backward compatibility issue
+            pytest.skip("Chromium not available for testing")
 
     def test_pinterest_dl_factory_methods_exist(self):
         """Test that PinterestDL factory methods exist and are accessible."""
@@ -102,7 +104,7 @@ class TestDeprecatedScraperNames:
         # 2. The new name to use
         assert "ApiScraper" in warning_message
         # 3. The removal version
-        assert "2.1.0" in warning_message
+        assert "1.1.0" in warning_message
 
 
 class TestDeprecatedDataModelModule:

@@ -1,16 +1,18 @@
 """Pinterest scrapers module.
 
 This module provides scraper implementations for Pinterest:
-- ApiScraper: Fast API-based scraping
-- WebDriverScraper: Selenium-based scraping
+- ApiScraper: Fast API-based scraping (default)
+- PlaywrightScraper: Playwright-based browser scraping (recommended for browser mode)
+- WebDriverScraper: Selenium-based scraping (legacy, for backward compatibility)
 """
 
 import warnings
 
 from .api_scraper import ApiScraper
+from .playwright_scraper import PlaywrightScraper
 from .webdriver_scraper import WebDriverScraper
 
-__all__ = ["ApiScraper", "WebDriverScraper"]
+__all__ = ["ApiScraper", "PlaywrightScraper", "WebDriverScraper"]
 
 
 def __getattr__(name: str):
@@ -38,5 +40,6 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
+        return WebDriverScraper
         return WebDriverScraper
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

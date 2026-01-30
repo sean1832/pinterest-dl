@@ -9,11 +9,14 @@ Example:
     >>> scraper.download(media, "output/")
 """
 
+import warnings
+
 __version__ = "0.0.0.dev0"
 __description__ = "An unofficial Pinterest image downloader"
 __all__ = [
     "PinterestDL",
     "ApiScraper",
+    "PlaywrightScraper",
     "WebDriverScraper",
     "PinterestMedia",
     "__version__",
@@ -24,15 +27,17 @@ from typing import Literal
 
 from pinterest_dl.domain.media import PinterestMedia
 from pinterest_dl.scrapers.api_scraper import ApiScraper
+from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
 from pinterest_dl.scrapers.webdriver_scraper import WebDriverScraper
 
 
 class PinterestDL:
     """Factory for creating Pinterest scrapers.
 
-    PinterestDL provides two scraping strategies:
-    - API-based: Fast, uses reverse-engineered Pinterest API
-    - WebDriver-based: Slower but more reliable, uses Selenium
+    PinterestDL provides multiple scraping strategies:
+    - API-based: Fast, uses reverse-engineered Pinterest API (default)
+    - Playwright-based: Browser automation, stable and cross-platform (recommended for browser mode)
+    - Selenium-based: Legacy browser automation (for backward compatibility)
     """
 
     @staticmethod
@@ -53,17 +58,21 @@ class PinterestDL:
 
     @staticmethod
     def with_browser(
-        browser_type: Literal["chrome", "firefox"],
+        browser_type: Literal["chromium", "firefox"] = "chromium",
         timeout: float = 3,
         headless: bool = True,
         incognito: bool = True,
         verbose: bool = False,
         ensure_alt: bool = False,
-    ) -> "WebDriverScraper":
-        """Scrape Pinterest using a webdriver (Selenium). This is slower but more reliable.
+    ) -> "PlaywrightScraper":
+        """Scrape Pinterest using Playwright browser automation.
+
+        This is the recommended browser-based scraping method. Playwright provides
+        better stability, automatic browser management, and cross-platform support
+        (including headless servers like Alpine/Ubuntu).
 
         Args:
-            browser_type (Literal["chrome", "firefox"]): Browser type to use ('chrome' or 'firefox').
+            browser_type: Browser to use ('chromium' or 'firefox').
             timeout (float): Timeout in seconds for browser operations.
             headless (bool): Run browser in headless mode.
             incognito (bool): Use incognito mode in the browser.
@@ -71,7 +80,55 @@ class PinterestDL:
             ensure_alt (bool): Ensure that alt text is included in the scraped data.
 
         Returns:
-            WebDriverScraper: Instance of WebDriverScraper with an initialized browser.
+            PlaywrightScraper: Instance of PlaywrightScraper with Playwright browser.
+
+        Note:
+            Requires `playwright install chromium` (or firefox) to be run first.
         """
+        return PlaywrightScraper.create(
+            browser_type=browser_type,
+            timeout=timeout,
+            headless=headless,
+            incognito=incognito,
+            verbose=verbose,
+            ensure_alt=ensure_alt,
+        )
+
+    @staticmethod
+    def with_selenium(
+        browser_type: Literal["chrome", "firefox"] = "chrome",
+        timeout: float = 3,
+        headless: bool = True,
+        incognito: bool = True,
+        verbose: bool = False,
+        ensure_alt: bool = False,
+    ) -> "WebDriverScraper":
+        """Scrape Pinterest using Selenium WebDriver (legacy).
+
+        This method is provided for backward compatibility. For new projects,
+        consider using `with_browser()` which uses Playwright instead.
+
+        Args:
+            browser_type: Browser type to use ('chrome' or 'firefox').
+            timeout (float): Timeout in seconds for browser operations.
+            headless (bool): Run browser in headless mode.
+            incognito (bool): Use incognito mode in the browser.
+            verbose (bool): Enable verbose logging.
+            ensure_alt (bool): Ensure that alt text is included in the scraped data.
+
+        Returns:
+            WebDriverScraper: Instance of WebDriverScraper with Selenium WebDriver.
+
+        Note:
+            Selenium requires separate driver installation (ChromeDriver/GeckoDriver).
+            For easier setup, use `with_browser()` which uses Playwright.
+        """
+        warnings.warn(
+            "with_selenium() uses Selenium which requires manual driver setup. "
+            "Consider using with_browser() which uses Playwright for easier setup. "
+            "Selenium support may be removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         webdriver = WebDriverScraper._initialize_webdriver(browser_type, headless, incognito)
         return WebDriverScraper(webdriver, timeout, verbose, ensure_alt=ensure_alt)
