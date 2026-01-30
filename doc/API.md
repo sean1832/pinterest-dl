@@ -36,6 +36,8 @@ images = PinterestDL.with_api(
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
     ensure_alt=True,  # Ensure every image has alt text (default: False)
+    debug_mode=False,  # Dump API requests/responses to JSON files (default: False)
+    debug_dir="debug",  # Directory to save debug files (default: "debug")
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
@@ -61,6 +63,8 @@ images = PinterestDL.with_api(
     timeout=3,  # Timeout in seconds for each request (default: 3)
     verbose=False,  # Enable detailed logging for debugging (default: False)
     ensure_alt=True,  # Ensure every image has alt text (default: False)
+    debug_mode=False,  # Dump API requests/responses to JSON files (default: False)
+    debug_dir="debug",  # Directory to save debug files (default: "debug")
 ).search_and_download(
     query="art",  # Pinterest search query
     output_dir="images/art",  # Directory to save downloaded images
@@ -265,5 +269,4 @@ with warnings.catch_warnings():
     )
 
 # Continue with download, save to JSON, add captions, etc.
-```
 ```

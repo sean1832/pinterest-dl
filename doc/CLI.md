@@ -26,14 +26,14 @@ pinterest-dl login [options]
 
 ![login](images/pinterest-dl-login.gif)
 
-| Options                           | Description                | Default        |
-| --------------------------------- | -------------------------- | -------------- |
-| `-o`, `--output [file]`           | Path to save cookies file  | `cookies.json` |
-| `--client [chromium/firefox]`     | Browser type to use        | `chromium`     |
-| `--backend [playwright/selenium]` | Browser automation backend | `playwright`   |
-| `--headful`                       | Show browser window        | -              |
-| `--incognito`                     | Use incognito mode         | -              |
-| `--verbose`                       | Enable debug output        | -              |
+| Options                                     | Description                | Default        |
+| ------------------------------------------- | -------------------------- | -------------- |
+| `-o`, `--output [file]`                     | Path to save cookies file  | `cookies.json` |
+| `--client [chromium/firefox]`               | Browser type to use        | `chromium`     |
+| `--backend [playwright/selenium]` (**NEW**) | Browser automation backend | `playwright`   |
+| `--headful`                                 | Show browser window        | -              |
+| `--incognito`                               | Use incognito mode         | -              |
+| `--verbose`                                 | Enable debug output        | -              |
 
 > [!TIP]
 >  After running `login`, you'll be prompted for your Pinterest email/password. Cookies are then saved to the specified file.
@@ -57,26 +57,29 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 ```
 ![scrape](images/pinterest-dl-scrape.gif)
 
-| Options                              | Description                                               | Default        |
-| ------------------------------------ | --------------------------------------------------------- | -------------- |
-| `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin  | -              |
-| `<url>`                              | One or more Pinterest URLs                                | -              |
-| `-o`, `--output [directory]`         | Directory to save images (stdout if omitted)              | -              |
-| `-c`, `--cookies [file]`             | Path to cookies file (for private content)                | `cookies.json` |
-| `-n`, `--num [number]`               | Maximum images to download                                | `100`          |
-| `-r`, `--resolution [WxH]`           | Minimum image resolution (e.g. `512x512`)                 | -              |
-| `--video`                            | Download video stream (if available)                      | -              |
-| `--skip-remux`                       | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -              |
-| `--timeout [seconds]`                | Request timeout                                           | `3`            |
-| `--delay [seconds]`                  | Delay between requests                                    | `0.2`          |
-| `--cache [path]`                     | Save scraped URLs to JSON                                 | -              |
-| `--caption [txt/json/metadata/none]` | Caption format: `txt`, `json`, `metadata`, or `none`      | `none`         |
-| `--ensure-cap`                       | Require alt text on every image                           | -              |
-| `--client [api/chromium/firefox]`    | Scraper backend                                           | `api`          |
-| `--backend [playwright/selenium]`    | Browser automation backend (for browser clients)          | `playwright`   |
-| `--headful`                          | Show browser window (browser clients only)                | -              |
-| `--incognito`                        | Use incognito mode (browser clients only)                 | -              |
-| `--verbose`                          | Enable debug output                                       | -              |
+| Options                                     | Description                                               | Default        |
+| ------------------------------------------- | --------------------------------------------------------- | -------------- |
+| `-f`, `--file [file]`                       | Path to file with URLs (one per line); use `-` for stdin  | -              |
+| `<url>`                                     | One or more Pinterest URLs                                | -              |
+| `-o`, `--output [directory]`                | Directory to save images (stdout if omitted)              | -              |
+| `-c`, `--cookies [file]`                    | Path to cookies file (for private content)                | `cookies.json` |
+| `-n`, `--num [number]`                      | Maximum images to download                                | `100`          |
+| `-r`, `--resolution [WxH]`                  | Minimum image resolution (e.g. `512x512`)                 | -              |
+| `--video`                                   | Download video stream (if available)                      | -              |
+| `--skip-remux` (**NEW**)                    | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -              |
+| `--timeout [seconds]`                       | Request timeout                                           | `10`           |
+| `--delay [seconds]`                         | Delay between requests                                    | `0.2`          |
+| `--cache [path]`                            | Save scraped URLs to JSON                                 | -              |
+| `--caption [txt/json/metadata/none]`        | Caption format: `txt`, `json`, `metadata`, or `none`      | `none`         |
+| `--ensure-cap`                              | Require alt text on every image                           | -              |
+| `--cap-from-title`                          | Use image title as caption                                | -              |
+| `--debug` (**NEW**)                         | Dump API requests/responses to JSON files                 | -              |
+| `--debug-dir [path]` (**NEW**)              | Directory for debug files                                 | `debug`        |
+| `--client [api/chromium/firefox]`           | Scraper backend                                           | `api`          |
+| `--backend [playwright/selenium]` (**NEW**) | Browser automation backend (for browser clients)          | `playwright`   |
+| `--headful`                                 | Show browser window (browser clients only)                | -              |
+| `--incognito`                               | Use incognito mode (browser clients only)                 | -              |
+| `--verbose`                                 | Enable debug output                                       | -              |
 
 ---
 
@@ -106,12 +109,15 @@ cat queries.txt | pinterest-dl search -f - [options]
 | `-n`, `--num [number]`               | Maximum images to download                                  | `100`          |
 | `-r`, `--resolution [WxH]`           | Minimum image resolution                                    | -              |
 | `--video`                            | Download video stream (if available)                        | -              |
-| `--skip-remux`                       | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed)   | -              |
-| `--timeout [seconds]`                | Request timeout                                             | `3`            |
+| `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed)   | -              |
+| `--timeout [seconds]`                | Request timeout                                             | `10`           |
 | `--delay [seconds]`                  | Delay between requests                                      | `0.2`          |
 | `--cache [path]`                     | Save results to JSON                                        | -              |
 | `--caption [txt/json/metadata/none]` | Caption format                                              | `none`         |
 | `--ensure-cap`                       | Require alt text on every image                             | -              |
+| `--cap-from-title`                   | Use image title as caption                                  | -              |
+| `--debug` (**NEW**)                  | Dump API requests/responses to JSON files                   | -              |
+| `--debug-dir [path]` (**NEW**)       | Directory for debug files                                   | `debug`        |
 | `--verbose`                          | Enable debug output                                         | -              |
 
 ---
@@ -124,10 +130,12 @@ pinterest-dl download <cache.json> [options]
 ```
 ![download](images/pinterest-dl-download.gif)
 
-| Options                    | Description                                               | Default             |
-| -------------------------- | --------------------------------------------------------- | ------------------- |
-| `-o`, `--output [dir]`     | Directory to save images                                  | `./<json_filename>` |
-| `-r`, `--resolution [WxH]` | Minimum image resolution                                  | -                   |
-| `--video`                  | Download video stream (if available)                      | -                   |
-| `--skip-remux`             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -                   |
-| `--verbose`                | Enable debug output                                       | -                   |
+| Options                              | Description                                               | Default             |
+| ------------------------------------ | --------------------------------------------------------- | ------------------- |
+| `-o`, `--output [dir]`               | Directory to save images                                  | `./<json_filename>` |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution                                  | -                   |
+| `--video`                            | Download video stream (if available)                      | -                   |
+| `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -                   |
+| `--caption [txt/json/metadata/none]` | Caption format                                            | `none`              |
+| `--ensure-cap`                       | Require alt text on every image                           | -                   |
+| `--verbose`                          | Enable debug output                                       | -                   |

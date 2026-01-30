@@ -9,8 +9,10 @@
 
 **[English](README.md) | 中文**
 
+> [!NOTE]
+> **1.0 版本已发布！** 此版本带来了更好的稳定性、错误处理和增强的测试（56 个全面测试）。所有现有代码无需任何修改即可继续工作 - 我们保持了完全的向后兼容性。
 
-本工具库用于从 [Pinterest](https://pinterest.com) 抓取和下载媒体内容（包括图片和视频流）。通过浏览器自动化（默认使用 [Playwright](https://playwright.dev)，[Selenium](https://selenium.dev) 作为备用）和逆向工程的 Pinterest API 实现自动化，支持从指定 Pinterest URL 提取图片并保存到指定目录。
+本工具库用于从 [Pinterest](https://pinterest.com) 抓取和下载媒体内容（包括图片和视频流）。通过逆向工程的 Pinterest API 和浏览器自动化（默认使用 [Playwright](https://playwright.dev)，[Selenium](https://selenium.dev) 作为备用）实现自动化，支持从指定 Pinterest URL 提取图片并保存到指定目录。
 
 提供 [命令行工具](#-命令行使用) 直接使用，也支持 [Python API](#️-python-api) 编程调用。支持通过浏览器 cookies 获取私密画板和图钉中的媒体内容，并可将抓取的 URL 保存为 JSON 文件供后续使用。
 
@@ -136,6 +138,16 @@ images = PinterestDL.with_api().search_and_download(
 
 包含：高级 API、私密画板访问、高级抓取模式
 
+**💡 [查看完整示例 ->](examples/)**
+
+工作示例涵盖：
+- 基本抓取和下载
+- 搜索功能
+- 私密画板的 Cookie 认证
+- 视频下载
+- 使用底层 API 进行高级控制
+- 调试模式和故障排除
+
 ---
 
 ## 📚 文档
@@ -148,4 +160,10 @@ images = PinterestDL.with_api().search_and_download(
 欢迎贡献代码！提交 PR 前请阅读[贡献指南](CONTRIBUTING.md)。
 
 ## 📜 许可证
-[Apache License 2.0](LICENSE)
+本项目采用 Apache 2.0 许可证 - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+由 [sean1832](https://github.com/sean1832) 用 ❤️ 制作
+
+**注意：** 本项目与 Pinterest 官方无关。所有商标均为其各自所有者的财产。

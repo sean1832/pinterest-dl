@@ -8,7 +8,7 @@
 <a href="https://www.buymeacoffee.com/zekezhang" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 145px !important;" ></a>
 
 
-**English | [中文](README_CN.md)**
+**English | [中文](https://github.com/sean1832/pinterest-dl/blob/main/README_CN.md)**
 
 > [!NOTE]
 > **Version 1.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
@@ -107,7 +107,7 @@ pinterest-dl search "nature photography" -o output_folder -n 30
 pinterest-dl login -o cookies.json
 ```
 
-**📖 [View Full CLI Documentation ->](doc/CLI.md)**
+**📖 [View Full CLI Documentation ->](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md)**
 
 Available commands: `login`, `scrape`, `search`, `download`
 
@@ -135,11 +135,11 @@ images = PinterestDL.with_api().search_and_download(
 )
 ```
 
-**📖 [View Full API Documentation ->](doc/API.md)**
+**📖 [View Full API Documentation ->](https://github.com/sean1832/pinterest-dl/blob/main/doc/API.md)**
 
 Includes: High-level API, private board access, advanced scraping patterns
 
-**💡 [See Complete Examples ->](examples/)**
+**💡 [See Complete Examples ->](https://github.com/sean1832/pinterest-dl/blob/main/examples/)**
 
 Working examples covering:
 - Basic scraping and downloading
@@ -153,20 +153,20 @@ Working examples covering:
 
 ## 📚 Documentation
 
-- **[CLI Guide](doc/CLI.md)** - Complete command-line interface documentation
-- **[Python API Guide](doc/API.md)** - Programmatic usage examples and patterns
-- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute to the project
+- **[CLI Guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md)** - Complete command-line interface documentation
+- **[Python API Guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/API.md)** - Programmatic usage examples and patterns
+- **[Contributing Guidelines](https://github.com/sean1832/pinterest-dl/blob/main/CONTRIBUTING.md)** - How to contribute to the project
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+We welcome contributions! Please see [CONTRIBUTING.md](https://github.com/sean1832/pinterest-dl/blob/main/CONTRIBUTING.md) for:
 - Code of Conduct
 - Commit message guidelines (semantic commits)
 - Pull request process
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License - see the [LICENSE](https://github.com/sean1832/pinterest-dl/blob/main/LICENSE) file for details.
 
 ---
 

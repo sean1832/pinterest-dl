@@ -1,39 +1,32 @@
 # Python API 使用指南
 
-本文档详细介绍如何在 Python 代码中使用 PinterestDL 库。
+您可以在 Python 代码中直接使用 `PinterestDL` 类来编程式地抓取和下载图片。
+
+> **💡 更喜欢示例？** 查看 [examples/](../examples/) 目录获取涵盖所有用例的可运行示例。
 
 ## 目录
-- [概述](#概述)
-- [1. 高级整合方法](#1-高级整合方法)
-  - [抓取并下载](#抓取并下载)
-  - [搜索并下载](#搜索并下载)
-  - [1a. 使用 Cookies 抓取私密内容](#1a-使用-cookies-抓取私密内容)
-- [2. 底层控制方法](#2-底层控制方法)
-  - [2a. 使用 API 模式](#2a-使用-api-模式)
-  - [2b. 使用浏览器模式 (Playwright)](#2b-使用浏览器模式-playwright)
-  - [2c. 使用浏览器模式 (Selenium - 遗留)](#2c-使用浏览器模式-selenium---遗留)
+- [Python API 使用指南](#python-api-使用指南)
+  - [目录](#目录)
+  - [1. 高级整合方法](#1-高级整合方法)
+    - [抓取并下载](#抓取并下载)
+    - [搜索并下载](#搜索并下载)
+    - [1a. 使用 Cookies 抓取私密内容](#1a-使用-cookies-抓取私密内容)
+  - [2. 底层控制方法](#2-底层控制方法)
+    - [2a. 使用 API 模式](#2a-使用-api-模式)
+      - [抓取媒体](#抓取媒体)
+      - [搜索媒体](#搜索媒体)
+    - [2b. 使用浏览器模式 (Playwright)](#2b-使用浏览器模式-playwright)
+    - [2c. 使用浏览器模式 (Selenium - 遗留)](#2c-使用浏览器模式-selenium---遗留)
 
 ---
-
-## 概述
-
-`PinterestDL` 类提供三种初始化方式：
-
-- **`PinterestDL.with_api()`** - 使用逆向工程的 Pinterest API（推荐，速度快）
-- **`PinterestDL.with_browser()`** - 使用 Playwright 浏览器自动化（默认，更可靠但较慢）
-- **`PinterestDL.with_selenium()`** - 使用 Selenium 浏览器自动化（遗留支持，将在1.1.0弃用）
 
 > **注意：** 浏览器自动化现在默认使用 **Playwright**，更快速、更可靠。Selenium 仍可通过 `PinterestDL.with_selenium()` 作为备用。
 
----
-
 ## 1. 高级整合方法
-
-这些方法将抓取和下载合并为一步操作，适合大多数使用场景。
 
 ### 抓取并下载
 
-从 Pinterest URL 一步完成抓取和下载。
+此示例展示如何一步完成从 Pinterest URL **抓取**和下载图片。
 
 ```python
 from pinterest_dl import PinterestDL
@@ -43,6 +36,8 @@ images = PinterestDL.with_api(
     timeout=3,        # 每个请求的超时时间（秒）（默认：3）
     verbose=False,    # 启用详细日志用于调试（默认：False）
     ensure_alt=True,  # 确保每张图片都有 alt 文本（默认：False）
+    debug_mode=False, # 将 API 请求/响应保存到 JSON 文件（默认：False）
+    debug_dir="debug", # 调试文件保存目录（默认："debug"）
 ).scrape_and_download(
     url="https://www.pinterest.com/pin/1234567",  # 要抓取的 Pinterest URL
     output_dir="images/art",                       # 保存下载图片的目录
@@ -59,7 +54,7 @@ images = PinterestDL.with_api(
 
 ### 搜索并下载
 
-通过关键词搜索并下载图片。
+此示例展示如何一步完成通过关键词**搜索**和下载图片。
 
 ```python
 from pinterest_dl import PinterestDL
@@ -70,6 +65,8 @@ images = PinterestDL.with_api(
     timeout=3,        # 每个请求的超时时间（秒）（默认：3）
     verbose=False,    # 启用详细日志用于调试（默认：False）
     ensure_alt=True,  # 确保每张图片都有 alt 文本（默认：False）
+    debug_mode=False, # 将 API 请求/响应保存到 JSON 文件（默认：False）
+    debug_dir="debug", # 调试文件保存目录（默认："debug"）
 ).search_and_download(
     query="艺术",                       # Pinterest 搜索关键词
     output_dir="images/art",            # 保存下载图片的目录
@@ -86,11 +83,9 @@ images = PinterestDL.with_api(
 
 ### 1a. 使用 Cookies 抓取私密内容
 
-要访问私密画板和图钉，需要 Pinterest 账户的 cookies。
+**步骤 1：获取 Cookies**
 
-#### 步骤 1：获取 Cookies
-
-首先登录 Pinterest 以获取浏览器 cookies。
+您需要先登录 Pinterest 以获取用于抓取私密画板和图钉的浏览器 cookies。
 
 ```python
 import os
@@ -114,7 +109,7 @@ with open("cookies.json", "w") as f:
     json.dump(cookies, f, indent=4)
 ```
 
-#### 步骤 2：使用 Cookies 抓取
+**步骤 2：使用 Cookies 抓取**
 
 获取 cookies 后，可以用它们抓取私密画板和图钉。
 
@@ -144,7 +139,7 @@ images = (
 
 ## 2. 底层控制方法
 
-如果需要对抓取和下载图片进行更精细的控制，请使用这些方法。
+如果您需要对抓取和下载图片进行更精细的控制，请使用这些示例。
 
 ### 2a. 使用 API 模式
 
@@ -276,95 +271,3 @@ with warnings.catch_warnings():
 
 # 继续下载、保存 JSON、添加标题等操作
 ```
-
----
-
-## 静态方法参考
-
-### `PinterestDL.download_media()`
-
-从抓取的媒体对象下载文件。
-
-```python
-PinterestDL.download_media(
-    media: List[PinterestMedia],
-    output_dir: str,
-    download_streams: bool = False
-) -> List[PinterestMedia]
-```
-
-### `PinterestDL.prune_images()`
-
-过滤掉低于最低分辨率的图片。
-
-```python
-PinterestDL.prune_images(
-    images: List[PinterestMedia],
-    min_resolution: Tuple[int, int]
-) -> List[PinterestMedia]
-```
-
-### `PinterestDL.add_captions_to_meta()`
-
-将 alt 文本嵌入为图片元数据。
-
-```python
-PinterestDL.add_captions_to_meta(
-    images: List[PinterestMedia]
-) -> None
-```
-
-### `PinterestDL.add_captions_to_file()`
-
-将 alt 文本保存到独立文件。
-
-```python
-PinterestDL.add_captions_to_file(
-    images: List[PinterestMedia],
-    output_dir: str,
-    extension: str = "txt"  # 'txt' 或 'json'
-) -> None
-```
-
----
-
-## 完整示例工作流
-
-```python
-from pinterest_dl import PinterestDL
-import json
-
-# 步骤 1：使用 cookies 初始化
-with open("cookies.json", "r") as f:
-    cookies = json.load(f)
-
-scraper = PinterestDL.with_api().with_cookies(cookies)
-
-# 步骤 2：抓取媒体
-medias = scraper.scrape(
-    url="https://www.pinterest.com/pin/123456",
-    num=50,
-    min_resolution=(1024, 768)
-)
-
-# 步骤 3：缓存结果
-with open("scraped.json", "w") as f:
-    json.dump([m.to_dict() for m in medias], f, indent=4)
-
-# 步骤 4：下载
-downloaded = PinterestDL.download_media(
-    media=medias,
-    output_dir="downloads",
-    download_streams=True
-)
-
-# 步骤 5：添加标题
-PinterestDL.add_captions_to_meta(downloaded)
-PinterestDL.add_captions_to_file(downloaded, "downloads", "txt")
-
-print(f"成功下载 {len(downloaded)} 个文件")
-```
-
----
-
-返回 [主 README](../README_CN.md)
