@@ -108,6 +108,7 @@ def get_parser() -> argparse.ArgumentParser:
     login_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend to use (default: playwright)")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
+    login_cmd.add_argument("--wait", type=int, default=10, help="Seconds to wait after login before capturing cookies (default: 15)")
     login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
 
     # scrape command
@@ -187,6 +188,9 @@ def main() -> None:
             email = input("Enter Pinterest email: ")
             password = getpass("Enter Pinterest password: ")
 
+            print(f"\nWaiting {args.wait} seconds after login to capture cookies...")
+            print("(Increase with --wait if Pinterest requires more time for authentication)\n")
+
             if args.backend == "selenium":
                 # Map chromium -> chrome for Selenium compatibility
                 browser_type = "chrome" if args.client == "chromium" else args.client
@@ -200,7 +204,7 @@ def main() -> None:
                         incognito=args.incognito,
                         verbose=args.verbose,
                     )
-                cookies = scraper.login(email, password).get_cookies(after_sec=10)
+                cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
             else:
                 # Default: Playwright
                 scraper = PinterestDL.with_browser(
@@ -209,7 +213,7 @@ def main() -> None:
                     incognito=args.incognito,
                     verbose=args.verbose,
                 )
-                cookies = scraper.login(email, password).get_cookies(after_sec=10)
+                cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
                 scraper.close()
 
             # Validate cookies are authenticated
@@ -219,8 +223,9 @@ def main() -> None:
                 print("This usually means:")
                 print("  - Login credentials were incorrect")
                 print("  - Pinterest blocked the login (captcha, verification required)")
+                print("  - Not enough time to complete login (try --headful and increase --wait)")
                 print(
-                    "  - Not enough time to complete login (try --headful to see what's happening)"
+                    f"  - Current wait time: {args.wait} seconds (increase with --wait 30 or higher)"
                 )
                 print(
                     "\nCookies will still be saved, but they likely won't work for private boards."
