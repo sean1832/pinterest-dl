@@ -168,8 +168,9 @@ Optional: Caption embedding (metadata/txt/json)
   - M3U8 playlist parsing, AES-128 decryption
   - Three explicit methods for deterministic output:
     - `concat_to_ts()`: Binary concat, no ffmpeg (used with `--skip-remux`)
-    - `remux_to_mp4()`: ffmpeg stream copy (default, requires ffmpeg)
-    - `reencode_to_mp4()`: ffmpeg re-encode (internal, for future CLI exposure)
+    - `remux_to_mp4()`: ffmpeg stream copy (fast, raises on failure)
+    - `reencode_to_mp4()`: ffmpeg re-encode (slower, more compatible)
+  - Auto-fallback: `HttpClient` tries remux first, falls back to re-encode with warning if remux fails
   - Optional ffmpeg requirement (not needed with `--skip-remux` flag)
 - `download/video/key_cache.py`: Decryption key cache
 - `download/video/segment_info.py`: Segment metadata
@@ -436,11 +437,13 @@ __version__ = "1.0.0"  # Increment here
 
 ### Video Download Modes
 
-- **Default mode** (`--video`): Downloads HLS streams, remuxes to .mp4 using ffmpeg
+- **Default mode** (`--video`): Downloads HLS streams, remuxes to .mp4 using ffmpeg (stream copy). If remux fails, automatically re-encodes with warning: "Warning: Remux failed, re-encoding video (this may take longer)..."
 - **Skip remux mode** (`--video --skip-remux`): Downloads HLS streams, outputs raw .ts file (no ffmpeg needed)
-- **Future** (`--video --reencode`): Force re-encoding for guaranteed .mp4 compatibility (TODO)
+- **Future** (`--video --reencode`): Force re-encoding upfront for guaranteed .mp4 compatibility (TODO)
 
 **Flag flow**: CLI -> ApiScraper -> operations.download_media() -> MediaDownloader -> HttpClient -> HlsProcessor
+
+**Auto-fallback logic**: Implemented in `HttpClient.download_streams()` - tries `remux_to_mp4()`, catches exception, prints warning, calls `reencode_to_mp4()`
 
 ### Extending HLS Processing
 
@@ -448,8 +451,9 @@ __version__ = "1.0.0"  # Increment here
 - Update `decrypt()` method for additional cipher modes
 - Three separate output methods for explicit control:
   - `concat_to_ts()`: No ffmpeg, raw .ts output
-  - `remux_to_mp4()`: ffmpeg remux (stream copy)
-  - `reencode_to_mp4()`: ffmpeg re-encode (TODO: expose via `--reencode` flag)
+  - `remux_to_mp4()`: ffmpeg remux (stream copy, raises on failure)
+  - `reencode_to_mp4()`: ffmpeg re-encode (auto-fallback target)
+- `HttpClient.download_streams()` handles remux->reencode fallback with user warning
 - Test with `--video` flag in CLI
 - Test `--skip-remux` for ffmpeg-free video downloads
 

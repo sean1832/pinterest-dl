@@ -68,7 +68,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - Python 3.10 or newer
 - (Optional) Playwright browsers: `playwright install chromium` or `playwright install firefox`
 - (Optional) For Selenium backend: Chrome or Firefox browser with matching WebDriver
-- (Optional) [ffmpeg](https://ffmpeg.org/) for video remuxing to MP4 (with `--video` option). Use `--skip-remux` to download raw .ts files without ffmpeg.
+- (Optional) [ffmpeg](https://ffmpeg.org/) for video remuxing to MP4 (with `--video` option). If remux fails, automatically falls back to re-encoding. Use `--skip-remux` to download raw .ts files without ffmpeg.
 
 ## 📥 Installation
 
