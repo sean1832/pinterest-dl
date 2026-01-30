@@ -15,7 +15,7 @@ def __getattr__(name: str):
     """Provide backward compatibility with deprecation warnings for renamed classes."""
     if name == "PinterestCookieJar":
         warnings.warn(
-            "PinterestCookieJar has been renamed to CookieJar and will be removed in version 2.1.0. "
+            "PinterestCookieJar has been renamed to CookieJar and will be removed in version 1.1.0. "
             "Use: from pinterest_dl.domain import CookieJar",
             DeprecationWarning,
             stacklevel=2,

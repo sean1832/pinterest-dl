@@ -6,7 +6,7 @@ The low_level module has been flattened:
 - low_level.hls → pinterest_dl.download.video
 - low_level.webdriver → pinterest_dl.webdriver
 
-This backward compatibility module will be removed in version 2.1.0.
+This backward compatibility module will be removed in version 1.1.0.
 """
 
 import warnings
@@ -15,7 +15,7 @@ import warnings
 def __getattr__(name: str):
     """Provide backward compatibility with deprecation warnings for old module structure."""
     warnings.warn(
-        f"Importing from pinterest_dl.low_level.{name} is deprecated and will be removed in version 2.1.0. "
+        f"Importing from pinterest_dl.low_level.{name} is deprecated and will be removed in version 1.1.0. "
         f"The module has been moved. Check the documentation for the new import path.",
         DeprecationWarning,
         stacklevel=2,

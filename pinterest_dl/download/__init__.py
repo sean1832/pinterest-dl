@@ -43,7 +43,7 @@ def __getattr__(name: str):
 
     if name == "PinterestMediaDownloader":
         warnings.warn(
-            "PinterestMediaDownloader has been renamed to MediaDownloader and will be removed in version 2.1.0. "
+            "PinterestMediaDownloader has been renamed to MediaDownloader and will be removed in version 1.1.0. "
             "Use: from pinterest_dl.download import MediaDownloader",
             DeprecationWarning,
             stacklevel=2,

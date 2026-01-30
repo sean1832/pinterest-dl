@@ -11,7 +11,7 @@
 **English | [中文](README_CN.md)**
 
 > [!NOTE]
-> **Version 2.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
+> **Version 1.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
 
 This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and [Selenium](https://selenium.dev) for automation, it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
 
@@ -29,16 +29,20 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 
 
 # Table of Contents
-- [🌟 Features](#-features)
-- [🚩 Known Issues](#-known-issues)
-- [📋 Requirements](#-requirements)
-- [📥 Installation](#-installation)
-- [🚀 Quick Start](#-quick-start)
-  - [CLI Usage](#cli-usage)
-  - [Python API](#python-api)
-- [📚 Documentation](#-documentation)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
+- [Pinterest Media Downloader (pinterest-dl)](#pinterest-media-downloader-pinterest-dl)
+- [Table of Contents](#table-of-contents)
+  - [🌟 Features](#-features)
+  - [🚩 Known Issues](#-known-issues)
+  - [📋 Requirements](#-requirements)
+  - [📥 Installation](#-installation)
+    - [Using pip (Recommended)](#using-pip-recommended)
+    - [Cloning from GitHub](#cloning-from-github)
+  - [🚀 Quick Start](#-quick-start)
+    - [CLI Usage](#cli-usage)
+    - [Python API](#python-api)
+  - [📚 Documentation](#-documentation)
+  - [🤝 Contributing](#-contributing)
+  - [📜 License](#-license)
 
 ## 🌟 Features
 - ✅ Scrape media directly from a Pinterest URL.

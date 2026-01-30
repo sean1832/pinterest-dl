@@ -1,7 +1,7 @@
 """Tests for backward compatibility of deprecated APIs.
 
 This test suite ensures that all deprecated APIs continue to work with proper
-deprecation warnings, maintaining backward compatibility for users upgrading to 2.0.0.
+deprecation warnings, maintaining backward compatibility for users upgrading to 1.0.0.
 """
 
 import warnings
@@ -58,7 +58,7 @@ class TestDeprecatedScraperNames:
 
     def test_deprecated_scraper_api_import_triggers_warning(self):
         """Test that importing _ScraperAPI triggers DeprecationWarning."""
-        with pytest.warns(DeprecationWarning, match=r"_ScraperAPI is deprecated.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"_ScraperAPI is deprecated.*1\.1\.0"):
             from pinterest_dl.scrapers import _ScraperAPI
 
             # Verify it returns the correct class
@@ -66,7 +66,7 @@ class TestDeprecatedScraperNames:
 
     def test_deprecated_scraper_webdriver_import_triggers_warning(self):
         """Test that importing _ScraperWebdriver triggers DeprecationWarning."""
-        with pytest.warns(DeprecationWarning, match=r"_ScraperWebdriver is deprecated.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"_ScraperWebdriver is deprecated.*1\.1\.0"):
             from pinterest_dl.scrapers import _ScraperWebdriver
 
             # Verify it returns the correct class
@@ -110,7 +110,7 @@ class TestDeprecatedDataModelModule:
 
     def test_pinterest_media_from_data_model(self):
         """Test importing PinterestMedia from old data_model path."""
-        with pytest.warns(DeprecationWarning, match=r"data_model.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"data_model.*1\.1\.0"):
             from pinterest_dl.data_model import PinterestMedia
 
             # Should work but trigger warning
@@ -123,7 +123,7 @@ class TestDeprecatedDataModelModule:
 
     def test_video_stream_info_from_data_model(self):
         """Test importing VideoStreamInfo from old data_model path."""
-        with pytest.warns(DeprecationWarning, match=r"data_model.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"data_model.*1\.1\.0"):
             from pinterest_dl.data_model import VideoStreamInfo
 
             assert VideoStreamInfo is not None
@@ -138,14 +138,14 @@ class TestDeprecatedClassNames:
 
     def test_deprecated_pinterest_api(self):
         """Test that PinterestAPI is still accessible with deprecation warning."""
-        with pytest.warns(DeprecationWarning, match=r"PinterestAPI.*Api.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"PinterestAPI.*Api.*1\.1\.0"):
             from pinterest_dl.api import Api, PinterestAPI
 
             assert PinterestAPI is Api
 
     def test_deprecated_pinterest_driver(self):
         """Test that PinterestDriver is still accessible with deprecation warning."""
-        with pytest.warns(DeprecationWarning, match=r"PinterestDriver.*Driver.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"PinterestDriver.*Driver.*1\.1\.0"):
             from pinterest_dl.webdriver import Driver, PinterestDriver
 
             assert PinterestDriver is Driver
@@ -153,7 +153,7 @@ class TestDeprecatedClassNames:
     def test_deprecated_pinterest_media_downloader(self):
         """Test that PinterestMediaDownloader is still accessible with deprecation warning."""
         with pytest.warns(
-            DeprecationWarning, match=r"PinterestMediaDownloader.*MediaDownloader.*2\.1\.0"
+            DeprecationWarning, match=r"PinterestMediaDownloader.*MediaDownloader.*1\.1\.0"
         ):
             from pinterest_dl.download import MediaDownloader, PinterestMediaDownloader
 
@@ -161,7 +161,7 @@ class TestDeprecatedClassNames:
 
     def test_deprecated_pinterest_cookie_jar(self):
         """Test that PinterestCookieJar is still accessible with deprecation warning."""
-        with pytest.warns(DeprecationWarning, match=r"PinterestCookieJar.*CookieJar.*2\.1\.0"):
+        with pytest.warns(DeprecationWarning, match=r"PinterestCookieJar.*CookieJar.*1\.1\.0"):
             from pinterest_dl.domain import CookieJar, PinterestCookieJar
 
             assert PinterestCookieJar is CookieJar
@@ -216,7 +216,7 @@ class TestDeprecationMessageQuality:
     """Test that all deprecation messages are clear and actionable."""
 
     def test_all_deprecations_mention_version(self):
-        """Test that all deprecation warnings mention version 2.1.0."""
+        """Test that all deprecation warnings mention version 1.1.0."""
         deprecated_imports = [
             ("pinterest_dl.scrapers", "_ScraperAPI"),
             ("pinterest_dl.scrapers", "_ScraperWebdriver"),
@@ -235,7 +235,7 @@ class TestDeprecationMessageQuality:
 
             assert len(record) >= 1
             warning_message = str(record[0].message)
-            assert "2.1.0" in warning_message, f"{class_name} warning should mention version 2.1.0"
+            assert "1.1.0" in warning_message, f"{class_name} warning should mention version 1.1.0"
 
     def test_deprecation_messages_provide_alternatives(self):
         """Test that deprecation warnings tell users what to use instead."""

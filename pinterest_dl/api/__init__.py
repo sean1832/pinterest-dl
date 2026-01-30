@@ -14,7 +14,7 @@ def __getattr__(name: str):
     """Provide backward compatibility with deprecation warnings for renamed classes."""
     if name == "PinterestAPI":
         warnings.warn(
-            "PinterestAPI has been renamed to Api and will be removed in version 2.1.0. "
+            "PinterestAPI has been renamed to Api and will be removed in version 1.1.0. "
             "Use: from pinterest_dl.api import Api",
             DeprecationWarning,
             stacklevel=2,
