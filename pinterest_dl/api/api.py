@@ -13,6 +13,7 @@ from pinterest_dl.exceptions import (
     InvalidBoardUrlError,
     InvalidPinterestUrlError,
     InvalidSearchUrlError,
+    InvalidSectionUrlError,
 )
 
 logger = get_logger(__name__)
@@ -52,14 +53,26 @@ class Api:
                 # Neither pin nor search URL - will try board parsing next
                 self.query = None
 
+        # Try parsing as section URL first (3 segments: username/board/section)
         try:
-            self.username, self.boardname = self._parse_board_url(self.url)
-        except InvalidBoardUrlError:
-            self.username = None
-            self.boardname = None
+            self.username, self.boardname, self.section_slug = self._parse_section_url(
+                self.url
+            )
+            self.is_section = True
+        except InvalidSectionUrlError:
+            self.section_slug = None
+            self.is_section = False
+            # Fall back to regular board URL parsing (2 segments: username/board)
+            try:
+                self.username, self.boardname = self._parse_board_url(self.url)
+            except InvalidBoardUrlError:
+                self.username = None
+                self.boardname = None
 
         self.endpoint = Endpoint()
-        self.cookies = cookies if cookies else self._get_default_cookies(self.endpoint._BASE)
+        self.cookies = (
+            cookies if cookies else self._get_default_cookies(self.endpoint._BASE)
+        )
 
         # Initialize session
         self._session = requests.Session()
@@ -94,7 +107,9 @@ class Api:
         request_url = None
         try:
             request_url = request_builder.build_get(endpoint, options, source_url)
-            logger.debug(f"Fetching related images for pin {self.pin_id} (page_size={num})")
+            logger.debug(
+                f"Fetching related images for pin {self.pin_id} (page_size={num})"
+            )
             response_raw = self._session.get(request_url, timeout=self.timeout)
             response_raw.raise_for_status()
 
@@ -178,7 +193,7 @@ class Api:
         else:
             username, boardname = self.username, self.boardname
 
-        endpoint = self.endpoint.GET_BOARD_RESOURCE
+        endpoint = self.endpoint.GET_BOARD
 
         source_url = f"/{username}/{boardname}/"
         options = {
@@ -214,12 +229,14 @@ class Api:
 
         return PinResponse(request_url, response_raw.json())
 
-    def get_board_feed(self, board_id: str, num: int, bookmark: List[str]) -> PinResponse:
+    def get_board_pins(
+        self, board_id: str, num: int, bookmark: List[str]
+    ) -> PinResponse:
         self._validate_num(num)
 
         board_url = f"/{self.username}/{self.boardname}/"
 
-        endpoint = self.endpoint.GET_BOARD_FEED_RESOURCE
+        endpoint = self.endpoint.GET_BOARD_PIN
         source_url = board_url
         options = {
             "board_id": board_id,
@@ -261,6 +278,116 @@ class Api:
 
         return PinResponse(request_url, response_raw.json())
 
+    def get_board_sections(self, board_id: str) -> PinResponse:
+        endpoint = self.endpoint.GET_BOARD_SECTIONS
+        options = {
+            "board_id": board_id,
+        }
+
+        request_url = None
+        try:
+            request_url = request_builder.build_get(endpoint, options)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Dump API call if enabled
+            if self.dumper:
+                dump_path = self.dumper.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_board_sections_{board_id}",
+                )
+                logger.info(f"API dump saved to: {dump_path}")
+
+        except requests.exceptions.RequestException as e:
+            if self.dumper:
+                dump_path = self.dumper.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_board_sections_{board_id}",
+                )
+                logger.info(f"Error dump saved to: {dump_path}")
+            raise requests.RequestException(f"Failed to request board sections: {e}")
+
+        return PinResponse(request_url, response_raw.json())
+
+    def get_section_id_by_slug(self, board_id: str, section_slug: str) -> Optional[str]:
+        """Look up section ID by slug name.
+
+        Args:
+            board_id: Board ID to fetch sections from.
+            section_slug: URL slug of the section to find.
+
+        Returns:
+            Section ID if found, None otherwise.
+        """
+        try:
+            sections_response = self.get_board_sections(board_id)
+        except Exception as e:
+            logger.warning(f"Failed to fetch board sections: {e}")
+            return None
+
+        sections_data = sections_response.data
+        if not sections_data or not isinstance(sections_data, list):
+            return None
+
+        for section in sections_data:
+            # Match by slug (URL-friendly name)
+            if section.get("slug") == section_slug:
+                return section.get("id")
+            # Also try matching by title (in case slug isn't available)
+            if (
+                section.get("title", "").lower().replace(" ", "-")
+                == section_slug.lower()
+            ):
+                return section.get("id")
+
+        return None
+
+    def get_board_section_pins(
+        self, section_id: str, num: int, bookmark: List[str]
+    ) -> PinResponse:
+        self._validate_num(num)
+
+        endpoint = self.endpoint.GET_BOARD_SECTION_PINS
+        source_url = f"/board/section/{section_id}/"
+        options = {
+            "section_id": section_id,
+            "page_size": num,
+            "bookmarks": bookmark,
+            "field_set_key": "react_grid_pin",
+            "redux_normalize_feed": True,
+        }
+
+        request_url = None
+        try:
+            request_url = request_builder.build_get(endpoint, options, source_url)
+            response_raw = self._session.get(request_url, timeout=self.timeout)
+
+            # Dump API call if enabled
+            if self.dumper:
+                dump_path = self.dumper.dump_api_call(
+                    endpoint=endpoint,
+                    options=options,
+                    response=response_raw,
+                    filename=f"get_board_section_pins_{section_id}",
+                )
+                logger.info(f"API dump saved to: {dump_path}")
+
+        except requests.exceptions.RequestException as e:
+            if self.dumper:
+                dump_path = self.dumper.dump_error(
+                    error=e,
+                    request_url=request_url,
+                    filename=f"error_get_board_section_pins_{section_id}",
+                )
+                logger.info(f"Error dump saved to: {dump_path}")
+            raise requests.RequestException(
+                f"Failed to request board section pins: {e}"
+            )
+
+        return PinResponse(request_url, response_raw.json())
+
     def get_search(self, num: int, bookmark: List[str]) -> PinResponse:
         if not self.query:
             raise ValueError("Invalid Pinterest search URL")
@@ -268,7 +395,7 @@ class Api:
 
         source_url = f"/search/pins/?q={self.query}rs=typed"
 
-        endpoint = self.endpoint.GET_SEARCH_RESOURCE
+        endpoint = self.endpoint.GET_SEARCH
         options = {
             "appliedProductFilters": "---",
             "auto_correction_disabled": False,
@@ -309,7 +436,9 @@ class Api:
             json_response = response_raw.json()
         except requests.exceptions.JSONDecodeError as e:
             # Include response snippet in exception for debugging
-            response_snippet = response_raw.text[:500] if response_raw.text else "<empty>"
+            response_snippet = (
+                response_raw.text[:500] if response_raw.text else "<empty>"
+            )
             raise requests.JSONDecodeError(
                 f"Failed to decode JSON response: {e}. Response snippet: {response_snippet}"
             )
@@ -356,8 +485,27 @@ class Api:
             result (str, str): (username, boardname)
         """
         result = re.search(
-            r"https://(?:[a-z0-9-]+\.)?pinterest\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?$", url
+            r"https://(?:[a-z0-9-]+\.)?pinterest\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?$",
+            url,
         )
         if not result:
             raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
         return result.group(1), result.group(2)
+
+    @staticmethod
+    def _parse_section_url(url: str) -> Tuple[str, str, str]:
+        """Parse Pinterest section URL to username, boardname, and section slug.
+
+        Args:
+            url (str): Pinterest section URL. (e.g. "https://www.pinterest.com/username/boardname/section/")
+
+        Returns:
+            result (str, str, str): (username, boardname, section_slug)
+        """
+        result = re.search(
+            r"https://(?:[a-z0-9-]+\.)?pinterest\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?$",
+            url,
+        )
+        if not result:
+            raise InvalidSectionUrlError(f"Invalid Pinterest section URL: {url}")
+        return result.group(1), result.group(2), result.group(3)

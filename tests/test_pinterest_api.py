@@ -64,3 +64,37 @@ class TestPinterestAPIUrlParsing:
         """Test search query attribute is set."""
         search_api = Api("https://www.pinterest.com/search/pins/?q=nature&rs=typed")
         assert search_api.query == "nature"
+
+    def test_parse_section_url_valid(self):
+        """Test parsing section URL with 3 path segments."""
+        api = Api("https://id.pinterest.com/Murasaki_Akiyama/wallpaper/live-wallpaper/")
+        assert api.username == "Murasaki_Akiyama"
+        assert api.boardname == "wallpaper"
+        assert api.section_slug == "live-wallpaper"
+        assert api.is_section is True
+
+    def test_parse_section_url_without_trailing_slash(self):
+        """Test parsing section URL without trailing slash."""
+        api = Api("https://www.pinterest.com/testuser/my-board/my-section")
+        assert api.username == "testuser"
+        assert api.boardname == "my-board"
+        assert api.section_slug == "my-section"
+        assert api.is_section is True
+
+    def test_board_url_is_not_section(self):
+        """Test that regular board URL is not detected as section."""
+        api = Api("https://www.pinterest.com/username/boardname/")
+        assert api.is_section is False
+        assert api.section_slug is None
+
+    def test_section_url_with_different_subdomains(self):
+        """Test section URL with various Pinterest subdomains."""
+        # Japanese subdomain
+        api = Api("https://jp.pinterest.com/user/board/section/")
+        assert api.is_section is True
+        assert api.section_slug == "section"
+
+        # German subdomain
+        api2 = Api("https://de.pinterest.com/user/board/section/")
+        assert api2.is_section is True
+        assert api2.section_slug == "section"

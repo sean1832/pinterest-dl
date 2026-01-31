@@ -31,7 +31,10 @@ class HttpResponseError(PinterestAPIError):
     """Network-level failure when performing an HTTP request."""
 
     def __init__(
-        self, message: str, status_code: Optional[int] = None, dump_data: Optional[dict] = None
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        dump_data: Optional[dict] = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -69,6 +72,12 @@ class InvalidBoardUrlError(UrlParseError):
         self.url = url
 
 
+class InvalidSectionUrlError(UrlParseError):
+    def __init__(self, url: str):
+        super().__init__(f"Invalid Pinterest section URL: {url}")
+        self.url = url
+
+
 class PinResponseError(PinterestAPIError):
     """Base exception for Pinterest response errors."""
 
@@ -79,6 +88,10 @@ class PinResponseError(PinterestAPIError):
 
 class BoardIDException(PinResponseError):
     """Exception raised when a board ID is not found in the response data."""
+
+
+class BoardSectionIDException(PinResponseError):
+    """Exception raised when a board section ID is not found in the response data."""
 
 
 class PinCountException(PinResponseError):

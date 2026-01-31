@@ -317,7 +317,9 @@ def main() -> None:
                         finally:
                             scraper.close()
                     if imgs and len(imgs) != args.num:
-                        print(f"Warning: Only ({len(imgs)}) images were scraped from {url}.")
+                        print(
+                            f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+                        )
                 else:
                     if args.incognito or args.headful:
                         print(
@@ -348,7 +350,9 @@ def main() -> None:
                         )
                     )
                     if imgs and len(imgs) != args.num:
-                        print(f"Warning: Only ({len(imgs)}) images were scraped from {url}.")
+                        print(
+                            f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+                        )
 
             print("\nDone.")
         elif args.cmd == "search":
@@ -397,7 +401,9 @@ def main() -> None:
                         )
                     )
                     if imgs and len(imgs) != args.num:
-                        print(f"Warning: Only ({len(imgs)}) images were scraped from {query}.")
+                        print(
+                            f"Warning: Only ({len(imgs)}) images were successfully downloaded from {query} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+                        )
             print("\nDone.")
         elif args.cmd == "download":
             # prepare image url data
