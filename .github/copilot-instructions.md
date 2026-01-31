@@ -11,6 +11,11 @@ Pinterest-DL is a Python-based Pinterest media scraper/downloader supporting bot
 - **API mode** (`ApiScraper`): Fast, reverse-engineered Pinterest API (default)
 - **WebDriver mode** (`WebDriverScraper`): Selenium-based, slower but more reliable
 
+# Environment
+```shell
+./venv/Scripts/python.exe ...
+```
+
 # Engineering Philosophy
 
 _"Clay becomes pottery through craft, but it's the emptiness that makes a pot useful."_ — Laozi
