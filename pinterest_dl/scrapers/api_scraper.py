@@ -205,47 +205,9 @@ class ApiScraper:
             delay,
             caption_from_title=caption_from_title,
         )
-
-        # Prepare for caching / console output
-        items_as_dict = [item.to_dict() for item in scraped_outputs]
-
-        if not output_dir and not cache_path:
-            # no output_dir and cache_path provided, print the scraped image data to console
-            print("Scraped: ")
-            print(json.dumps(items_as_dict, indent=2))
-
-        if cache_path:
-            output_path = Path(cache_path)
-            io.write_json(items_as_dict, output_path, indent=4)
-            logger.info(f"Cached {len(items_as_dict)} items to {output_path}")
-
-        if not output_dir:
-            return None
-
-        try:
-            downloaded_items = operations.download_media(
-                scraped_outputs, output_dir, download_streams, skip_remux
-            )
-        except Exception as e:
-            logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
-            raise
-
-        if caption == "txt" or caption == "json":
-            try:
-                operations.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
-            except Exception as e:
-                logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
-                raise
-        elif caption == "metadata":
-            try:
-                operations.add_captions_to_meta(downloaded_items, self.verbose)
-            except Exception as e:
-                logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
-                raise
-        elif caption != "none":
-            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
-
-        return downloaded_items
+        return self._download_and_save(
+            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
+        )
 
     def search(
         self,
@@ -387,48 +349,9 @@ class ApiScraper:
         scraped_outputs = self.search(
             query, num, min_resolution, delay, caption_from_title=caption_from_title
         )
-
-        # Prepare for caching / console output
-        items_as_dict = [item.to_dict() for item in scraped_outputs]
-
-        if not output_dir:
-            print("Scraped:")
-            print(json.dumps(items_as_dict, indent=2))
-
-        if cache_path:
-            output_path = Path(cache_path)
-            io.write_json(items_as_dict, output_path, indent=4)
-            logger.info(f"Cached {len(items_as_dict)} search results to {output_path}")
-
-        if not output_dir:
-            return None
-
-        try:
-            downloaded_items = operations.download_media(
-                scraped_outputs, output_dir, download_streams, skip_remux
-            )
-        except Exception as e:
-            logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
-            raise
-
-        # Caption handling
-        if caption in ("txt", "json"):
-            try:
-                operations.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
-            except Exception as e:
-                logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
-                raise
-        elif caption == "metadata":
-            try:
-                # if metadata embedding needs some indices/selection, decide and supply them here explicitly
-                operations.add_captions_to_meta(downloaded_items, self.verbose)
-            except Exception as e:
-                logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
-                raise
-        elif caption != "none":
-            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
-
-        return downloaded_items
+        return self._download_and_save(
+            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
+        )
 
     def _scrape_pins(
         self,
@@ -719,6 +642,70 @@ class ApiScraper:
             time.sleep(delay)
 
         return medias
+
+    def _download_and_save(
+        self,
+        scraped_outputs: List[PinterestMedia],
+        output_dir: Optional[Union[str, Path]],
+        download_streams: bool,
+        skip_remux: bool,
+        cache_path: Optional[Union[str, Path]],
+        caption: Literal["txt", "json", "metadata", "none"],
+    ) -> Optional[List[PinterestMedia]]:
+        """Download scraped media and optionally save captions.
+
+        Handles caching, console output, downloading, and caption embedding.
+        Used by both scrape_and_download() and search_and_download().
+
+        Args:
+            scraped_outputs: List of scraped PinterestMedia objects.
+            output_dir: Directory to store downloaded images. None to skip download.
+            download_streams: Whether to download video streams if available.
+            skip_remux: If True, output raw .ts file without ffmpeg remux.
+            cache_path: Path to cache scraped data as json.
+            caption: Caption mode for downloaded images.
+
+        Returns:
+            List of downloaded PinterestMedia objects, or None if output_dir is None.
+        """
+        items_as_dict = [item.to_dict() for item in scraped_outputs]
+
+        if not output_dir and not cache_path:
+            print("Scraped:")
+            print(json.dumps(items_as_dict, indent=2))
+
+        if cache_path:
+            output_path = Path(cache_path)
+            io.write_json(items_as_dict, output_path, indent=4)
+            logger.info(f"Cached {len(items_as_dict)} items to {output_path}")
+
+        if not output_dir:
+            return None
+
+        try:
+            downloaded_items = operations.download_media(
+                scraped_outputs, output_dir, download_streams, skip_remux
+            )
+        except Exception as e:
+            logger.error(f"Failed to download media: {e}", exc_info=self.verbose)
+            raise
+
+        if caption in ("txt", "json"):
+            try:
+                operations.add_captions_to_file(downloaded_items, output_dir, caption, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to file: {e}", exc_info=self.verbose)
+                raise
+        elif caption == "metadata":
+            try:
+                operations.add_captions_to_meta(downloaded_items, self.verbose)
+            except Exception as e:
+                logger.error(f"Failed to add captions to metadata: {e}", exc_info=self.verbose)
+                raise
+        elif caption != "none":
+            raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
+
+        return downloaded_items
 
     # TODO: _get_section_images() and _get_images() share similar logic.
     # Consider extracting common pagination/parsing logic if a third similar
