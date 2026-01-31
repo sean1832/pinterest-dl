@@ -623,7 +623,7 @@ class ApiScraper:
         response = (
             api.get_related_images(batch_size, bookmarks.get())
             if not board_id
-            else api.get_board_feed(board_id, batch_size, bookmarks.get())
+            else api.get_board_pins(board_id, batch_size, bookmarks.get())
         )
 
         # parse response data
@@ -736,7 +736,7 @@ class ApiScraper:
                 next_response = (
                     api.get_related_images(difference, bookmarks.get())
                     if not board_id
-                    else api.get_board_feed(board_id, difference, bookmarks.get())
+                    else api.get_board_pins(board_id, difference, bookmarks.get())
                 )
                 next_response_data = next_response.resource_response.get("data", [])
 

@@ -214,7 +214,7 @@ class Api:
 
         return PinResponse(request_url, response_raw.json())
 
-    def get_board_feed(self, board_id: str, num: int, bookmark: List[str]) -> PinResponse:
+    def get_board_pins(self, board_id: str, num: int, bookmark: List[str]) -> PinResponse:
         self._validate_num(num)
 
         board_url = f"/{self.username}/{self.boardname}/"
