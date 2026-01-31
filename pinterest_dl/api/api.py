@@ -178,7 +178,7 @@ class Api:
         else:
             username, boardname = self.username, self.boardname
 
-        endpoint = self.endpoint.GET_BOARD_RESOURCE
+        endpoint = self.endpoint.GET_BOARD
 
         source_url = f"/{username}/{boardname}/"
         options = {
@@ -219,7 +219,7 @@ class Api:
 
         board_url = f"/{self.username}/{self.boardname}/"
 
-        endpoint = self.endpoint.GET_BOARD_FEED_RESOURCE
+        endpoint = self.endpoint.GET_BOARD_PIN
         source_url = board_url
         options = {
             "board_id": board_id,
@@ -268,7 +268,7 @@ class Api:
 
         source_url = f"/search/pins/?q={self.query}rs=typed"
 
-        endpoint = self.endpoint.GET_SEARCH_RESOURCE
+        endpoint = self.endpoint.GET_SEARCH
         options = {
             "appliedProductFilters": "---",
             "auto_correction_disabled": False,
