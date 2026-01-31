@@ -13,5 +13,11 @@ class Endpoint:
     GET_BOARD_PIN = f"{_BASE}/resource/BoardFeedResource/get/"
     """Get board pin. This can be used to get board images. Requires `board_id`."""
 
+    GET_BOARD_SECTIONS = f"{_BASE}/resource/BoardSectionsResource/get/"
+    """Get board sections. This can be used to get `section_id` for a board."""
+
+    GET_BOARD_SECTION_PINS = f"{_BASE}/resource/BoardSectionPinsResource/get/"
+    """Get board section pins. This can be used to get pins of a board section. Requires `section_id`."""
+
     GET_SEARCH = f"{_BASE}/resource/BaseSearchResource/get/"
     """Get search results. This can be used to search images based text queries."""

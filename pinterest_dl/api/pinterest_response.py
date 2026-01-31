@@ -6,6 +6,7 @@ from pinterest_dl.exceptions import (
     BookmarkException,
     HttpResponseError,
     PinCountException,
+    BoardSectionIDException,
     PinResponseError,
 )
 
@@ -19,7 +20,8 @@ class PinResponse:
             self.resource_response: dict = self.raw_response["resource_response"]
         except KeyError:
             raise PinResponseError(
-                "Invalid response format: 'resource_response' key not found.", raw_response
+                "Invalid response format: 'resource_response' key not found.",
+                raw_response,
             )
 
         # validate network error
@@ -58,7 +60,8 @@ class PinResponse:
 
         if not isinstance(data, dict):
             raise BoardIDException(
-                "Expected a single board object, got list or other type", self.raw_response
+                "Expected a single board object, got list or other type",
+                self.raw_response,
             )
 
         try:
@@ -71,6 +74,29 @@ class PinResponse:
 
         return board_id
 
+    def get_board_section_id(self) -> str:
+        data = self.data
+        if data is None:
+            raise BoardSectionIDException("No data in response", self.raw_response)
+
+        if not isinstance(data, dict):
+            raise BoardSectionIDException(
+                "Expected a single board object, got list or other type",
+                self.raw_response,
+            )
+
+        try:
+            board_section_id = data["id"]
+        except KeyError:
+            raise BoardSectionIDException("Missing 'id' field in response data", self.raw_response)
+
+        if not isinstance(board_section_id, str) or not board_section_id:
+            raise BoardSectionIDException(
+                f"Invalid board section id: {board_section_id!r}", self.raw_response
+            )
+
+        return board_section_id
+
     def get_pin_count(self) -> int:
         data = self.data
         if data is None:
@@ -78,7 +104,8 @@ class PinResponse:
 
         if not isinstance(data, dict):
             raise PinCountException(
-                f"Expected single board object, got {type(data).__name__}", self.raw_response
+                f"Expected single board object, got {type(data).__name__}",
+                self.raw_response,
             )
 
         try:
