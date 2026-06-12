@@ -59,10 +59,13 @@ pip install .          # 或：pip install .[all]
 ### 命令行
 
 ```bash
-# 抓取画板或版块
-pinterest-dl scrape "https://www.pinterest.com/username/board-name/" -o ./output -n 50
+# 下载一个pin（pin URL 会返回该pin本身）
+pinterest-dl scrape "<pin_url>" -o ./output
 
-# 搜索并下载
+# 下载50个pin及相关pin（pin + 49 个相关pin）
+pinterest-dl scrape "<pin_url>" -o ./output -n 50
+
+# 搜索并下载30个pin
 pinterest-dl search "自然摄影" -o ./output -n 30
 
 # 下载视频为 MP4（需要 ffmpeg）

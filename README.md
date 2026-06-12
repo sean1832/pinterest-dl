@@ -60,10 +60,13 @@ pip install .          # or: pip install .[all]
 ### Command line
 
 ```bash
-# Scrape a board or section
-pinterest-dl scrape "https://www.pinterest.com/username/board-name/" -o ./output -n 50
+# Download a single pin (pin URLs return the pin itself)
+pinterest-dl scrape "<pin_url>" -o ./output
 
-# Search and download
+# Download a pin plus related pins (pin + 49 related)
+pinterest-dl scrape "<pin_url>" -o ./output -n 50
+
+# Search and download 30 pins
 pinterest-dl search "nature photography" -o ./output -n 30
 
 # Download a pin's video as MP4 (needs ffmpeg)
