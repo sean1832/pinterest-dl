@@ -54,6 +54,24 @@ class TestPinterestAPIUrlParsing:
         assert api.username == "DRAMrefresh"
         assert api.boardname == "what-the-dog-doin"
 
+    # Synthetic non-Latin board slug (katakana for "test"); percent-encoded in
+    # URLs as "%E3%83%86%E3%82%B9%E3%83%88-2". Regression cover for issue #72.
+    UNICODE_BOARD_SLUG = "テスト-2"
+
+    def test_parse_board_url_with_percent_encoded_unicode(self):
+        """Percent-encoded Unicode board slugs should decode (issue #72)."""
+        with patch.object(Api, "_get_default_cookies", return_value={}):
+            api = Api("https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/")
+        assert api.username == "testuser"
+        assert api.boardname == self.UNICODE_BOARD_SLUG
+
+    def test_parse_board_url_with_raw_unicode(self):
+        """Non-encoded Unicode board slugs should also parse."""
+        with patch.object(Api, "_get_default_cookies", return_value={}):
+            api = Api(f"https://www.pinterest.com/testuser/{self.UNICODE_BOARD_SLUG}/")
+        assert api.username == "testuser"
+        assert api.boardname == self.UNICODE_BOARD_SLUG
+
     def test_parse_search_query_url(self):
         """Test parsing search query from URL."""
         api = Api("https://www.pinterest.com/search/pins/?q=nature&rs=typed")
@@ -109,6 +127,17 @@ class TestPinterestAPIUrlParsing:
         assert api.username == "testuser"
         assert api.boardname == "my-board"
         assert api.section_slug == "my-section"
+        assert api.is_section is True
+
+    def test_parse_section_url_with_percent_encoded_unicode(self):
+        """Percent-encoded Unicode board/section slugs should decode (issue #72)."""
+        with patch.object(Api, "_get_default_cookies", return_value={}):
+            api = Api(
+                "https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/live/"
+            )
+        assert api.username == "testuser"
+        assert api.boardname == self.UNICODE_BOARD_SLUG
+        assert api.section_slug == "live"
         assert api.is_section is True
 
     def test_board_url_is_not_section(self):
