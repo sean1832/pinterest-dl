@@ -108,7 +108,8 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes the requested pin itself
+                - Pin URL: scrapes the requested pin itself, then fills the
+                  remainder of `num` with related pins when `num > 1`
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             num (int): Maximum number of images to scrape.
@@ -129,6 +130,17 @@ class ApiScraper:
                 caption_from_title=caption_from_title,
             )
             medias = [media] if media else []
+            # When more than the pin itself is requested, fill the remainder with related pins.
+            if num > 1:
+                related = self._scrape_pins(
+                    api,
+                    num - len(medias),
+                    min_resolution,
+                    delay,
+                    BookmarkManager(3),
+                    caption_from_title=caption_from_title,
+                )
+                medias.extend(related)
         elif api.is_section:
             # Section URL detected - scrape only this section
             medias = self._scrape_section(
@@ -201,7 +213,8 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes the requested pin itself
+                - Pin URL: scrapes the requested pin itself, then fills the
+                  remainder of `num` with related pins when `num > 1`
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
