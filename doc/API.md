@@ -33,7 +33,7 @@ You can use the `PinterestDL` class directly in your Python code to scrape and d
 
 ### Scrape from URL
 
-This example shows how to **scrape** and download images from a Pinterest URL in one step.
+This example shows how to **scrape** and download media from a Pinterest URL in one step.
 
 ```python
 from pinterest_dl import PinterestDL
@@ -45,7 +45,7 @@ images = PinterestDL.with_api(
     ensure_alt=True,  # Ensure every image has alt text (default: False)
     dump=None,  # Dump API requests/responses to directory (default: None/disabled)
 ).scrape_and_download(
-    url="https://www.pinterest.com/pin/1234567",  # Pinterest URL to scrape
+    url="https://www.pinterest.com/username/board-name/",  # Board, section, or pin URL to scrape
     output_dir="images/art",  # Directory to save downloaded images
     num=30,  # Max number of images to download 
     download_streams=True,  # Download video streams if available (default: False)
@@ -130,7 +130,7 @@ images = (
         cookies,  # cookies in selenium format
     )
     .scrape_and_download(
-        url="https://www.pinterest.com/pin/1234567",  # Assume this is a private board URL
+        url="https://www.pinterest.com/username/private-board/",  # Private board or pin URL
         output_dir="images/art",  # Directory to save downloaded images
         num=30,  # Max number of images to download
     )
@@ -153,8 +153,9 @@ import json
 from pinterest_dl import PinterestDL
 
 # 1. Initialize PinterestDL with API and scrape media
+# Pin URLs return the requested pin itself. Use `.related(...)` for recommendations around a pin.
 scraped_medias = PinterestDL.with_api().scrape(
-    url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
+    url="https://www.pinterest.com/username/board-name/",  # URL of the Pinterest page
     num=30,  # Maximum number of images to scrape
     min_resolution=(512, 512),  # <- Only available to set in the API. Browser mode will have to pruned after download.
 )

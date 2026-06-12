@@ -16,7 +16,7 @@ BOARD_URL = "https://www.pinterest.com/username/board-name/"  # Replace with act
 
 
 def example_1_simple_pin_scrape():
-    """Scrape a single pin and download its images."""
+    """Scrape a single pin and download it."""
     print("Example 1: Simple Pin Scrape")
     print("-" * 50)
 
@@ -24,7 +24,7 @@ def example_1_simple_pin_scrape():
     images = PinterestDL.with_api().scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/pin",
-        num=10,
+        num=1,
     )
 
     if images:
@@ -64,7 +64,7 @@ def example_3_with_resolution_filter():
     images = PinterestDL.with_api().scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/high_res",
-        num=20,
+        num=1,
         min_resolution=(1024, 1024),  # Only download images >= 1024x1024
     )
 
@@ -84,7 +84,7 @@ def example_4_with_captions():
     images = PinterestDL.with_api().scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/with_captions",
-        num=10,
+        num=1,
         caption="txt",  # Options: 'txt', 'json', 'metadata', 'none'
     )
 
@@ -103,7 +103,7 @@ def example_5_with_cache():
     images = PinterestDL.with_api().scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/cached",
-        num=15,
+        num=1,
         cache_path="cache/scraped_data.json",  # Save scraped metadata
     )
 
@@ -123,7 +123,7 @@ def example_6_with_video_streams():
     images = PinterestDL.with_api().scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/videos",
-        num=10,
+        num=1,
         download_streams=True,  # Download video streams as .mp4
     )
 
@@ -144,7 +144,7 @@ def example_7_verbose_mode():
     ).scrape_and_download(
         url=PIN_URL,
         output_dir="downloads/verbose",
-        num=5,
+        num=1,
     )
 
     if images:

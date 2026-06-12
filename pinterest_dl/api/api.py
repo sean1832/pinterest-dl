@@ -1,5 +1,6 @@
 import re
 from typing import List, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
@@ -40,7 +41,7 @@ class Api:
             timeout (float, optional): Request timeout in seconds. Defaults to 5.
             dump (Optional[str], optional): Directory to dump API requests/responses. Defaults to None (disabled).
         """
-        self.url = url
+        self.url = self._normalize_url(url)
         self.timeout = timeout
         self.dumper = RequestDumper(dump) if dump else None
         try:
@@ -82,6 +83,20 @@ class Api:
             {"x-pinterest-pws-handler": "www/pin/[id].js"}
         )  # required since 2025-03-07. See https://github.com/sean1832/pinterest-dl/issues/30
         self.is_pin = bool(self.pin_id)
+
+    @staticmethod
+    def _normalize_url(url: str) -> str:
+        """Normalize Pinterest URLs for both CLI and library callers."""
+        normalized = url.strip()
+        if not re.match(r"^https?://", normalized, flags=re.IGNORECASE):
+            normalized = f"https://{normalized}"
+
+        parsed = urlsplit(normalized)
+        path = parsed.path or "/"
+        if path != "/" and not path.endswith("/"):
+            path = f"{path}/"
+
+        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
 
     def get_related_images(self, num: int, bookmark: List[str]) -> PinResponse:
         if not self.pin_id:
@@ -186,6 +201,27 @@ class Api:
             raise requests.RequestException(f"Failed to request main image: {e}")
 
         return PinResponse(request_url, response_raw.json())
+
+    def get_pin_page(self) -> str:
+        """Fetch the public HTML for a pin page."""
+        if not self.pin_id:
+            raise ValueError("Invalid Pinterest URL")
+
+        request_url = self.url
+        headers = dict(self._session.headers)
+        headers.pop("x-pinterest-pws-handler", None)
+
+        try:
+            response_raw = self._session.get(
+                request_url,
+                timeout=self.timeout,
+                headers=headers,
+            )
+            response_raw.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise requests.RequestException(f"Failed to request pin page: {e}")
+
+        return response_raw.text
 
     def get_board(self) -> PinResponse:
         if not self.username or not self.boardname:
@@ -460,7 +496,7 @@ class Api:
 
     @staticmethod
     def _parse_pin_id(url: str) -> str:
-        result = re.search(r"pin/(\d+)/", url)
+        result = re.search(r"pin/(\d+)(?:/|$)", url)
         if not result:
             raise InvalidPinterestUrlError(f"Invalid Pinterest URL: {url}")
         return result.group(1)

@@ -108,7 +108,7 @@ def example_3_use_cookies_path_directly():
         .scrape_and_download(
             url=PRIVATE_PIN_URL,
             output_dir="downloads/private_pin",
-            num=10,
+            num=1,
         )
     )
 

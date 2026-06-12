@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
@@ -10,9 +11,9 @@ from pinterest_dl.api.bookmark_manager import BookmarkManager
 from pinterest_dl.common import io
 from pinterest_dl.common.logging import get_logger
 from pinterest_dl.domain.cookies import CookieJar
-from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.domain.media import PinterestMedia, VideoStreamInfo
 from pinterest_dl.download import request_builder
-from pinterest_dl.exceptions import EmptyResponseError
+from pinterest_dl.exceptions import EmptyResponseError, HttpResponseError
 from pinterest_dl.parsers.response import ResponseParser
 
 from . import operations
@@ -107,7 +108,7 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes related pins
+                - Pin URL: scrapes the requested pin itself
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             num (int): Maximum number of images to scrape.
@@ -118,24 +119,16 @@ class ApiScraper:
             List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
 
+        api = self._create_api(url)
         medias: List[PinterestMedia] = []
-        api = Api(
-            url,
-            self.cookies,
-            timeout=self.timeout,
-            dump=self.dump,
-        )
-        bookmarks = BookmarkManager(3)
 
         if api.is_pin:
-            medias = self._scrape_pins(
+            media = self._scrape_one_pin(
                 api,
-                num,
                 min_resolution,
-                delay,
-                bookmarks,
                 caption_from_title=caption_from_title,
             )
+            medias = [media] if media else []
         elif api.is_section:
             # Section URL detected - scrape only this section
             medias = self._scrape_section(
@@ -151,7 +144,7 @@ class ApiScraper:
                 num,
                 min_resolution,
                 delay,
-                bookmarks,
+                BookmarkManager(3),
                 caption_from_title=caption_from_title,
             )
 
@@ -159,6 +152,36 @@ class ApiScraper:
             self._display_images(medias)
 
         logger.info(f"Successfully scraped {len(medias[:num])} media items from {url}")
+        return medias[:num]
+
+    def related(
+        self,
+        url: str,
+        num: int,
+        min_resolution: Tuple[int, int] = (0, 0),
+        delay: float = 0.2,
+        caption_from_title: bool = False,
+    ) -> List[PinterestMedia]:
+        """Scrape related pins from a Pinterest pin URL."""
+        api = self._create_api(url)
+        if not api.is_pin:
+            raise ValueError("related only supports Pinterest pin URLs")
+
+        medias = self._scrape_pins(
+            api,
+            num,
+            min_resolution,
+            delay,
+            BookmarkManager(3),
+            caption_from_title=caption_from_title,
+        )
+
+        if self.verbose:
+            self._display_images(medias)
+
+        logger.info(
+            f"Successfully scraped {len(medias[:num])} related media items from {url}"
+        )
         return medias[:num]
 
     def scrape_and_download(
@@ -178,7 +201,7 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes related pins
+                - Pin URL: scrapes the requested pin itself
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
@@ -203,6 +226,71 @@ class ApiScraper:
             num,
             min_resolution,
             delay,
+            caption_from_title=caption_from_title,
+        )
+        return self._download_and_save(
+            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
+        )
+
+    def related_and_download(
+        self,
+        url: str,
+        output_dir: Optional[Union[str, Path]],
+        num: int,
+        download_streams: bool = False,
+        skip_remux: bool = False,
+        min_resolution: Tuple[int, int] = (0, 0),
+        cache_path: Optional[Union[str, Path]] = None,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
+        caption_from_title: bool = False,
+        delay: float = 0.2,
+    ) -> Optional[List[PinterestMedia]]:
+        """Scrape related pins from a pin URL and download them."""
+        scraped_outputs = self.related(
+            url,
+            num,
+            min_resolution,
+            delay,
+            caption_from_title=caption_from_title,
+        )
+        return self._download_and_save(
+            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
+        )
+
+    def scrape_one(
+        self,
+        url: str,
+        min_resolution: Tuple[int, int] = (0, 0),
+        caption_from_title: bool = False,
+    ) -> List[PinterestMedia]:
+        """Scrape exactly one requested pin from a pin URL."""
+        api = self._create_api(url)
+
+        if not api.is_pin:
+            raise ValueError("scrape_one only supports Pinterest pin URLs")
+
+        media = self._scrape_one_pin(
+            api,
+            min_resolution,
+            caption_from_title=caption_from_title,
+        )
+        return [media] if media else []
+
+    def scrape_one_and_download(
+        self,
+        url: str,
+        output_dir: Optional[Union[str, Path]],
+        download_streams: bool = False,
+        skip_remux: bool = False,
+        min_resolution: Tuple[int, int] = (0, 0),
+        cache_path: Optional[Union[str, Path]] = None,
+        caption: Literal["txt", "json", "metadata", "none"] = "none",
+        caption_from_title: bool = False,
+    ) -> Optional[List[PinterestMedia]]:
+        """Download exactly one requested pin from a pin URL."""
+        scraped_outputs = self.scrape_one(
+            url,
+            min_resolution=min_resolution,
             caption_from_title=caption_from_title,
         )
         return self._download_and_save(
@@ -362,7 +450,7 @@ class ApiScraper:
         bookmarks: BookmarkManager,
         caption_from_title: bool = False,
     ) -> List[PinterestMedia]:
-        """Scrape pins from a specific Pinterest pin URL."""
+        """Scrape related pins from a specific Pinterest pin URL."""
         images: List[PinterestMedia] = []
         remains = num
 
@@ -418,6 +506,215 @@ class ApiScraper:
                     raise
 
         return images
+
+    def _scrape_one_pin(
+        self,
+        api: Api,
+        min_resolution: Tuple[int, int],
+        caption_from_title: bool = False,
+    ) -> Optional[PinterestMedia]:
+        """Scrape the requested Pinterest pin from a pin URL."""
+        try:
+            return self._get_main_pin(
+                api,
+                min_resolution,
+                caption_from_title=caption_from_title,
+            )
+        except EmptyResponseError as e:
+            logger.warning(f"Scraping interrupted: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error while scraping pin: {e}", exc_info=self.verbose)
+            raise
+
+    def _create_api(self, url: str) -> Api:
+        return Api(
+            url,
+            self.cookies,
+            timeout=self.timeout,
+            dump=self.dump,
+        )
+
+    def _get_main_pin(
+        self,
+        api: Api,
+        min_resolution: Tuple[int, int],
+        caption_from_title: bool = False,
+    ) -> PinterestMedia:
+        """Fetch the requested pin from a pin URL."""
+        try:
+            response = api.get_main_image()
+            response_data = response.resource_response.get("data")
+            candidate_items = self._extract_pin_candidates(response_data)
+
+            if candidate_items:
+                matching_items = [
+                    item for item in candidate_items if str(item.get("id")) == str(api.pin_id)
+                ]
+                items_to_parse = matching_items or candidate_items
+
+                parsed_items = ResponseParser.from_responses(
+                    items_to_parse,
+                    min_resolution,
+                    caption_from_title=caption_from_title,
+                )
+
+                if self.ensure_alt:
+                    parsed_items = self._cull_no_alt(parsed_items)
+
+                if parsed_items:
+                    for item in parsed_items:
+                        if str(item.id) == str(api.pin_id):
+                            return item
+                    return parsed_items[0]
+        except HttpResponseError as e:
+            logger.debug(f"Pin API lookup failed, falling back to page HTML: {e}")
+        except EmptyResponseError:
+            logger.debug("Pin API lookup returned no pin data, falling back to page HTML")
+        except ValueError as e:
+            logger.debug(f"Pin API lookup returned invalid data, falling back to page HTML: {e}")
+
+        return self._get_main_pin_from_page(
+            api,
+            min_resolution,
+            caption_from_title=caption_from_title,
+        )
+
+    def _extract_pin_candidates(self, data: Any) -> List[dict[str, Any]]:
+        """Collect pin-like dictionaries from a Pinterest API response."""
+        candidates: List[dict[str, Any]] = []
+
+        def visit(value: Any) -> None:
+            if isinstance(value, dict):
+                if value.get("id") is not None and value.get("images", {}).get("orig"):
+                    candidates.append(value)
+                for nested in value.values():
+                    visit(nested)
+            elif isinstance(value, list):
+                for nested in value:
+                    visit(nested)
+
+        visit(data)
+        return candidates
+
+    def _get_main_pin_from_page(
+        self,
+        api: Api,
+        min_resolution: Tuple[int, int],
+        caption_from_title: bool = False,
+    ) -> PinterestMedia:
+        """Parse pin metadata from the public pin page HTML."""
+        html = api.get_pin_page()
+        meta = self._extract_meta_tags(html)
+
+        src = (
+            meta.get("og:image")
+            or meta.get("twitter:image")
+            or meta.get("twitter:image:src")
+        )
+        if not src:
+            raise EmptyResponseError("No image found in pin page metadata.")
+
+        width = self._parse_int(meta.get("og:image:width"))
+        height = self._parse_int(meta.get("og:image:height"))
+        resolution = (width, height) if width and height else (0, 0)
+
+        min_width, min_height = min_resolution
+        if (min_width > 0 or min_height > 0) and resolution == (0, 0):
+            raise EmptyResponseError(
+                "Requested pin does not include dimensions required for min_resolution."
+            )
+        if width < min_width or height < min_height:
+            raise EmptyResponseError("Requested pin does not meet min_resolution.")
+
+        description = meta.get("og:description") or meta.get("description") or ""
+        title = meta.get("og:title") or meta.get("twitter:title") or ""
+        alt = title if caption_from_title and title else description
+
+        if self.ensure_alt and not alt.strip():
+            raise EmptyResponseError("Requested pin has no alt text.")
+
+        video_stream = self._extract_video_stream_from_meta(meta) or self._extract_video_stream_from_html(html)
+
+        return PinterestMedia(
+            id=int(api.pin_id),
+            src=src,
+            alt=alt,
+            origin=api.url,
+            resolution=resolution,
+            video_stream=video_stream,
+        )
+
+    def _extract_meta_tags(self, html: str) -> dict[str, str]:
+        """Extract HTML meta tags into a lowercase key-value mapping."""
+        meta: dict[str, str] = {}
+
+        for tag in re.findall(r"<meta\b[^>]*>", html, flags=re.IGNORECASE):
+            attrs = {
+                key.lower(): value
+                for key, value in re.findall(
+                    r'([A-Za-z_:.-]+)\s*=\s*["\']([^"\']*)["\']',
+                    tag,
+                )
+            }
+            key = attrs.get("property") or attrs.get("name")
+            content = attrs.get("content")
+            if key and content:
+                meta[key.lower()] = content
+
+        return meta
+
+    def _extract_video_stream_from_meta(
+        self, meta: dict[str, str]
+    ) -> Optional[VideoStreamInfo]:
+        """Extract video metadata from page meta tags when available."""
+        video_url = meta.get("og:video") or meta.get("og:video:url")
+        if not video_url:
+            return None
+
+        width = self._parse_int(meta.get("og:video:width"))
+        height = self._parse_int(meta.get("og:video:height"))
+
+        return VideoStreamInfo(
+            url=video_url,
+            resolution=(width, height),
+            duration=0,
+        )
+
+    def _extract_video_stream_from_html(self, html: str) -> Optional[VideoStreamInfo]:
+        """Extract video URLs directly from raw page HTML."""
+        html = html.replace("\\/", "/")
+        candidates = re.findall(
+            r'https?://[^"\'<>\s]+(?:\.m3u8|\.mp4)(?:\?[^"\'<>\s]*)?',
+            html,
+            flags=re.IGNORECASE,
+        )
+        candidates = [
+            url
+            for url in candidates
+            if "pinimg.com" in url or "pinterest" in url
+        ]
+        if not candidates:
+            return None
+
+        def score(url: str) -> tuple[int, int]:
+            is_hls = 1 if ".m3u8" in url.lower() else 0
+            return (is_hls, len(url))
+
+        best_url = max(candidates, key=score)
+        return VideoStreamInfo(
+            url=best_url,
+            resolution=(0, 0),
+            duration=0,
+        )
+
+    def _parse_int(self, value: Optional[str]) -> int:
+        if value is None:
+            return 0
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
 
     def _scrape_board(
         self,

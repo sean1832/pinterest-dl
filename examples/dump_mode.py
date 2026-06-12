@@ -27,7 +27,7 @@ def example_1_basic_dump():
     scraper = PinterestDL.with_api(dump=".dump")
 
     # All API calls will be logged to ".dump/" directory
-    medias = scraper.scrape(PIN_URL, num=3)
+    medias = scraper.scrape(PIN_URL, num=1)
 
     print(f"> Scraped {len(medias)} items")
     print("> Dump files saved to: .dump/")
@@ -42,7 +42,7 @@ def example_2_custom_dump_dir():
     # Specify custom dump directory
     scraper = PinterestDL.with_api(dump="my_custom_dump")
 
-    medias = scraper.scrape(PIN_URL, num=2)
+    medias = scraper.scrape(PIN_URL, num=1)
 
     print(f"> Scraped {len(medias)} items")
     print("> Dump files saved to: my_custom_dump/")
@@ -74,7 +74,7 @@ def example_3_with_cookies():
         print("Note: No cookies file found (using public access)")
 
     # Scraping will dump request headers including cookies
-    medias = scraper.scrape(PIN_URL, num=2)
+    medias = scraper.scrape(PIN_URL, num=1)
 
     print(f"> Scraped {len(medias)} items")
     print("> Dump files with auth info saved to: auth_dump/")
@@ -90,7 +90,7 @@ def example_4_error_debugging():
 
     try:
         # Try scraping with an invalid URL (should fail)
-        scraper.scrape(INVALID_URL, num=2)
+        scraper.scrape(INVALID_URL, num=1)
     except Exception as e:
         print(f"x Error occurred: {e}")
         print("> Error dump file saved to: error_dump/")

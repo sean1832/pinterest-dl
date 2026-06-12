@@ -38,7 +38,7 @@ scraper = PinterestDL.with_api(
 )
 
 # All API calls will now be logged
-medias = scraper.scrape("https://pinterest.com/pin/123456/", num=10)
+medias = scraper.scrape("https://pinterest.com/pin/123456/", num=1)
 ```
 
 ## Dump File Structure

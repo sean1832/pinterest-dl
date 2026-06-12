@@ -122,14 +122,20 @@ pip install .[all]
 Scrape images from Pinterest using the command line:
 
 ```bash
-# Scrape from a Pinterest board or pin
+# Scrape a board, section, or the requested pin itself
 pinterest-dl scrape <url> -o output_folder -n 50
 
+# Download exactly one pin
+pinterest-dl one <pin_url> -o output_folder
+
+# Download pins related to a pin
+pinterest-dl related <pin_url> -o output_folder -n 50
+
 # Download videos as MP4 (requires ffmpeg)
-pinterest-dl scrape <url> --video -o output_folder
+pinterest-dl scrape <pin_url> --video -o output_folder
 
 # Download videos as raw .ts files (no ffmpeg needed)
-pinterest-dl scrape <url> --video --skip-remux -o output_folder
+pinterest-dl scrape <pin_url> --video --skip-remux -o output_folder
 
 # Search for images
 pinterest-dl search "nature photography" -o output_folder -n 30
@@ -140,7 +146,7 @@ pinterest-dl login -o cookies.json
 
 **📖 [View Full CLI Documentation ->](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md)**
 
-Available commands: `login`, `scrape`, `search`, `download`
+Available commands: `login`, `scrape`, `related`, `one`, `search`, `download`
 
 ---
 
@@ -153,9 +159,16 @@ from pinterest_dl import PinterestDL
 
 # Quick scrape and download
 images = PinterestDL.with_api().scrape_and_download(
-    url="https://www.pinterest.com/pin/1234567",
+    url="https://www.pinterest.com/username/board-name/",
     output_dir="images/art",
     num=30
+)
+
+# Download the requested pin itself
+pin = PinterestDL.with_api().scrape_and_download(
+    url="https://www.pinterest.com/pin/1234567",
+    output_dir="images/pin",
+    num=1
 )
 
 # Search for images
