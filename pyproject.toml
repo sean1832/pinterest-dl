@@ -48,3 +48,9 @@ version = { attr = "pinterest_dl.__version__" }
 
 [tool.setuptools]
 packages = { find = { include = ["pinterest_dl*"] } }
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: hits the real Pinterest network; run deliberately, not in the default suite",
+]
+addopts = "-m 'not integration'"

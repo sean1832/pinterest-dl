@@ -60,15 +60,13 @@ class TestPinterestAPIUrlParsing:
 
     def test_parse_board_url_with_percent_encoded_unicode(self):
         """Percent-encoded Unicode board slugs should decode (issue #72)."""
-        with patch.object(Api, "_get_default_cookies", return_value={}):
-            api = Api("https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/")
+        api = Api("https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/")
         assert api.username == "testuser"
         assert api.boardname == self.UNICODE_BOARD_SLUG
 
     def test_parse_board_url_with_raw_unicode(self):
         """Non-encoded Unicode board slugs should also parse."""
-        with patch.object(Api, "_get_default_cookies", return_value={}):
-            api = Api(f"https://www.pinterest.com/testuser/{self.UNICODE_BOARD_SLUG}/")
+        api = Api(f"https://www.pinterest.com/testuser/{self.UNICODE_BOARD_SLUG}/")
         assert api.username == "testuser"
         assert api.boardname == self.UNICODE_BOARD_SLUG
 
@@ -131,10 +129,7 @@ class TestPinterestAPIUrlParsing:
 
     def test_parse_section_url_with_percent_encoded_unicode(self):
         """Percent-encoded Unicode board/section slugs should decode (issue #72)."""
-        with patch.object(Api, "_get_default_cookies", return_value={}):
-            api = Api(
-                "https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/live/"
-            )
+        api = Api("https://www.pinterest.com/testuser/%E3%83%86%E3%82%B9%E3%83%88-2/live/")
         assert api.username == "testuser"
         assert api.boardname == self.UNICODE_BOARD_SLUG
         assert api.section_slug == "live"
@@ -161,21 +156,20 @@ class TestPinterestAPIUrlParsing:
 
 class TestScrapePinFallbacks:
     def test_scrape_falls_back_to_page_when_api_data_is_invalid(self):
-        with patch.object(Api, "_get_default_cookies", return_value={}):
-            scraper = ApiScraper()
-            expected = PinterestMedia(
-                id=123456789012345,
-                src="https://i.pinimg.com/originals/test.jpg",
-                alt="caption",
-                origin="https://www.pinterest.com/pin/123456789012345/",
-                resolution=(1200, 1800),
-            )
+        scraper = ApiScraper()
+        expected = PinterestMedia(
+            id=123456789012345,
+            src="https://i.pinimg.com/originals/test.jpg",
+            alt="caption",
+            origin="https://www.pinterest.com/pin/123456789012345/",
+            resolution=(1200, 1800),
+        )
 
-            with (
-                patch.object(Api, "get_main_image", side_effect=ValueError("bad json")),
-                patch.object(ApiScraper, "_get_main_pin_from_page", return_value=expected) as page_fallback,
-            ):
-                items = scraper.scrape("https://www.pinterest.com/pin/123456789012345/", num=1)
+        with (
+            patch.object(Api, "get_main_image", side_effect=ValueError("bad json")),
+            patch.object(ApiScraper, "_get_main_pin_from_page", return_value=expected) as page_fallback,
+        ):
+            items = scraper.scrape("https://www.pinterest.com/pin/123456789012345/", num=1)
 
         assert items == [expected]
         page_fallback.assert_called_once()
@@ -188,18 +182,17 @@ class TestScrapePinFallbacks:
         </html>
         """
 
-        with patch.object(Api, "_get_default_cookies", return_value={}):
-            scraper = ApiScraper()
+        scraper = ApiScraper()
 
-            with (
-                patch.object(Api, "get_main_image", side_effect=EmptyResponseError("no data")),
-                patch.object(Api, "get_pin_page", return_value=html),
-            ):
-                items = scraper.scrape(
-                    "https://www.pinterest.com/pin/123456789012345/",
-                    num=1,
-                    min_resolution=(1000, 1000),
-                )
+        with (
+            patch.object(Api, "get_main_image", side_effect=EmptyResponseError("no data")),
+            patch.object(Api, "get_pin_page", return_value=html),
+        ):
+            items = scraper.scrape(
+                "https://www.pinterest.com/pin/123456789012345/",
+                num=1,
+                min_resolution=(1000, 1000),
+            )
 
         assert items == []
 
