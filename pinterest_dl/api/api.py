@@ -136,13 +136,14 @@ class Api:
 
     @classmethod
     def _canonicalize_pin_url(cls, url: str) -> str:
-        """Convert Pinterest pin variants to canonical /pin/<id>/ URLs."""
+        """Canonicalize a pin URL's path to /pin/<id>/, preserving the host region."""
         normalized = cls._normalize_url(url)
         try:
             pin_id = cls._parse_pin_id(normalized)
         except InvalidPinterestUrlError:
             return normalized
-        return f"https://www.pinterest.com/pin/{pin_id}/"
+        parsed = urlsplit(normalized)
+        return urlunsplit((parsed.scheme, parsed.netloc, f"/pin/{pin_id}/", "", ""))
 
     def get_related_images(self, num: int, bookmark: List[str]) -> PinResponse:
         if not self.pin_id:
