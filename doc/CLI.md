@@ -10,9 +10,8 @@ pinterest-dl [command] [options]
 | [`login`](#1-login)       | Login to Pinterest to obtain browser cookies for scraping private boards and pins. |
 | [`scrape`](#2-scrape)     | Download the requested pin or scrape a board/section URL.                          |
 | [`related`](#3-related)   | Download pins related to a specific Pinterest pin.                                 |
-| [`one`](#4-one)           | Download exactly one Pinterest pin.                                                |
-| [`search`](#5-search)     | Search for images on Pinterest using a query.                                      |
-| [`download`](#6-download) | Download images from a list of URLs provided in a JSON file.                       |
+| [`search`](#4-search)     | Search for images on Pinterest using a query.                                      |
+| [`download`](#5-download) | Download images from a list of URLs provided in a JSON file.                       |
 
 
 ---
@@ -82,6 +81,9 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--incognito`                               | Use incognito mode (browser clients only)                 | -              |
 | `--verbose`                                 | Enable debug output                                       | -              |
 
+> [!TIP]
+> For a pin URL, `scrape` fetches the requested pin itself (one item). Use `related` when you want Pinterest recommendations around a pin.
+
 ---
 
 ### 3. Related
@@ -116,39 +118,7 @@ pinterest-dl related -f urls.txt [options]
 
 ---
 
-### 4. One
-Download exactly one Pinterest pin.
-
-```bash
-pinterest-dl one <pin_url> [options]
-
-# Aliases:
-pinterest-dl scrape_one <pin_url> [options]
-pinterest-dl scrape-one <pin_url> [options]
-```
-
-| Options                              | Description                                               | Default        |
-| ------------------------------------ | --------------------------------------------------------- | -------------- |
-| `<pin_url>`                          | Pinterest pin URL                                         | -              |
-| `-o`, `--output [directory]`         | Directory to save media (stdout if omitted)               | -              |
-| `-c`, `--cookies [file]`             | Path to cookies file (for private content)                | `cookies.json` |
-| `-r`, `--resolution [WxH]`           | Minimum image resolution                                  | -              |
-| `--video`                            | Download video stream (if available)                      | -              |
-| `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -              |
-| `--timeout [seconds]`                | Request timeout                                           | `10`           |
-| `--cache [path]`                     | Save scraped URLs to JSON                                 | -              |
-| `--caption [txt/json/metadata/none]` | Caption format                                            | `none`         |
-| `--ensure-cap`                       | Require alt text on the pin                               | -              |
-| `--cap-from-title`                   | Use image title as caption                                | -              |
-| `--dump [PATH]` (**NEW**)            | Dump API requests/responses to PATH (default: `.dump`)    | -              |
-| `--verbose`                          | Enable debug output                                       | -              |
-
-> [!TIP]
-> `scrape` and `one` both fetch the requested pin itself. Use `related` when you want Pinterest recommendations around a pin.
-
----
-
-### 5. Search  
+### 4. Search  
 Find and download images via a search query (API mode only), or from URL-lists in files.
 
 ```bash
@@ -186,7 +156,7 @@ cat queries.txt | pinterest-dl search -f - [options]
 
 ---
 
-### 6. Download  
+### 5. Download  
 Fetch images from a previously saved cache file.
 
 ```bash

@@ -159,26 +159,6 @@ def get_parser() -> argparse.ArgumentParser:
     related_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
     related_cmd.add_argument("--dump", type=str, nargs="?", const=".dump", default=None, metavar="PATH", help="Dump API requests/responses to PATH directory (default: .dump if flag used without path, disabled if not specified)")
 
-    # one command
-    one_cmd = cmd.add_parser(
-        "one",
-        aliases=["scrape_one", "scrape-one"],
-        help="Download exactly one Pinterest pin",
-    )
-    one_cmd.add_argument("url", help="Pinterest pin URL")
-    one_cmd.add_argument("-o", "--output", type=str, help="Output directory")
-    one_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private pins.")
-    one_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
-    one_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
-    one_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
-    one_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
-    one_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
-    one_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
-    one_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
-    one_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure the pin has alt text")
-    one_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
-    one_cmd.add_argument("--dump", type=str, nargs="?", const=".dump", default=None, metavar="PATH", help="Dump API requests/responses to PATH directory (default: .dump if flag used without path, disabled if not specified)")
-
     # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
     search_cmd.add_argument("querys", nargs="*", help="Search query")
@@ -444,40 +424,6 @@ def main() -> None:
                     print(
                         f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
                     )
-
-            print("\nDone.")
-        elif args.cmd in ["one", "scrape_one", "scrape-one"]:
-            url = sanitize_url(args.url)
-
-            if args.cookies:
-                check_and_warn_invalid_cookies(args.cookies)
-
-            print(f"Scraping one pin from {url}...")
-            imgs = (
-                PinterestDL.with_api(
-                    timeout=args.timeout,
-                    verbose=args.verbose,
-                    ensure_alt=args.ensure_cap,
-                    dump=args.dump,
-                )
-                .with_cookies_path(args.cookies)
-                .scrape_one_and_download(
-                    url,
-                    args.output,
-                    download_streams=args.video,
-                    skip_remux=args.skip_remux,
-                    min_resolution=parse_resolution(args.resolution)
-                    if args.resolution
-                    else (0, 0),
-                    cache_path=args.cache,
-                    caption=args.caption,
-                    caption_from_title=args.cap_from_title,
-                )
-            )
-            if imgs and len(imgs) != 1:
-                print(
-                    f"Warning: Expected 1 downloaded item from {url}, got {len(imgs)}."
-                )
 
             print("\nDone.")
         elif args.cmd == "search":

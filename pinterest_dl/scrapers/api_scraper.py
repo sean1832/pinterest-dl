@@ -257,46 +257,6 @@ class ApiScraper:
             scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
         )
 
-    def scrape_one(
-        self,
-        url: str,
-        min_resolution: Tuple[int, int] = (0, 0),
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape exactly one requested pin from a pin URL."""
-        api = self._create_api(url)
-
-        if not api.is_pin:
-            raise ValueError("scrape_one only supports Pinterest pin URLs")
-
-        media = self._scrape_one_pin(
-            api,
-            min_resolution,
-            caption_from_title=caption_from_title,
-        )
-        return [media] if media else []
-
-    def scrape_one_and_download(
-        self,
-        url: str,
-        output_dir: Optional[Union[str, Path]],
-        download_streams: bool = False,
-        skip_remux: bool = False,
-        min_resolution: Tuple[int, int] = (0, 0),
-        cache_path: Optional[Union[str, Path]] = None,
-        caption: Literal["txt", "json", "metadata", "none"] = "none",
-        caption_from_title: bool = False,
-    ) -> Optional[List[PinterestMedia]]:
-        """Download exactly one requested pin from a pin URL."""
-        scraped_outputs = self.scrape_one(
-            url,
-            min_resolution=min_resolution,
-            caption_from_title=caption_from_title,
-        )
-        return self._download_and_save(
-            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
-        )
-
     def search(
         self,
         query: str,

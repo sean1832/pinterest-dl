@@ -130,8 +130,8 @@ class TestPinterestAPIUrlParsing:
         assert api2.section_slug == "section"
 
 
-class TestScrapeOneFallbacks:
-    def test_scrape_one_falls_back_to_page_when_api_data_is_invalid(self):
+class TestScrapePinFallbacks:
+    def test_scrape_falls_back_to_page_when_api_data_is_invalid(self):
         with patch.object(Api, "_get_default_cookies", return_value={}):
             scraper = ApiScraper()
             expected = PinterestMedia(
@@ -146,12 +146,12 @@ class TestScrapeOneFallbacks:
                 patch.object(Api, "get_main_image", side_effect=ValueError("bad json")),
                 patch.object(ApiScraper, "_get_main_pin_from_page", return_value=expected) as page_fallback,
             ):
-                items = scraper.scrape_one("https://www.pinterest.com/pin/123456789012345/")
+                items = scraper.scrape("https://www.pinterest.com/pin/123456789012345/", num=1)
 
         assert items == [expected]
         page_fallback.assert_called_once()
 
-    def test_scrape_one_rejects_unknown_resolution_when_min_resolution_is_requested(self):
+    def test_scrape_rejects_unknown_resolution_when_min_resolution_is_requested(self):
         html = """
         <html>
             <meta property="og:image" content="https://i.pinimg.com/originals/test.jpg">
@@ -166,8 +166,9 @@ class TestScrapeOneFallbacks:
                 patch.object(Api, "get_main_image", side_effect=EmptyResponseError("no data")),
                 patch.object(Api, "get_pin_page", return_value=html),
             ):
-                items = scraper.scrape_one(
+                items = scraper.scrape(
                     "https://www.pinterest.com/pin/123456789012345/",
+                    num=1,
                     min_resolution=(1000, 1000),
                 )
 

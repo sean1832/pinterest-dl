@@ -119,8 +119,8 @@ Scrape images from Pinterest using the command line:
 # Scrape a board, section, or the requested pin itself
 pinterest-dl scrape <url> -o output_folder -n 50
 
-# Download exactly one pin
-pinterest-dl one <pin_url> -o output_folder
+# Download a single pin (pin URLs return the pin itself)
+pinterest-dl scrape <pin_url> -o output_folder
 
 # Download pins related to a pin
 pinterest-dl related <pin_url> -o output_folder -n 50
