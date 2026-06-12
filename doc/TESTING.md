@@ -69,8 +69,8 @@ more requests just add load on Pinterest without adding signal.
 
 ### Scheduled runs
 
-`.github/workflows/integration.yml` runs the integration suite on a weekly cron
-and on manual dispatch, never on push. One controlled run a week is a negligible
+`.github/workflows/integration.yml` runs the integration suite on a monthly cron
+and on manual dispatch, never on push. One controlled run a month is a negligible
 load on Pinterest, and it alerts us when the unofficial API changes.
 
 ## Writing a test that needs the network
