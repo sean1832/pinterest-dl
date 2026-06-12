@@ -196,6 +196,7 @@ Working examples covering:
 
 - **[CLI Guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md)** - Complete command-line interface documentation
 - **[Python API Guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/API.md)** - Programmatic usage examples and patterns
+- **[Testing Guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/TESTING.md)** - Offline-by-default test policy and live integration tests
 - **[Contributing Guidelines](https://github.com/sean1832/pinterest-dl/blob/main/CONTRIBUTING.md)** - How to contribute to the project
 
 ## 🤝 Contributing
