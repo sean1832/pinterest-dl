@@ -5,7 +5,7 @@ name: Integration (live Pinterest API)
 # keep load on Pinterest negligible.
 on:
   schedule:
-    - cron: "0 6 1 * *" # Mondays 06:00 UTC on the 1st of every month
+    - cron: "0 6 1 * *" # 06:00 UTC on the 1st of every month
   workflow_dispatch:
 
 jobs:
