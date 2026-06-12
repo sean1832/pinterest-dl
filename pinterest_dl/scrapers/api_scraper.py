@@ -108,7 +108,8 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes the requested pin itself
+                - Pin URL: scrapes the requested pin itself, then fills the
+                  remainder of `num` with related pins when `num > 1`
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             num (int): Maximum number of images to scrape.
@@ -129,6 +130,18 @@ class ApiScraper:
                 caption_from_title=caption_from_title,
             )
             medias = [media] if media else []
+            # When more than the pin itself is requested, fill the remainder with related pins.
+            if num > 1:
+                related = self._scrape_pins(
+                    api,
+                    num - len(medias),
+                    min_resolution,
+                    delay,
+                    BookmarkManager(3),
+                    caption_from_title=caption_from_title,
+                    progress_offset=len(medias),
+                )
+                medias.extend(related)
         elif api.is_section:
             # Section URL detected - scrape only this section
             medias = self._scrape_section(
@@ -201,7 +214,8 @@ class ApiScraper:
 
         Args:
             url (str): Pinterest URL to scrape. Supports:
-                - Pin URL: scrapes the requested pin itself
+                - Pin URL: scrapes the requested pin itself, then fills the
+                  remainder of `num` with related pins when `num > 1`
                 - Board URL: scrapes pins from the board
                 - Section URL: scrapes pins from a specific board section
             output_dir (Optional[Union[str, Path]]): Directory to store downloaded images. 'None' print to console.
@@ -251,46 +265,6 @@ class ApiScraper:
             num,
             min_resolution,
             delay,
-            caption_from_title=caption_from_title,
-        )
-        return self._download_and_save(
-            scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
-        )
-
-    def scrape_one(
-        self,
-        url: str,
-        min_resolution: Tuple[int, int] = (0, 0),
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape exactly one requested pin from a pin URL."""
-        api = self._create_api(url)
-
-        if not api.is_pin:
-            raise ValueError("scrape_one only supports Pinterest pin URLs")
-
-        media = self._scrape_one_pin(
-            api,
-            min_resolution,
-            caption_from_title=caption_from_title,
-        )
-        return [media] if media else []
-
-    def scrape_one_and_download(
-        self,
-        url: str,
-        output_dir: Optional[Union[str, Path]],
-        download_streams: bool = False,
-        skip_remux: bool = False,
-        min_resolution: Tuple[int, int] = (0, 0),
-        cache_path: Optional[Union[str, Path]] = None,
-        caption: Literal["txt", "json", "metadata", "none"] = "none",
-        caption_from_title: bool = False,
-    ) -> Optional[List[PinterestMedia]]:
-        """Download exactly one requested pin from a pin URL."""
-        scraped_outputs = self.scrape_one(
-            url,
-            min_resolution=min_resolution,
             caption_from_title=caption_from_title,
         )
         return self._download_and_save(
@@ -449,12 +423,24 @@ class ApiScraper:
         delay: float,
         bookmarks: BookmarkManager,
         caption_from_title: bool = False,
+        progress_offset: int = 0,
     ) -> List[PinterestMedia]:
-        """Scrape related pins from a specific Pinterest pin URL."""
+        """Scrape related pins from a specific Pinterest pin URL.
+
+        progress_offset seeds the progress bar with items already collected by
+        the caller (e.g. the pin itself when scrape() fills with related pins),
+        so the bar reflects the full requested count rather than just the
+        related pins. It only affects display, not how many pins are scraped.
+        """
         images: List[PinterestMedia] = []
         remains = num
 
-        with tqdm(total=num, desc="Scraping Pins", disable=self.verbose) as pbar:
+        with tqdm(
+            total=num + progress_offset,
+            initial=progress_offset,
+            desc="Scraping Pins",
+            disable=self.verbose,
+        ) as pbar:
             while remains > 0:
                 batch_size = min(50, remains)
                 try:
@@ -604,6 +590,10 @@ class ApiScraper:
         caption_from_title: bool = False,
     ) -> PinterestMedia:
         """Parse pin metadata from the public pin page HTML."""
+        pin_id = api.pin_id
+        if pin_id is None:
+            raise ValueError(f"Cannot parse pin page without a pin id (url={api.url!r})")
+
         html = api.get_pin_page()
         meta = self._extract_meta_tags(html)
 
@@ -637,7 +627,7 @@ class ApiScraper:
         video_stream = self._extract_video_stream_from_meta(meta) or self._extract_video_stream_from_html(html)
 
         return PinterestMedia(
-            id=int(api.pin_id),
+            id=int(pin_id),
             src=src,
             alt=alt,
             origin=api.url,

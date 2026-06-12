@@ -119,11 +119,14 @@ Scrape images from Pinterest using the command line:
 # Scrape a board, section, or the requested pin itself
 pinterest-dl scrape <url> -o output_folder -n 50
 
-# Download exactly one pin
-pinterest-dl one <pin_url> -o output_folder
+# Download a single pin (pin URLs return the pin itself)
+pinterest-dl scrape <pin_url> -o output_folder
 
-# Download pins related to a pin
-pinterest-dl related <pin_url> -o output_folder -n 50
+# Download a pin plus related pins (pin + 49 related)
+pinterest-dl scrape <pin_url> -o output_folder -n 50
+
+# Download only pins related to a pin (exclude the pin itself)
+pinterest-dl scrape <pin_url> --related-only -o output_folder -n 50
 
 # Download videos as MP4 (requires ffmpeg)
 pinterest-dl scrape <pin_url> --video -o output_folder
@@ -140,7 +143,7 @@ pinterest-dl login -o cookies.json
 
 **📖 [View Full CLI Documentation ->](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md)**
 
-Available commands: `login`, `scrape`, `related`, `one`, `search`, `download`
+Available commands: `login`, `scrape`, `search`, `download`
 
 ---
 

@@ -153,7 +153,8 @@ import json
 from pinterest_dl import PinterestDL
 
 # 1. Initialize PinterestDL with API and scrape media
-# Pin URLs return the requested pin itself. Use `.related(...)` for recommendations around a pin.
+# Pin URLs return the pin itself, then fill the rest of `num` with related pins.
+# Use `.related(...)` for recommendations only (excluding the pin itself).
 scraped_medias = PinterestDL.with_api().scrape(
     url="https://www.pinterest.com/username/board-name/",  # URL of the Pinterest page
     num=30,  # Maximum number of images to scrape
