@@ -1,6 +1,6 @@
 import re
 from typing import List, Optional, Tuple
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 import requests
 
@@ -16,7 +16,6 @@ from pinterest_dl.exceptions import (
     InvalidSearchUrlError,
     InvalidSectionUrlError,
 )
-from urllib.parse import urlsplit, urlunsplit
 
 logger = get_logger(__name__)
 
@@ -575,10 +574,10 @@ class Api:
         if len(segments) != 2:
             raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
 
-        username, boardname = segments
-        if not re.fullmatch(r"[A-Za-z0-9_-]+", username) or not re.fullmatch(
-            r"[A-Za-z0-9_-]+", boardname
-        ):
+        # Board slugs can be percent-encoded Unicode (e.g. Japanese board names).
+        # Decode them so the slug passed to the API matches what Pinterest expects.
+        username, boardname = (unquote(segment) for segment in segments)
+        if not re.fullmatch(r"[\w-]+", username) or not re.fullmatch(r"[\w-]+", boardname):
             raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
 
         return username, boardname
@@ -601,8 +600,9 @@ class Api:
         if len(segments) != 3:
             raise InvalidSectionUrlError(f"Invalid Pinterest section URL: {url}")
 
-        username, boardname, section_slug = segments
-        valid_segment = re.compile(r"[A-Za-z0-9_-]+$")
+        # Slugs can be percent-encoded Unicode (e.g. Japanese names); decode before use.
+        username, boardname, section_slug = (unquote(segment) for segment in segments)
+        valid_segment = re.compile(r"[\w-]+")
         if not (
             valid_segment.fullmatch(username)
             and valid_segment.fullmatch(boardname)
