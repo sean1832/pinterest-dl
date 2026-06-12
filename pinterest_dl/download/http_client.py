@@ -4,6 +4,7 @@ from typing import List, Union
 
 import requests
 import requests.adapters
+from urllib3.util.retry import Retry
 
 from pinterest_dl.common.logging import get_logger
 from pinterest_dl.download.video.hls_processor import HlsProcessor
@@ -29,7 +30,7 @@ class HttpClient:
         """
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
-        retries = requests.adapters.Retry(
+        retries = Retry(
             total=max_retries,
             backoff_factor=backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
