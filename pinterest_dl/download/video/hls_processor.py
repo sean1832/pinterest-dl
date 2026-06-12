@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from urllib.parse import urljoin
 
 import m3u8
@@ -73,6 +73,32 @@ class HlsProcessor:
         )
         return urljoin(base_uri, best.uri)
 
+    def get_init_section(self, playlist: m3u8.M3U8, base_uri: str) -> Optional[SegmentInfo]:
+        """Get the initialization section data if present.
+
+        Args:
+            playlist (m3u8.M3U8): The HLS playlist.
+            base_uri (str): The base URI for resolving segment URLs.
+        Returns:
+            Optional[SegmentInfo]: The initialization section information, or None if not present.
+        """
+        if not playlist.segment_map:
+            return None
+        init = playlist.segment_map[0]
+        byte_offset = byte_length = None  # if byterange is not present, these will remain None
+        if init.byterange:
+            byte_offset, byte_length = self._parse_byterange(init.byterange, 0)
+        return SegmentInfo(
+            index=-1,
+            uri=urljoin(base_uri, init.uri),
+            method=None,
+            key_uri=None,
+            iv=None,
+            media_sequence=playlist.media_sequence or 0,
+            byte_offset=byte_offset,
+            byte_length=byte_length,
+        )
+
     def enumerate_segments(self, playlist: m3u8.M3U8, base_uri: str) -> List[SegmentInfo]:
         """Enumerate segments in the playlist.
 
@@ -91,12 +117,15 @@ class HlsProcessor:
         if not playlist.segments:
             raise HlsDownloadError("Playlist has no segments")
         media_sequence = playlist.media_sequence or 0
+        prev_end = 0
         infos: List[SegmentInfo] = []
         for idx, segment in enumerate(playlist.segments):
             seg_url = urljoin(base_uri, segment.uri)
             method = None
             key_uri = None
             iv_bytes: Optional[bytes] = None
+            byte_length: Optional[int] = None
+            byte_offset: Optional[int] = None
             if segment.key:
                 key_info = segment.key
                 method = key_info.method
@@ -110,6 +139,9 @@ class HlsProcessor:
                     iv_bytes = bytes.fromhex(hexstr)
                 else:
                     iv_bytes = self._compute_default_iv(media_sequence, idx)
+            if segment.byterange:
+                byte_offset, byte_length = self._parse_byterange(segment.byterange, prev_end)
+                prev_end = byte_offset + byte_length
             infos.append(
                 SegmentInfo(
                     index=idx,
@@ -118,27 +150,60 @@ class HlsProcessor:
                     key_uri=key_uri,
                     iv=iv_bytes,
                     media_sequence=media_sequence,
+                    byte_offset=byte_offset,
+                    byte_length=byte_length,
                 )
             )
         return infos
 
-    def download_segment(self, url: str) -> bytes:
-        """Download a segment.
+    @staticmethod
+    def _parse_byterange(spec: str, offset: int) -> Tuple[int, int]:
+        """
+        Parse an EXT-X-BYTERANGE 'length[@offset]' value into (offset, length).
+
+        Args:
+            spec (str): The byterange specification string (e.g., "5000@10000" or "5000").
+            offset (int): The starting byte offset, used for absolute ranges.
+
+        Returns:
+            Tuple[int, int]: A tuple of (offset, length) where offset is the starting byte and length is the number of bytes.
+        """
+        spec = spec.strip()
+        if "@" in spec:
+            length_str, offset_str = spec.split("@", 1)
+            return int(offset_str), int(length_str)
+
+        return offset, int(spec)
+
+    def download_segment(
+        self, url: str, byte_offset: Optional[int] = None, byte_length: Optional[int] = None
+    ) -> bytes:
+        """Download a segment with optional byte range.
 
         Args:
             url (str): The URL of the segment.
-
-        Raises:
-            HlsDownloadError: If the segment cannot be downloaded.
+            byte_offset (Optional[int]): The starting byte offset for the segment, if using byte range.
+            byte_length (Optional[int]): The length in bytes to download, if using byte range.
 
         Returns:
-            bytes: The content of the downloaded segment.
+            bytes: The downloaded segment data.
         """
+        headers = None
+        # If both byte_offset and byte_length are provided, set the Range header
+        if byte_offset is not None and byte_length is not None:
+            headers = {"Range": f"bytes={byte_offset}-{byte_offset + byte_length - 1}"}
         last_exc = None
         for attempt in range(1, self.max_retries + 1):
             try:
-                resp = self.session.get(url, timeout=self.timeout)
+                resp = self.session.get(url, timeout=self.timeout, headers=headers)
+                if resp.status_code == 206:
+                    # Partial Content: server honored the Range request
+                    return resp.content
                 if resp.status_code == 200:
+                    # Server ignored Range and sent the whole file.
+                    # Slice so we never concatenate full copies
+                    if byte_offset is not None and byte_length is not None:
+                        return resp.content[byte_offset : byte_offset + byte_length]
                     return resp.content
                 last_exc = HlsDownloadError(f"HTTP {resp.status_code} for segment: {url}")
             except requests.RequestException as e:
@@ -195,18 +260,6 @@ class HlsProcessor:
         path.write_bytes(data)
 
     @staticmethod
-    def build_concat_list(segment_paths: List[Path], output_list: Path) -> None:
-        """Build a concat list file for ffmpeg.
-
-        Args:
-            segment_paths (List[Path]): The paths to the segment files.
-            output_list (Path): The path to the output concat list file.
-        """
-        with output_list.open("w", encoding="utf-8") as f:
-            for p in segment_paths:
-                f.write(f"file '{p.as_posix()}'\n")
-
-    @staticmethod
     def concat_to_ts(segment_paths: List[Path], output_ts: Path) -> None:
         """Binary concatenate .ts segments into a single .ts file without ffmpeg.
 
@@ -218,11 +271,11 @@ class HlsProcessor:
             for seg_path in segment_paths:
                 out.write(seg_path.read_bytes())
 
-    def remux_to_mp4(self, concat_list: Path, output_mp4: Path) -> None:
+    def remux_to_mp4(self, input_file: Path, output_mp4: Path) -> None:
         """Concatenate segments and remux to MP4 using ffmpeg (stream copy, no re-encode).
 
         Args:
-            concat_list (Path): Path to the file containing the list of segments.
+            input_file (Path): Path to the concatenated input .ts file.
             output_mp4 (Path): Path to the output MP4 file.
 
         Raises:
@@ -234,26 +287,23 @@ class HlsProcessor:
                 "-y",
                 "-loglevel",
                 "info",
-                "-f",
-                "concat",
-                "-safe",
-                "0",
                 "-i",
-                str(concat_list),
+                input_file.absolute().as_posix(),
                 "-c",
                 "copy",
-                str(output_mp4),
+                output_mp4.absolute().as_posix(),
             ],
             "remux to mp4",
         )
 
     # TODO: Expose reencode_to_mp4 via CLI flag (e.g. --reencode) for guaranteed mp4 output
-    def reencode_to_mp4(self, concat_list: Path, output_mp4: Path) -> None:
+    def reencode_to_mp4(self, input_file: Path, output_mp4: Path, crf: int = 23) -> None:
         """Concatenate segments and re-encode to MP4 using ffmpeg (slower but more compatible).
 
         Args:
-            concat_list (Path): Path to the file containing the list of segments.
+            input_file (Path): Path to the concatenated input .ts file.
             output_mp4 (Path): Path to the output MP4 file.
+            crf (int): The CRF value for x264 encoding (lower is better quality, default 23).
 
         Raises:
             HlsDownloadError: If ffmpeg re-encode fails.
@@ -264,23 +314,19 @@ class HlsProcessor:
                 "-y",
                 "-loglevel",
                 "info",
-                "-f",
-                "concat",
-                "-safe",
-                "0",
                 "-i",
-                str(concat_list),
+                input_file.absolute().as_posix(),
                 "-c:v",
                 "libx264",
                 "-preset",
                 "medium",
                 "-crf",
-                "23",
+                str(crf),
                 "-c:a",
                 "aac",
                 "-b:a",
                 "128k",
-                str(output_mp4),
+                output_mp4.absolute().as_posix(),
             ],
             "re-encode to mp4",
         )
