@@ -8,9 +8,11 @@ pinterest-dl [command] [options]
 | Command                   | Description                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------- |
 | [`login`](#1-login)       | Login to Pinterest to obtain browser cookies for scraping private boards and pins. |
-| [`scrape`](#2-scrape)     | Scrape images from a Pinterest URL.                                                |
-| [`search`](#3-search)     | Search for images on Pinterest using a query.                                      |
-| [`download`](#4-download) | Download images from a list of URLs provided in a JSON file.                       |
+| [`scrape`](#2-scrape)     | Download the requested pin or scrape a board/section URL.                          |
+| [`related`](#3-related)   | Download pins related to a specific Pinterest pin.                                 |
+| [`one`](#4-one)           | Download exactly one Pinterest pin.                                                |
+| [`search`](#5-search)     | Search for images on Pinterest using a query.                                      |
+| [`download`](#6-download) | Download images from a list of URLs provided in a JSON file.                       |
 
 
 ---
@@ -42,7 +44,7 @@ pinterest-dl login [options]
 ---
 
 ### 2. Scrape  
-Download images from a Pin, Board URL, or a list of URLs.
+Download the requested pin itself, or scrape a Board/Section URL.
 
 ```bash
 # Single or multiple URLs:
@@ -63,7 +65,7 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `<url>`                                     | One or more Pinterest URLs                                | -              |
 | `-o`, `--output [directory]`                | Directory to save images (stdout if omitted)              | -              |
 | `-c`, `--cookies [file]`                    | Path to cookies file (for private content)                | `cookies.json` |
-| `-n`, `--num [number]`                      | Maximum images to download                                | `100`          |
+| `-n`, `--num [number]`                      | Maximum images to download (`scrape` returns 1 for pin URLs) | `100`       |
 | `-r`, `--resolution [WxH]`                  | Minimum image resolution (e.g. `512x512`)                 | -              |
 | `--video`                                   | Download video stream (if available)                      | -              |
 | `--skip-remux` (**NEW**)                    | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -              |
@@ -82,7 +84,71 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 
 ---
 
-### 3. Search  
+### 3. Related
+Download pins related to one or more Pinterest pins (API mode).
+
+```bash
+# Single or multiple pin URLs:
+pinterest-dl related <pin_url1> <pin_url2> ... [options]
+
+# From one or more files:
+pinterest-dl related -f urls.txt [options]
+```
+
+| Options                              | Description                                                 | Default        |
+| ------------------------------------ | ----------------------------------------------------------- | -------------- |
+| `-f`, `--file [file]`                | Path to file with URLs (one per line); use `-` for stdin    | -              |
+| `<pin_url>`                          | One or more Pinterest pin URLs                              | -              |
+| `-o`, `--output [directory]`         | Directory to save media (stdout if omitted)                 | -              |
+| `-c`, `--cookies [file]`             | Path to cookies file (for private content)                  | `cookies.json` |
+| `-n`, `--num [number]`               | Maximum related pins to download                            | `100`          |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution                                    | -              |
+| `--video`                            | Download video stream (if available)                        | -              |
+| `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed)   | -              |
+| `--timeout [seconds]`                | Request timeout                                             | `10`           |
+| `--delay [seconds]`                  | Delay between requests                                      | `0.2`          |
+| `--cache [path]`                     | Save scraped URLs to JSON                                   | -              |
+| `--caption [txt/json/metadata/none]` | Caption format                                              | `none`         |
+| `--ensure-cap`                       | Require alt text on every image                             | -              |
+| `--cap-from-title`                   | Use image title as caption                                  | -              |
+| `--dump [PATH]` (**NEW**)            | Dump API requests/responses to PATH (default: `.dump`)      | -              |
+| `--verbose`                          | Enable debug output                                         | -              |
+
+---
+
+### 4. One
+Download exactly one Pinterest pin.
+
+```bash
+pinterest-dl one <pin_url> [options]
+
+# Aliases:
+pinterest-dl scrape_one <pin_url> [options]
+pinterest-dl scrape-one <pin_url> [options]
+```
+
+| Options                              | Description                                               | Default        |
+| ------------------------------------ | --------------------------------------------------------- | -------------- |
+| `<pin_url>`                          | Pinterest pin URL                                         | -              |
+| `-o`, `--output [directory]`         | Directory to save media (stdout if omitted)               | -              |
+| `-c`, `--cookies [file]`             | Path to cookies file (for private content)                | `cookies.json` |
+| `-r`, `--resolution [WxH]`           | Minimum image resolution                                  | -              |
+| `--video`                            | Download video stream (if available)                      | -              |
+| `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -              |
+| `--timeout [seconds]`                | Request timeout                                           | `10`           |
+| `--cache [path]`                     | Save scraped URLs to JSON                                 | -              |
+| `--caption [txt/json/metadata/none]` | Caption format                                            | `none`         |
+| `--ensure-cap`                       | Require alt text on the pin                               | -              |
+| `--cap-from-title`                   | Use image title as caption                                | -              |
+| `--dump [PATH]` (**NEW**)            | Dump API requests/responses to PATH (default: `.dump`)    | -              |
+| `--verbose`                          | Enable debug output                                       | -              |
+
+> [!TIP]
+> `scrape` and `one` both fetch the requested pin itself. Use `related` when you want Pinterest recommendations around a pin.
+
+---
+
+### 5. Search  
 Find and download images via a search query (API mode only), or from URL-lists in files.
 
 ```bash
@@ -120,7 +186,7 @@ cat queries.txt | pinterest-dl search -f - [options]
 
 ---
 
-### 4. Download  
+### 6. Download  
 Fetch images from a previously saved cache file.
 
 ```bash

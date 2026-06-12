@@ -1,5 +1,6 @@
 import re
 from typing import List, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
@@ -246,6 +247,27 @@ class Api:
             raise requests.RequestException(f"Failed to request main image: {e}")
 
         return PinResponse(request_url, response_raw.json())
+
+    def get_pin_page(self) -> str:
+        """Fetch the public HTML for a pin page."""
+        if not self.pin_id:
+            raise ValueError("Invalid Pinterest URL")
+
+        request_url = self.url
+        headers = dict(self._session.headers)
+        headers.pop("x-pinterest-pws-handler", None)
+
+        try:
+            response_raw = self._session.get(
+                request_url,
+                timeout=self.timeout,
+                headers=headers,
+            )
+            response_raw.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise requests.RequestException(f"Failed to request pin page: {e}")
+
+        return response_raw.text
 
     def get_board(self) -> PinResponse:
         if not self.username or not self.boardname:
@@ -520,7 +542,7 @@ class Api:
 
     @staticmethod
     def _parse_pin_id(url: str) -> str:
-        result = re.search(r"pin/(\d+)/", url)
+        result = re.search(r"pin/(\d+)(?:/|$)", url)
         if not result:
             raise InvalidPinterestUrlError(f"Invalid Pinterest URL: {url}")
         return result.group(1)

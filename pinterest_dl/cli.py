@@ -52,6 +52,11 @@ def sanitize_url(url: str) -> str:
     return url if url.endswith("/") else url + "/"
 
 
+def looks_like_pin_url(url: str) -> bool:
+    """Return True when the URL path looks like a Pinterest pin URL."""
+    return "/pin/" in url
+
+
 def validate_cookies_authenticated(cookies: list[dict]) -> bool:
     """Check if cookies contain authenticated Pinterest session.
 
@@ -112,7 +117,7 @@ def get_parser() -> argparse.ArgumentParser:
     login_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
 
     # scrape command
-    scrape_cmd = cmd.add_parser("scrape", help="Scrape images from Pinterest")
+    scrape_cmd = cmd.add_parser("scrape", help="Download the requested pin or scrape a board/section")
     scrape_cmd.add_argument("urls", nargs="*", help="One or more URLs to scrape")
     scrape_cmd.add_argument("-f", "--file", action="append", help="Path to file with URLs (one per line), use '-' for stdin")
     scrape_cmd.add_argument("-o", "--output", type=str, help="Output directory")
@@ -134,6 +139,45 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for browser clients)")
     scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for browser clients)")
+
+    # related command
+    related_cmd = cmd.add_parser("related", help="Download pins related to a Pinterest pin")
+    related_cmd.add_argument("urls", nargs="*", help="One or more Pinterest pin URLs")
+    related_cmd.add_argument("-f", "--file", action="append", help="Path to file with URLs (one per line), use '-' for stdin")
+    related_cmd.add_argument("-o", "--output", type=str, help="Output directory")
+    related_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private pins.")
+    related_cmd.add_argument("-n", "--num", type=int, default=100, help="Max number of related images to scrape (default: 100)")
+    related_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
+    related_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
+    related_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
+    related_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    related_cmd.add_argument("--delay", type=float, default=0.2, help="Delay between requests in seconds (default: 0.2)")
+    related_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
+    related_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    related_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
+    related_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure every image has alt text")
+    related_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
+    related_cmd.add_argument("--dump", type=str, nargs="?", const=".dump", default=None, metavar="PATH", help="Dump API requests/responses to PATH directory (default: .dump if flag used without path, disabled if not specified)")
+
+    # one command
+    one_cmd = cmd.add_parser(
+        "one",
+        aliases=["scrape_one", "scrape-one"],
+        help="Download exactly one Pinterest pin",
+    )
+    one_cmd.add_argument("url", help="Pinterest pin URL")
+    one_cmd.add_argument("-o", "--output", type=str, help="Output directory")
+    one_cmd.add_argument("-c", "--cookies", type=str, help="Path to cookies file. Use this to scrape private pins.")
+    one_cmd.add_argument("-r", "--resolution", type=str, help="Minimum resolution to keep (e.g. 512x512).")
+    one_cmd.add_argument("--video", action="store_true", help="Download video streams if available")
+    one_cmd.add_argument("--skip-remux", action="store_true", help="Skip ffmpeg remux, output raw .ts file (requires --video, no ffmpeg needed)")
+    one_cmd.add_argument("--timeout", type=int, default=10, help="Timeout in seconds for requests (default: 10)")
+    one_cmd.add_argument("--cache", type=str, help="path to cache URLs into json file for reuse")
+    one_cmd.add_argument("--verbose", action="store_true", help="Print verbose output")
+    one_cmd.add_argument("--caption", type=str, default="none", choices=["txt", "json", "metadata", "none"], help="Caption format for downloaded images: 'txt' for alt text in separate files, 'json' for full image data in seperate file, 'metadata' embeds in image files, 'none' skips captions (default)")
+    one_cmd.add_argument("--ensure-cap", action="store_true", help="Ensure the pin has alt text")
+    one_cmd.add_argument("--cap-from-title", action="store_true", help="Use the image title as the caption")
+    one_cmd.add_argument("--dump", type=str, nargs="?", const=".dump", default=None, metavar="PATH", help="Dump API requests/responses to PATH directory (default: .dump if flag used without path, disabled if not specified)")
 
     # search command
     search_cmd = cmd.add_parser("search", help="Search images from Pinterest")
@@ -349,10 +393,91 @@ def main() -> None:
                             caption_from_title=args.cap_from_title,
                         )
                     )
-                    if imgs and len(imgs) != args.num:
-                        print(
-                            f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
-                        )
+                    expected_count = 1 if looks_like_pin_url(url) else args.num
+                    if imgs and len(imgs) != expected_count:
+                        if expected_count == 1:
+                            print(
+                                f"Warning: Expected 1 downloaded item from {url}, got {len(imgs)}."
+                            )
+                        else:
+                            print(
+                                f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+                            )
+
+            print("\nDone.")
+        elif args.cmd == "related":
+            urls = combine_inputs(args.urls, args.file)
+            if not urls:
+                print("No URLs provided. Please provide at least one URL.")
+                return
+
+            if args.cookies:
+                check_and_warn_invalid_cookies(args.cookies)
+
+            for url in urls:
+                url = sanitize_url(url)
+                print(f"Scraping related pins from {url}...")
+                imgs = (
+                    PinterestDL.with_api(
+                        timeout=args.timeout,
+                        verbose=args.verbose,
+                        ensure_alt=args.ensure_cap,
+                        dump=args.dump,
+                    )
+                    .with_cookies_path(args.cookies)
+                    .related_and_download(
+                        url,
+                        args.output,
+                        args.num,
+                        download_streams=args.video,
+                        skip_remux=args.skip_remux,
+                        min_resolution=parse_resolution(args.resolution)
+                        if args.resolution
+                        else (0, 0),
+                        cache_path=args.cache,
+                        caption=args.caption,
+                        delay=args.delay,
+                        caption_from_title=args.cap_from_title,
+                    )
+                )
+                if imgs and len(imgs) != args.num:
+                    print(
+                        f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+                    )
+
+            print("\nDone.")
+        elif args.cmd in ["one", "scrape_one", "scrape-one"]:
+            url = sanitize_url(args.url)
+
+            if args.cookies:
+                check_and_warn_invalid_cookies(args.cookies)
+
+            print(f"Scraping one pin from {url}...")
+            imgs = (
+                PinterestDL.with_api(
+                    timeout=args.timeout,
+                    verbose=args.verbose,
+                    ensure_alt=args.ensure_cap,
+                    dump=args.dump,
+                )
+                .with_cookies_path(args.cookies)
+                .scrape_one_and_download(
+                    url,
+                    args.output,
+                    download_streams=args.video,
+                    skip_remux=args.skip_remux,
+                    min_resolution=parse_resolution(args.resolution)
+                    if args.resolution
+                    else (0, 0),
+                    cache_path=args.cache,
+                    caption=args.caption,
+                    caption_from_title=args.cap_from_title,
+                )
+            )
+            if imgs and len(imgs) != 1:
+                print(
+                    f"Warning: Expected 1 downloaded item from {url}, got {len(imgs)}."
+                )
 
             print("\nDone.")
         elif args.cmd == "search":

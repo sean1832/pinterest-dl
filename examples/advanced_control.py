@@ -27,7 +27,7 @@ def example_1_separate_scrape_and_download():
     # Step 1: Scrape media metadata
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=20,
+        num=1,
         min_resolution=(512, 512),
     )
 
@@ -53,7 +53,7 @@ def example_2_save_metadata_to_json():
     # Scrape media
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=15,
+        num=1,
     )
 
     # Convert to dictionary and save
@@ -76,7 +76,7 @@ def example_3_add_captions_as_metadata():
     # Scrape and download
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=10,
+        num=1,
     )
 
     output_dir = "downloads/advanced/with_metadata"
@@ -101,7 +101,7 @@ def example_4_add_captions_as_txt_files():
     # Scrape and download
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=10,
+        num=1,
     )
 
     output_dir = "downloads/advanced/with_txt"
@@ -126,7 +126,7 @@ def example_5_add_captions_as_json_files():
     # Scrape and download
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=10,
+        num=1,
     )
 
     output_dir = "downloads/advanced/with_json"
@@ -151,7 +151,7 @@ def example_6_prune_by_resolution():
     # Scrape and download (no resolution filter)
     scraped_medias = PinterestDL.with_api().scrape(
         url=PIN_URL,
-        num=20,
+        num=1,
     )
 
     output_dir = "downloads/advanced/prune"

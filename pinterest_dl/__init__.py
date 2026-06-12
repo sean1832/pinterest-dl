@@ -5,7 +5,7 @@ This package provides a simple API for scraping and downloading media from Pinte
 Example:
     >>> from pinterest_dl import PinterestDL
     >>> scraper = PinterestDL.with_api()
-    >>> media = scraper.scrape("https://pinterest.com/pin/123456/")
+    >>> media = scraper.scrape("https://pinterest.com/user/board/", num=10)
     >>> scraper.download(media, "output/")
 """
 

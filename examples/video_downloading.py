@@ -24,7 +24,7 @@ def example_1_basic_video_download():
     items = PinterestDL.with_api().scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/basic",
-        num=20,
+        num=1,
         download_streams=True,  # Enable video downloading
     )
 
@@ -43,7 +43,7 @@ def example_2_video_with_captions():
     items = PinterestDL.with_api().scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/with_captions",
-        num=15,
+        num=1,
         download_streams=True,
         caption="txt",  # Save descriptions to .txt files
     )
@@ -83,7 +83,7 @@ def example_4_video_with_json_metadata():
     items = PinterestDL.with_api().scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/with_json",
-        num=10,
+        num=1,
         download_streams=True,
         caption="json",  # Save full metadata
     )
@@ -105,7 +105,7 @@ def example_5_separate_video_scrape_and_download():
     # Step 1: Scrape media (includes video stream info)
     scraped_medias = PinterestDL.with_api().scrape(
         url=VIDEO_PIN_URL,
-        num=15,
+        num=1,
     )
 
     print(f"> Scraped {len(scraped_medias)} items")
@@ -134,7 +134,7 @@ def example_6_video_with_cache():
     items = PinterestDL.with_api().scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/cached",
-        num=20,
+        num=1,
         download_streams=True,
         cache_path="cache/video_metadata.json",  # Cache includes video info
     )
@@ -156,7 +156,7 @@ def example_7_video_with_resolution_preference():
     items = PinterestDL.with_api().scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/filtered",
-        num=25,
+        num=1,
         download_streams=True,
         min_resolution=(800, 600),  # Filter images by resolution
     )
@@ -179,7 +179,7 @@ def example_8_video_verbose_mode():
     ).scrape_and_download(
         url=VIDEO_PIN_URL,
         output_dir="downloads/videos/verbose",
-        num=10,
+        num=1,
         download_streams=True,
     )
 
