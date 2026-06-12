@@ -45,6 +45,15 @@ class TestPinterestAPIUrlParsing:
         assert api.username == "testuser"
         assert api.boardname == "my-board"
 
+    def test_parse_board_url_with_query_parameters(self):
+        """Test parsing board URL when short-link redirect preserves query params."""
+        api = Api(
+            "https://ru.pinterest.com/DRAMrefresh/what-the-dog-doin/"
+            "?invite_code=106b1079a76c49e7b995245a1ec4697c&sender=923308498513593481"
+        )
+        assert api.username == "DRAMrefresh"
+        assert api.boardname == "what-the-dog-doin"
+
     def test_parse_search_query_url(self):
         """Test parsing search query from URL."""
         api = Api("https://www.pinterest.com/search/pins/?q=nature&rs=typed")
@@ -86,6 +95,17 @@ class TestPinterestAPIUrlParsing:
     def test_parse_section_url_without_trailing_slash(self):
         """Test parsing section URL without trailing slash."""
         api = Api("https://www.pinterest.com/testuser/my-board/my-section")
+        assert api.username == "testuser"
+        assert api.boardname == "my-board"
+        assert api.section_slug == "my-section"
+        assert api.is_section is True
+
+    def test_parse_section_url_with_query_parameters(self):
+        """Test parsing section URL when query params are present."""
+        api = Api(
+            "https://www.pinterest.com/testuser/my-board/my-section/"
+            "?invite_code=abc123&sender=123"
+        )
         assert api.username == "testuser"
         assert api.boardname == "my-board"
         assert api.section_slug == "my-section"

@@ -16,6 +16,7 @@ from pinterest_dl.exceptions import (
     InvalidSearchUrlError,
     InvalidSectionUrlError,
 )
+from urllib.parse import urlsplit, urlunsplit
 
 logger = get_logger(__name__)
 
@@ -41,7 +42,7 @@ class Api:
             timeout (float, optional): Request timeout in seconds. Defaults to 5.
             dump (Optional[str], optional): Directory to dump API requests/responses. Defaults to None (disabled).
         """
-        self.url = self._normalize_url(url)
+        self.url = self._prepare_url(url, timeout)
         self.timeout = timeout
         self.dumper = RequestDumper(dump) if dump else None
         try:
@@ -97,6 +98,51 @@ class Api:
             path = f"{path}/"
 
         return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
+
+    @classmethod
+    def _prepare_url(cls, url: str, timeout: float) -> str:
+        """Normalize, resolve short links, and canonicalize pin URLs."""
+        normalized = cls._normalize_url(url)
+        resolved = cls._resolve_short_url(normalized, timeout)
+        return cls._canonicalize_pin_url(resolved)
+
+    @classmethod
+    def _resolve_short_url(cls, url: str, timeout: float) -> str:
+        """Resolve Pinterest short URLs such as pin.it links."""
+        parsed = urlsplit(url)
+        host = parsed.netloc.lower()
+        is_short_host = host == "pin.it"
+        is_shortener_api = (
+            host == "api.pinterest.com"
+            and parsed.path.startswith("/url_shortener/")
+            and "/redirect" in parsed.path
+        )
+
+        if not (is_short_host or is_shortener_api):
+            return url
+
+        try:
+            response = requests.get(
+                url,
+                timeout=timeout,
+                allow_redirects=True,
+                headers={"User-Agent": cls.USER_AGENT},
+            )
+            response.raise_for_status()
+            return cls._normalize_url(response.url)
+        except requests.exceptions.RequestException as e:
+            logger.debug(f"Failed to resolve short Pinterest URL {url}: {e}")
+            return url
+
+    @classmethod
+    def _canonicalize_pin_url(cls, url: str) -> str:
+        """Convert Pinterest pin variants to canonical /pin/<id>/ URLs."""
+        normalized = cls._normalize_url(url)
+        try:
+            pin_id = cls._parse_pin_id(normalized)
+        except InvalidPinterestUrlError:
+            return normalized
+        return f"https://www.pinterest.com/pin/{pin_id}/"
 
     def get_related_images(self, num: int, bookmark: List[str]) -> PinResponse:
         if not self.pin_id:
@@ -520,13 +566,21 @@ class Api:
         Returns:
             result (str, str): (username, boardname)
         """
-        result = re.search(
-            r"https://(?:[a-z0-9-]+\.)?pinterest\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?$",
-            url,
-        )
-        if not result:
+        parsed = urlsplit(url)
+        if not re.fullmatch(r"(?:[a-z0-9-]+\.)?pinterest\.com", parsed.netloc, flags=re.IGNORECASE):
             raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
-        return result.group(1), result.group(2)
+
+        segments = [segment for segment in parsed.path.split("/") if segment]
+        if len(segments) != 2:
+            raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
+
+        username, boardname = segments
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", username) or not re.fullmatch(
+            r"[A-Za-z0-9_-]+", boardname
+        ):
+            raise InvalidBoardUrlError(f"Invalid Pinterest board URL: {url}")
+
+        return username, boardname
 
     @staticmethod
     def _parse_section_url(url: str) -> Tuple[str, str, str]:
@@ -538,10 +592,21 @@ class Api:
         Returns:
             result (str, str, str): (username, boardname, section_slug)
         """
-        result = re.search(
-            r"https://(?:[a-z0-9-]+\.)?pinterest\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)/?$",
-            url,
-        )
-        if not result:
+        parsed = urlsplit(url)
+        if not re.fullmatch(r"(?:[a-z0-9-]+\.)?pinterest\.com", parsed.netloc, flags=re.IGNORECASE):
             raise InvalidSectionUrlError(f"Invalid Pinterest section URL: {url}")
-        return result.group(1), result.group(2), result.group(3)
+
+        segments = [segment for segment in parsed.path.split("/") if segment]
+        if len(segments) != 3:
+            raise InvalidSectionUrlError(f"Invalid Pinterest section URL: {url}")
+
+        username, boardname, section_slug = segments
+        valid_segment = re.compile(r"[A-Za-z0-9_-]+$")
+        if not (
+            valid_segment.fullmatch(username)
+            and valid_segment.fullmatch(boardname)
+            and valid_segment.fullmatch(section_slug)
+        ):
+            raise InvalidSectionUrlError(f"Invalid Pinterest section URL: {url}")
+
+        return username, boardname, section_slug
