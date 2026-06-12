@@ -10,3 +10,5 @@ class SegmentInfo:
     key_uri: Optional[str]
     iv: Optional[bytes]  # explicit IV or None
     media_sequence: int
+    byte_offset: Optional[int] = None
+    byte_length: Optional[int] = None

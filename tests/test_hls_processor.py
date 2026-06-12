@@ -107,6 +107,88 @@ class TestHlsProcessor:
         with pytest.raises(HlsDownloadError, match="Unsupported encryption method"):
             processor.enumerate_segments(mock_playlist, "http://example.com/")
 
+    def test_parse_byterange(self, processor):
+        """Parse 'length@offset' and bare 'length' (implicit offset) forms."""
+        assert processor._parse_byterange("500@1000", 0) == (1000, 500)
+        # When '@offset' is omitted, the range continues from the previous end.
+        assert processor._parse_byterange("500", 1500) == (1500, 500)
+
+    def test_enumerate_segments_byterange(self, processor):
+        """Byte-range segments sharing one file keep distinct (offset, length).
+
+        Regression: the ranges used to be dropped, so every segment resolved to
+        the same URL and the whole file was downloaded once per segment, yielding
+        a video repeated N times.
+        """
+        mock_playlist = MagicMock()
+        mock_playlist.media_sequence = 0
+
+        seg1 = MagicMock()
+        seg1.uri = "video.cmfv"
+        seg1.key = None
+        seg1.byterange = "100@0"
+
+        seg2 = MagicMock()
+        seg2.uri = "video.cmfv"
+        seg2.key = None
+        seg2.byterange = "200@100"
+
+        mock_playlist.segments = [seg1, seg2]
+        segments = processor.enumerate_segments(mock_playlist, "http://example.com/")
+
+        assert segments[0].uri == segments[1].uri == "http://example.com/video.cmfv"
+        assert (segments[0].byte_offset, segments[0].byte_length) == (0, 100)
+        assert (segments[1].byte_offset, segments[1].byte_length) == (100, 200)
+
+    def test_get_init_section(self, processor):
+        """EXT-X-MAP init section is resolved with its byte range."""
+        mock_playlist = MagicMock()
+        mock_playlist.media_sequence = 0
+        init = MagicMock()
+        init.uri = "video.cmfv"
+        init.byterange = "899@0"
+        mock_playlist.segment_map = [init]
+
+        result = processor.get_init_section(mock_playlist, "http://example.com/")
+
+        assert result is not None
+        assert result.uri == "http://example.com/video.cmfv"
+        assert (result.byte_offset, result.byte_length) == (0, 899)
+
+    def test_get_init_section_absent(self, processor):
+        """No EXT-X-MAP -> no init section (plain .ts streams)."""
+        mock_playlist = MagicMock()
+        mock_playlist.segment_map = []
+        assert processor.get_init_section(mock_playlist, "http://example.com/") is None
+
+    def test_download_segment_byterange_uses_range_header(self, processor, mock_session):
+        """Range request sends a Range header and accepts HTTP 206."""
+        resp = MagicMock()
+        resp.status_code = 206
+        resp.content = b"partial-bytes"
+        mock_session.get.return_value = resp
+
+        data = processor.download_segment(
+            "http://example.com/v.cmfv", byte_offset=100, byte_length=50
+        )
+
+        assert data == b"partial-bytes"
+        _, kwargs = mock_session.get.call_args
+        assert kwargs["headers"] == {"Range": "bytes=100-149"}
+
+    def test_download_segment_200_slices_when_range_ignored(self, processor, mock_session):
+        """If the server ignores Range and returns 200, slice locally."""
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.content = b"0123456789"
+        mock_session.get.return_value = resp
+
+        data = processor.download_segment(
+            "http://example.com/v.cmfv", byte_offset=2, byte_length=4
+        )
+
+        assert data == b"2345"
+
     def test_decrypt_aes128(self, processor):
         """Test AES-128 decryption logic."""
         # Setup mock key cache
@@ -138,21 +220,22 @@ class TestHlsProcessor:
 
     @patch("subprocess.run")
     def test_remux_to_mp4_success(self, mock_run, processor):
-        """Test successful remux command."""
+        """Test successful remux command (single input file, stream copy)."""
         mock_run.return_value.returncode = 0
-        
-        concat_list = Path("list.txt")
+
+        input_file = Path("combined.ts")
         output_mp4 = Path("output.mp4")
-        
-        processor.remux_to_mp4(concat_list, output_mp4)
-        
+
+        processor.remux_to_mp4(input_file, output_mp4)
+
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
         assert args[0] == "ffmpeg"
+        assert "-i" in args
         assert "-c" in args
-        assert "copy" in args # verify stream copy is used
-        assert str(concat_list) in args
-        assert str(output_mp4) in args
+        assert "copy" in args  # verify stream copy is used
+        assert input_file.absolute().as_posix() in args
+        assert output_mp4.absolute().as_posix() in args
 
     @patch("subprocess.run")
     def test_reencode_to_mp4_failure_handling(self, mock_run, processor):

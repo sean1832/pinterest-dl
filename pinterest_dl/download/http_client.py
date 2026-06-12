@@ -1,9 +1,10 @@
 import tempfile
 from pathlib import Path
-from typing import Iterable, List, Union
+from typing import List, Union
 
 import requests
 import requests.adapters
+from urllib3.util.retry import Retry
 
 from pinterest_dl.common.logging import get_logger
 from pinterest_dl.download.video.hls_processor import HlsProcessor
@@ -29,7 +30,7 @@ class HttpClient:
         """
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
-        retries = requests.adapters.Retry(
+        retries = Retry(
             total=max_retries,
             backoff_factor=backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
@@ -95,31 +96,46 @@ class HttpClient:
             base_uri = playlist.base_uri or media_url.rsplit("/", 1)[0] + "/"
 
         # enumerate segments
+        init = self.hls_processor.get_init_section(playlist, base_uri)
         segments = self.hls_processor.enumerate_segments(playlist, base_uri)
         with tempfile.TemporaryDirectory() as td:
             temp_dir = Path(td)
             segment_paths: List[Path] = []
-            iterator: Iterable = enumerate(segments)
-            for index, segment in iterator:
-                raw = self.hls_processor.download_segment(segment.uri)
+
+            # download init section if present
+            if init is not None:
+                init_bytes = self.hls_processor.download_segment(
+                    init.uri, init.byte_offset, init.byte_length
+                )
+                init_path = temp_dir / "init.mp4"
+                self.hls_processor.write_segment_file(init_path, init_bytes)
+                segment_paths.append(init_path)
+
+            for index, segment in enumerate(segments):
+                raw = self.hls_processor.download_segment(
+                    segment.uri, segment.byte_offset, segment.byte_length
+                )
                 data = self.hls_processor.decrypt(segment, raw)
                 segment_path = temp_dir / f"segment_{index:05d}.ts"
                 self.hls_processor.write_segment_file(segment_path, data)
                 segment_paths.append(segment_path)
 
+            # fMP4 (has init) -> .mp4. Plain TS (no init) -> .ts
+            suffix = ".mp4" if init is not None else ".ts"
+
             if skip_remux:
-                # Binary concat to .ts file (no ffmpeg)
-                output_ts = output_path.with_suffix(".ts")
-                self.hls_processor.concat_to_ts(segment_paths, output_ts)
-                return output_ts
-            else:
-                # Remux to .mp4 using ffmpeg, fallback to re-encode if remux fails
-                output_mp4 = output_path.with_suffix(".mp4")
-                concat_list = temp_dir / "concat_list.txt"
-                self.hls_processor.build_concat_list(segment_paths, concat_list)
-                try:
-                    self.hls_processor.remux_to_mp4(concat_list, output_mp4)
-                except Exception:
-                    logger.warning("Remux failed, re-encoding video (this may take longer)...")
-                    self.hls_processor.reencode_to_mp4(concat_list, output_mp4)
-                return output_mp4
+                final = output_path.with_suffix(suffix)
+                self.hls_processor.concat_to_ts(
+                    segment_paths, final
+                )  # binary concat straight to output
+                return final
+
+            combined = temp_dir / f"combined{suffix}"
+            self.hls_processor.concat_to_ts(segment_paths, combined)
+            output_mp4 = output_path.with_suffix(".mp4")
+            try:
+                self.hls_processor.remux_to_mp4(combined, output_mp4)
+            except Exception:
+                logger.warning("Remux failed, re-encoding video (this may take longer)...")
+                self.hls_processor.reencode_to_mp4(combined, output_mp4)
+            return output_mp4
