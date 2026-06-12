@@ -10,8 +10,6 @@
 
 **English | [中文](https://github.com/sean1832/pinterest-dl/blob/main/README_CN.md)**
 
-> [!NOTE]
-> **Version 1.0 is here!** This release brings improved stability, better error handling, and enhanced testing (56 comprehensive tests). All existing code continues to work without any changes - we've maintained full backward compatibility.
 
 This library facilitates the scraping and downloading of medias (including images and video stream) from [Pinterest](https://pinterest.com). Using reverse engineered Pinterest API and browser automation ([Playwright](https://playwright.dev) by default, with [Selenium](https://selenium.dev) as fallback), it enables users to extract images from a specified Pinterest URL and save them to a chosen directory.
 
@@ -32,8 +30,7 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - [Pinterest Media Downloader (pinterest-dl)](#pinterest-media-downloader-pinterest-dl)
 - [Table of Contents](#table-of-contents)
   - [🌟 Features](#-features)
-  - [🚩 Known Issues](#-known-issues)
-  - [📋 Requirements](#-requirements)
+  - [� Requirements](#-requirements)
   - [📥 Installation](#-installation)
     - [Using pip (Recommended)](#using-pip-recommended)
     - [Cloning from GitHub](#cloning-from-github)
@@ -60,9 +57,6 @@ It includes a [CLI](#-cli-usage) for direct usage and a [Python API](#️-python
 - ✅ Support for batch processing of URLs and queries from files.
 - ✅ Download video streams if available.
 - ✅ **Playwright support** - faster and more reliable browser automation (default), with Selenium as fallback (`--backend selenium`).
-
-## 🚩 Known Issues
-~~- 🔲 Not able to scrape nested boards yet.~~ (Supported since [#69](https://github.com/sean1832/pinterest-dl/pull/69))
 
 ## 📋 Requirements
 - Python 3.10 or newer
