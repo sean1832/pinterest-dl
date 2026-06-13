@@ -120,9 +120,31 @@ class ApiScraper:
         Returns:
             List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
-        medias = self._collect(
-            self.iter_scrape(url, min_resolution, delay, caption_from_title), num, on_progress
-        )
+        api = self._create_api(url)
+        if api.query is not None:
+            source = self.iter_search(api.query, min_resolution, delay, caption_from_title)
+            medias = self._collect(source, num, on_progress)
+        elif api.is_pin:
+            # The main pin is always the first result. Related pins only fill
+            # the remainder when num > 1; a filtered-out pin returns [] not a related pin.
+            main = self._scrape_one_pin(api, min_resolution, caption_from_title)
+            medias = [main] if main else []
+            if main and on_progress:
+                on_progress(main)
+            if num > 1:
+                source = self._pump(
+                    lambda size, bm: self._get_images(
+                        api, size, bm, min_resolution, caption_from_title=caption_from_title
+                    ),
+                    delay,
+                )
+                medias.extend(self._collect(source, num - len(medias), on_progress))
+        elif api.is_section:
+            source = self._iter_section(api, min_resolution, delay, caption_from_title)
+            medias = self._collect(source, num, on_progress)
+        else:
+            source = self._iter_board(api, min_resolution, delay, caption_from_title)
+            medias = self._collect(source, num, on_progress)
         if self.verbose:
             self._display_images(medias)
         logger.info(f"Successfully scraped {len(medias)} media items from {url}")
