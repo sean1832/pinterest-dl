@@ -187,7 +187,7 @@ class TestScrapePinFallbacks:
         with (
             patch.object(Api, "get_main_image", side_effect=EmptyResponseError("no data")),
             patch.object(Api, "get_pin_page", return_value=html),
-            patch.object(ApiScraper, "_pump", return_value=iter([])),
+            patch.object(ApiScraper, "_pump") as pump,
         ):
             items = scraper.scrape(
                 "https://www.pinterest.com/pin/123456789012345/",
@@ -196,6 +196,7 @@ class TestScrapePinFallbacks:
             )
 
         assert items == []
+        pump.assert_not_called()
 
 
 class TestApiScraperRouting:
