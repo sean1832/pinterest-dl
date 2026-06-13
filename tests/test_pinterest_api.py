@@ -187,6 +187,7 @@ class TestScrapePinFallbacks:
         with (
             patch.object(Api, "get_main_image", side_effect=EmptyResponseError("no data")),
             patch.object(Api, "get_pin_page", return_value=html),
+            patch.object(ApiScraper, "_pump", return_value=iter([])),
         ):
             items = scraper.scrape(
                 "https://www.pinterest.com/pin/123456789012345/",
@@ -199,7 +200,7 @@ class TestScrapePinFallbacks:
 
 class TestApiScraperRouting:
     def test_scrape_returns_only_the_pin_when_num_is_one(self):
-        fake_api = SimpleNamespace(is_pin=True, is_section=False)
+        fake_api = SimpleNamespace(query=None, is_pin=True, is_section=False)
         expected = PinterestMedia(
             id=123,
             src="https://i.pinimg.com/originals/test.jpg",
@@ -211,21 +212,18 @@ class TestApiScraperRouting:
         with (
             patch("pinterest_dl.scrapers.api_scraper.Api", return_value=fake_api),
             patch.object(ApiScraper, "_scrape_one_pin", return_value=expected) as scrape_one_pin,
-            patch.object(ApiScraper, "_scrape_pins") as scrape_pins,
+            patch.object(ApiScraper, "_pump") as pump,
         ):
             scraper = ApiScraper()
             items = scraper.scrape("https://www.pinterest.com/pin/123/", num=1)
 
         assert items == [expected]
-        scrape_one_pin.assert_called_once_with(
-            fake_api,
-            (0, 0),
-            caption_from_title=False,
-        )
-        scrape_pins.assert_not_called()
+        scrape_one_pin.assert_called_once_with(fake_api, (0, 0), False)
+        # num=1 is satisfied by the pin alone, so the related stream is never tapped.
+        pump.assert_not_called()
 
     def test_scrape_fills_with_related_when_num_exceeds_one(self):
-        fake_api = SimpleNamespace(is_pin=True, is_section=False)
+        fake_api = SimpleNamespace(query=None, is_pin=True, is_section=False)
         pin = PinterestMedia(
             id=123,
             src="https://i.pinimg.com/originals/pin.jpg",
@@ -248,23 +246,29 @@ class TestApiScraperRouting:
                 origin="https://www.pinterest.com/pin/789/",
                 resolution=(1200, 1800),
             ),
+            PinterestMedia(
+                id=101,
+                src="https://i.pinimg.com/originals/related-3.jpg",
+                alt="related 3",
+                origin="https://www.pinterest.com/pin/101/",
+                resolution=(1200, 1800),
+            ),
         ]
 
         with (
             patch("pinterest_dl.scrapers.api_scraper.Api", return_value=fake_api),
             patch.object(ApiScraper, "_scrape_one_pin", return_value=pin),
-            patch.object(ApiScraper, "_scrape_pins", return_value=related) as scrape_pins,
+            patch.object(ApiScraper, "_pump", return_value=iter(related)) as pump,
         ):
             scraper = ApiScraper()
             items = scraper.scrape("https://www.pinterest.com/pin/123/", num=3)
 
-        assert items == [pin, *related]
-        scrape_pins.assert_called_once()
-        # The pin counts as one item, so only the remaining (num - 1) are requested as related.
-        assert scrape_pins.call_args.args[1] == 2
+        # The pin counts as one item, so islice caps the related stream at num - 1 = 2.
+        assert items == [pin, related[0], related[1]]
+        pump.assert_called_once()
 
     def test_scrape_uses_board_flow_for_board_urls(self):
-        fake_api = SimpleNamespace(is_pin=False, is_section=False)
+        fake_api = SimpleNamespace(query=None, is_pin=False, is_section=False)
         expected = [
             PinterestMedia(
                 id=1,
@@ -277,13 +281,13 @@ class TestApiScraperRouting:
 
         with (
             patch("pinterest_dl.scrapers.api_scraper.Api", return_value=fake_api),
-            patch.object(ApiScraper, "_scrape_board", return_value=expected) as scrape_board,
+            patch.object(ApiScraper, "_iter_board", return_value=iter(expected)) as iter_board,
         ):
             scraper = ApiScraper()
             items = scraper.scrape("https://www.pinterest.com/user/board/", num=50)
 
         assert items == expected
-        scrape_board.assert_called_once()
+        iter_board.assert_called_once()
 
     def test_related_requires_pin_urls(self):
         fake_api = SimpleNamespace(is_pin=False, is_section=False)

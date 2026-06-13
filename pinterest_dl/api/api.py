@@ -44,6 +44,7 @@ class Api:
         self.url = self._prepare_url(url, timeout)
         self.timeout = timeout
         self.dumper = RequestDumper(dump) if dump else None
+        self.query: Optional[str] = None
         try:
             self.pin_id = self._parse_pin_id(self.url)
         except InvalidPinterestUrlError:
@@ -52,7 +53,7 @@ class Api:
                 self.query = self._parse_search_query(self.url)
             except InvalidSearchUrlError:
                 # Neither pin nor search URL - will try board parsing next
-                self.query = None
+                pass
 
         # Try parsing as section URL first (3 segments: username/board/section)
         try:

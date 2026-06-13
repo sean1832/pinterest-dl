@@ -1,10 +1,9 @@
+import itertools
 import json
 import re
 import time
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
-
-from tqdm import tqdm
+from typing import Any, Callable, Iterator, List, Literal, Optional, Tuple, Union
 
 from pinterest_dl.api.api import Api
 from pinterest_dl.api.bookmark_manager import BookmarkManager
@@ -103,6 +102,7 @@ class ApiScraper:
         min_resolution: Tuple[int, int] = (0, 0),
         delay: float = 0.2,
         caption_from_title: bool = False,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
     ) -> List[PinterestMedia]:
         """Scrape pins from Pinterest using the API.
 
@@ -115,57 +115,18 @@ class ApiScraper:
             num (int): Maximum number of images to scrape.
             delay (float): Delay in seconds between requests.
             caption_from_title (bool): Use the image title as the caption.
+            on_progress (Optional[Callable[[PinterestMedia], None]]): Optional callback function to be called for each scraped media item for progress reporting.
 
         Returns:
             List[PinterestMedia]: List of scraped PinterestMedia objects.
         """
-
-        api = self._create_api(url)
-        medias: List[PinterestMedia] = []
-
-        if api.is_pin:
-            media = self._scrape_one_pin(
-                api,
-                min_resolution,
-                caption_from_title=caption_from_title,
-            )
-            medias = [media] if media else []
-            # When more than the pin itself is requested, fill the remainder with related pins.
-            if num > 1:
-                related = self._scrape_pins(
-                    api,
-                    num - len(medias),
-                    min_resolution,
-                    delay,
-                    BookmarkManager(3),
-                    caption_from_title=caption_from_title,
-                    progress_offset=len(medias),
-                )
-                medias.extend(related)
-        elif api.is_section:
-            # Section URL detected - scrape only this section
-            medias = self._scrape_section(
-                api,
-                num,
-                min_resolution,
-                delay,
-                caption_from_title=caption_from_title,
-            )
-        else:
-            medias = self._scrape_board(
-                api,
-                num,
-                min_resolution,
-                delay,
-                BookmarkManager(3),
-                caption_from_title=caption_from_title,
-            )
-
+        medias = self._collect(
+            self.iter_scrape(url, min_resolution, delay, caption_from_title), num, on_progress
+        )
         if self.verbose:
             self._display_images(medias)
-
-        logger.info(f"Successfully scraped {len(medias[:num])} media items from {url}")
-        return medias[:num]
+        logger.info(f"Successfully scraped {len(medias)} media items from {url}")
+        return medias
 
     def related(
         self,
@@ -174,28 +135,64 @@ class ApiScraper:
         min_resolution: Tuple[int, int] = (0, 0),
         delay: float = 0.2,
         caption_from_title: bool = False,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
     ) -> List[PinterestMedia]:
-        """Scrape related pins from a Pinterest pin URL."""
+        """Scrape related pins from a pin URL.
+
+        Args:
+            url (str): Pinterest pin URL to scrape related pins from.
+            num (int): Maximum number of related pins to scrape.
+            min_resolution (Tuple[int, int], optional): Minimum resolution for pruning. Defaults to (0, 0).
+            delay (float, optional): Delay in seconds between requests. Defaults to 0.2.
+            caption_from_title (bool, optional): Use the image title as the caption. Defaults to False.
+            on_progress (Optional[Callable[[PinterestMedia], None]], optional): Optional callback function to be called for each scraped media item for progress reporting. Defaults to None.
+
+        Returns:
+            List[PinterestMedia]: List of scraped PinterestMedia objects related to the given pin URL.
+        """
         api = self._create_api(url)
         if not api.is_pin:
             raise ValueError("related only supports Pinterest pin URLs")
-
-        medias = self._scrape_pins(
-            api,
-            num,
-            min_resolution,
+        source = self._pump(
+            lambda size, bm: self._get_images(
+                api, size, bm, min_resolution, caption_from_title=caption_from_title
+            ),
             delay,
-            BookmarkManager(3),
-            caption_from_title=caption_from_title,
         )
-
+        medias = self._collect(source, num, on_progress)
         if self.verbose:
             self._display_images(medias)
+        logger.info(f"Successfully scraped {len(medias)} related media items from {url}")
+        return medias
 
-        logger.info(
-            f"Successfully scraped {len(medias[:num])} related media items from {url}"
-        )
-        return medias[:num]
+    def search(
+        self,
+        query: str,
+        num: int,
+        min_resolution: Tuple[int, int],
+        delay: float = 0.2,
+        bookmarksCount: int = 1,
+        caption_from_title: bool = False,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
+    ) -> List[PinterestMedia]:
+        """Search for pins on Pinterest and return results.
+
+        Args:
+            query (str): The search query.
+            num (int): The number of results to return.
+            min_resolution (Tuple[int, int]): The minimum resolution for the images.
+            delay (float, optional): The delay between requests. Defaults to 0.2.
+            bookmarksCount (int, optional): The number of bookmarks to fetch. Defaults to 1.
+            caption_from_title (bool, optional): Whether to use the title as the caption. Defaults to False.
+            on_progress (Optional[Callable[[PinterestMedia], None]], optional): A callback function to be called for each scraped media item. Defaults to None.
+
+        Returns:
+            List[PinterestMedia]: A list of PinterestMedia objects matching the search query, up to the specified count.
+        """
+        source = self.iter_search(query, min_resolution, delay, bookmarksCount, caption_from_title)
+        medias = self._collect(source, num, on_progress)
+        logger.info(f"Successfully scraped {len(medias)} media items for search query: '{query}'")
+        return medias
 
     def scrape_and_download(
         self,
@@ -209,6 +206,7 @@ class ApiScraper:
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         caption_from_title: bool = False,
         delay: float = 0.2,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
     ) -> Optional[List[PinterestMedia]]:
         """Scrape pins from Pinterest and download images.
 
@@ -225,12 +223,13 @@ class ApiScraper:
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
-                'txt' for alt text in separate files,
-                'json' for full image data,
-                'metadata' embeds in image files,
-                'none' skips captions
+                - 'txt' for alt text in separate files,
+                - 'json' for full image data,
+                - 'metadata' embeds in image files,
+                - 'none' skips captions
             caption_from_title (bool): Use the image title as the caption.
             delay (float): Delay in seconds between requests.
+            on_progress (Optional[Callable[[PinterestMedia], None]]): Optional callback invoked with each scraped media item for progress reporting.
 
         Returns:
             Optional[List[PinterestMedia]]: List of downloaded PinterestMedia objects.
@@ -241,6 +240,7 @@ class ApiScraper:
             min_resolution,
             delay,
             caption_from_title=caption_from_title,
+            on_progress=on_progress,
         )
         return self._download_and_save(
             scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
@@ -258,6 +258,7 @@ class ApiScraper:
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         caption_from_title: bool = False,
         delay: float = 0.2,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
     ) -> Optional[List[PinterestMedia]]:
         """Scrape related pins from a pin URL and download them."""
         scraped_outputs = self.related(
@@ -266,113 +267,11 @@ class ApiScraper:
             min_resolution,
             delay,
             caption_from_title=caption_from_title,
+            on_progress=on_progress,
         )
         return self._download_and_save(
             scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
         )
-
-    def search(
-        self,
-        query: str,
-        num: int,
-        min_resolution: Tuple[int, int],
-        delay: float = 0.2,
-        bookmarksCount: int = 1,
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape pins from a Pinterest search query using the API.
-
-        Args:
-            query (str): query to search.
-            num (int): Maximum number of images to scrape.
-            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
-            delay (float): Delay in seconds between requests in second. Defaults to 0.2.
-            bookmarksCount (int, optional): Number of bookmarks to keep. Defaults to 1.
-
-        Returns:
-            List[PinterestMedia]: List of scraped PinterestMedia objects.
-        """
-        images = []
-        remains = num
-        batch_count = 0
-
-        if " " in query:
-            query = request_builder.url_encode(query)
-        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
-
-        logger.info(f"Starting search scrape for query: '{query}', target: {num} items")
-        if self.verbose:
-            logger.debug(f"Search URL: {url}")
-        api = Api(
-            url,
-            self.cookies,
-            timeout=self.timeout,
-            dump=self.dump,
-        )
-        bookmarks = BookmarkManager(bookmarksCount)
-
-        with tqdm(total=num, desc="Scraping Search", disable=self.verbose) as pbar:
-            while remains > 0:
-                batch_size = min(50, remains)
-                try:
-                    current_img_batch, bookmarks = self._search_images(
-                        api,
-                        batch_size,
-                        bookmarks,
-                        min_resolution,
-                        caption_from_title=caption_from_title,
-                    )
-                except (ValueError, EmptyResponseError) as e:
-                    logger.warning(f"Search scraping interrupted: {e}")
-                    break
-                except Exception as e:
-                    logger.error(
-                        f"Unexpected error during search scraping: {e}",
-                        exc_info=self.verbose,
-                    )
-                    raise
-
-                old_count = len(images)
-                images.extend(current_img_batch)
-                images = self._unique_images(images)
-                new_images_count = len(images) - old_count
-                remains -= new_images_count
-                pbar.update(new_images_count)
-
-                if "-end-" in bookmarks.get():
-                    break
-
-                if self.verbose:
-                    for img in current_img_batch:
-                        logger.debug(f"[Batch {batch_count}] ({img.src})")
-                    logger.debug(f"[Batch {batch_count}] bookmarks: {bookmarks.get()}")
-
-                time.sleep(delay)
-                try:
-                    remains = self._handle_missing_search_images(
-                        api,
-                        batch_size,
-                        remains,
-                        bookmarks,
-                        min_resolution,
-                        images,
-                        pbar,
-                        delay,
-                    )
-                except (ValueError, EmptyResponseError) as e:
-                    logger.warning(
-                        f"Search scraping interrupted while handling missing images: {e}"
-                    )
-                    break
-                except Exception as e:
-                    logger.error(
-                        f"Unexpected error while handling missing search images: {e}",
-                        exc_info=self.verbose,
-                    )
-                    raise
-                batch_count += 1
-
-        return images[:num]
 
     def search_and_download(
         self,
@@ -386,6 +285,7 @@ class ApiScraper:
         caption: Literal["txt", "json", "metadata", "none"] = "none",
         delay: float = 0.2,
         caption_from_title: bool = False,
+        on_progress: Optional[Callable[[PinterestMedia], None]] = None,
     ) -> Optional[List[PinterestMedia]]:
         """Search for images on Pinterest and download them.
 
@@ -398,100 +298,232 @@ class ApiScraper:
             min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to download all images.
             cache_path (Optional[Union[str, Path]]): Path to cache scraped data as json
             caption (Literal["txt", "json", "metadata", "none"]): Caption mode for downloaded images.
-                'txt' for alt text in separate files,
-                'json' for full image data,
-                'metadata' embeds in image files,
-                'none' skips captions
+                - 'txt' for alt text in separate files,
+                - 'json' for full image data,
+                - 'metadata' embeds in image files,
+                - 'none' skips captions
             delay (float): Delay in seconds between requests.
-
+            on_progress (Optional[Callable[[PinterestMedia], None]]): Optional callback invoked with each scraped media item for progress reporting.
 
         Returns:
             Optional[List[PinterestMedia]]: List of downloaded PinterestMedia objects.
         """
         scraped_outputs = self.search(
-            query, num, min_resolution, delay, caption_from_title=caption_from_title
+            query,
+            num,
+            min_resolution,
+            delay,
+            caption_from_title=caption_from_title,
+            on_progress=on_progress,
         )
         return self._download_and_save(
             scraped_outputs, output_dir, download_streams, skip_remux, cache_path, caption
         )
 
-    def _scrape_pins(
+    def iter_scrape(
+        self,
+        url: str,
+        min_resolution: Tuple[int, int] = (0, 0),
+        delay: float = 0.2,
+        caption_from_title: bool = False,
+    ) -> Iterator[PinterestMedia]:
+        """Lazily yield media for any supported URL (pin, board, or section).
+
+        Args:
+            url (str): Pinterest URL to scrape. Supports:
+                - Pin URL: scrapes the requested pin itself, then continues with related pins
+                - Board URL: scrapes pins from the board
+                - Section URL: scrapes pins from a specific board section
+            min_resolution (Tuple[int, int]): Minimum resolution for pruning. (width, height). (0, 0) to include all images.
+            delay (float): Delay in seconds between requests.
+            caption_from_title (bool): Use the image title as the caption.
+        Returns:
+            Iterator[PinterestMedia]: An iterator over scraped PinterestMedia objects.
+        """
+        api = self._create_api(url)
+        if api.query is not None:
+            # Search URL detected - delegate to iter_search
+            yield from self.iter_search(api.query, min_resolution, delay, caption_from_title)
+        elif api.is_pin:
+            main = self._scrape_one_pin(api, min_resolution, caption_from_title)
+            if main is not None:
+                yield main
+            yield from self._pump(
+                lambda size, bm: self._get_images(
+                    api, size, bm, min_resolution, caption_from_title=caption_from_title
+                ),
+                delay,
+            )
+        elif api.is_section:
+            yield from self._iter_section(api, min_resolution, delay, caption_from_title)
+        else:
+            yield from self._iter_board(api, min_resolution, delay, caption_from_title)
+
+    def iter_search(
+        self,
+        query: str,
+        min_resolution: Tuple[int, int] = (0, 0),
+        delay: float = 0.2,
+        bookmarksCount: int = 1,
+        caption_from_title: bool = False,
+    ) -> Iterator[PinterestMedia]:
+        """Search for pins on Pinterest and yield results lazily.
+
+        Args:
+            query (str): query to search.
+            min_resolution (Tuple[int, int], optional): Minimum resolution for the images. Defaults to (0, 0).
+            delay (float, optional): Delay between requests. Defaults to 0.2.
+            bookmarksCount (int, optional): Number of bookmarks to fetch. Defaults to 1.
+            caption_from_title (bool, optional): Whether to use the title as the caption. Defaults to False.
+
+        Yields:
+            Iterator[PinterestMedia]: An iterator over search results as PinterestMedia objects.
+        """
+        if " " in query:
+            query = request_builder.url_encode(query)
+        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+        logger.info(f"Starting search scrape for query: '{query}'")
+        api = Api(url, self.cookies, self.timeout, self.dump)
+        yield from self._pump(
+            lambda size, bm: self._search_images(
+                api, size, bm, min_resolution, caption_from_title=caption_from_title
+            ),
+            delay,
+            bookmarks=BookmarkManager(bookmarksCount),
+        )
+
+    def _pump(
+        self,
+        fetch_batch: Callable[[int, BookmarkManager], Tuple[List[PinterestMedia], BookmarkManager]],
+        delay: float,
+        bookmarks: Optional[BookmarkManager] = None,
+    ) -> Iterator[PinterestMedia]:
+        """Page through a Pinterest bookmark stream, yielding unique media lazily.
+
+        Args:
+            fetch_batch (fetch_batch(batch_size, bookmarks)): Function that fetches the next batch of media given a batch size and current bookmarks, returning (media_list, new_bookmarks).
+            delay (float): Delay in seconds between batch fetches to avoid hitting rate limits.
+            bookmarks (Optional[BookmarkManager]): Initial bookmarks to start from. If None, starts from the beginning of the stream.
+
+        Yields:
+            Iterator[PinterestMedia]: An iterator over unique PinterestMedia objects from the stream.
+        """
+        bookmarks = bookmarks or BookmarkManager(3)
+        seen: set[str] = set()
+        while True:
+            try:
+                batch, bookmarks = fetch_batch(
+                    50, bookmarks
+                )  # pinterest API seems to max out at 50 items per request
+            except (ValueError, EmptyResponseError) as e:
+                logger.warning(f"Scraping interrupted: {e}")
+                return
+            except Exception as e:
+                logger.error(f"Unexpected error while scraping: {e}", exc_info=self.verbose)
+                raise
+
+            for media in batch:
+                if media.src not in seen:
+                    seen.add(media.src)
+                    yield media
+
+            # "-end-" is a special bookmark value indicating no more results
+            if "-end-" in bookmarks.get():
+                return
+            time.sleep(delay)
+
+    def _collect(
+        self,
+        source: Iterator[PinterestMedia],
+        num: int,
+        on_progress: Optional[Callable[[PinterestMedia], None]],
+    ) -> List[PinterestMedia]:
+        """Drain up to `num` items from a media iterator, reporting each one.
+
+        Args:
+            source (Iterator[PinterestMedia]): An iterator that yields PinterestMedia objects.
+            num (int): Maximum number of items to collect from the source iterator.
+            on_progress (Optional[Callable[[PinterestMedia], None]]): Optional callback function that is called with each new media item for progress reporting.
+        Returns:
+            List[PinterestMedia]: A list of collected PinterestMedia objects, up to the target count.
+        """
+        medias: List[PinterestMedia] = []
+        for media in itertools.islice(source, num):
+            medias.append(media)
+            if on_progress is not None:
+                on_progress(media)
+        return medias
+
+    def _iter_section(
         self,
         api: Api,
-        num: int,
         min_resolution: Tuple[int, int],
         delay: float,
-        bookmarks: BookmarkManager,
-        caption_from_title: bool = False,
-        progress_offset: int = 0,
-    ) -> List[PinterestMedia]:
-        """Scrape related pins from a specific Pinterest pin URL.
+        caption_from_title: bool,
+    ) -> Iterator[PinterestMedia]:
+        board_id = api.get_board().get_board_id()
+        if not api.section_slug:
+            logger.error("Section slug is not set in the API client")
+            return
+        section_id = api.get_section_id_by_slug(board_id, api.section_slug)
+        if not section_id:
+            logger.warning(f"Section '{api.section_slug}' not found in board '{api.boardname}'")
+            return
+        logger.info(f"Scraping section '{api.section_slug}' (ID: {section_id})")
+        yield from self._pump(
+            lambda size, bm: self._get_section_images(
+                api,
+                section_id,
+                size,
+                bm,
+                min_resolution,
+                caption_from_title=caption_from_title,
+            ),
+            delay,
+        )
 
-        progress_offset seeds the progress bar with items already collected by
-        the caller (e.g. the pin itself when scrape() fills with related pins),
-        so the bar reflects the full requested count rather than just the
-        related pins. It only affects display, not how many pins are scraped.
-        """
-        images: List[PinterestMedia] = []
-        remains = num
+    def _iter_board(
+        self, api: Api, min_resolution: Tuple[int, int], delay: float, caption_from_title: bool
+    ) -> Iterator[PinterestMedia]:
+        board_info = api.get_board()
+        board_id = board_info.get_board_id()
+        logger.info(f"Scraping board (ID: {board_id}) with {board_info.get_pin_count()} pins")
 
-        with tqdm(
-            total=num + progress_offset,
-            initial=progress_offset,
-            desc="Scraping Pins",
-            disable=self.verbose,
-        ) as pbar:
-            while remains > 0:
-                batch_size = min(50, remains)
-                try:
-                    current_img_batch, bookmarks = self._get_images(
-                        api,
-                        batch_size,
-                        bookmarks,
-                        min_resolution,
-                        caption_from_title=caption_from_title,
-                    )
-                except (ValueError, EmptyResponseError) as e:
-                    logger.warning(f"Scraping interrupted: {e}")
-                    break
-                except Exception as e:
-                    logger.error(f"Unexpected error while scraping: {e}", exc_info=self.verbose)
-                    raise
-
-                old_count = len(images)
-                images.extend(current_img_batch)
-                images = self._unique_images(images)
-                new_images_count = len(images) - old_count
-                remains -= new_images_count
-                pbar.update(new_images_count)
-
-                if "-end-" in bookmarks.get():
-                    break
-                if self.verbose:
-                    logger.debug(f"bookmarks: {bookmarks.get()}")
+        bookmarks = BookmarkManager(3)
+        seen: set[str] = set()
+        consecutive_empty = 0
+        while True:
+            try:
+                batch, bookmarks = self._get_images_with_retry(
+                    api, 50, bookmarks, min_resolution, board_id, caption_from_title
+                )
+                consecutive_empty = 0  # reset on successful fetch
+            except EmptyResponseError as e:
+                consecutive_empty += 1
+                logger.warning(
+                    f"Failed to fetch batch after retries: {e} (consecutive: {consecutive_empty}/3)"
+                )
+                if consecutive_empty >= 3:
+                    logger.warning("Stopping after 3 consecutive empty responses")
+                    return
                 time.sleep(delay)
-                try:
-                    remains = self._handle_missing_images(
-                        api,
-                        batch_size,
-                        remains,
-                        bookmarks,
-                        min_resolution,
-                        images,
-                        pbar,
-                        delay,
-                    )
-                except (ValueError, EmptyResponseError) as e:
-                    logger.warning(f"Scraping interrupted while handling missing images: {e}")
-                    break
-                except Exception as e:
-                    logger.error(
-                        f"Unexpected error while handling missing images: {e}",
-                        exc_info=self.verbose,
-                    )
-                    raise
+                continue
+            except ValueError as e:
+                logger.warning(f"Board scraping interrupted: {e}")
+                return
+            except Exception as e:
+                logger.error(f"Unexpected error while scraping board: {e}", exc_info=self.verbose)
+                raise
 
-        return images
+            for media in batch:
+                if media.src not in seen:
+                    seen.add(media.src)
+                    yield media
+
+            if "-end-" in bookmarks.get():
+                logger.debug("Reached end of board stream")
+                return
+            time.sleep(delay)
 
     def _scrape_one_pin(
         self,
@@ -597,11 +629,7 @@ class ApiScraper:
         html = api.get_pin_page()
         meta = self._extract_meta_tags(html)
 
-        src = (
-            meta.get("og:image")
-            or meta.get("twitter:image")
-            or meta.get("twitter:image:src")
-        )
+        src = meta.get("og:image") or meta.get("twitter:image") or meta.get("twitter:image:src")
         if not src:
             raise EmptyResponseError("No image found in pin page metadata.")
 
@@ -624,7 +652,9 @@ class ApiScraper:
         if self.ensure_alt and not alt.strip():
             raise EmptyResponseError("Requested pin has no alt text.")
 
-        video_stream = self._extract_video_stream_from_meta(meta) or self._extract_video_stream_from_html(html)
+        video_stream = self._extract_video_stream_from_meta(
+            meta
+        ) or self._extract_video_stream_from_html(html)
 
         return PinterestMedia(
             id=int(pin_id),
@@ -654,9 +684,7 @@ class ApiScraper:
 
         return meta
 
-    def _extract_video_stream_from_meta(
-        self, meta: dict[str, str]
-    ) -> Optional[VideoStreamInfo]:
+    def _extract_video_stream_from_meta(self, meta: dict[str, str]) -> Optional[VideoStreamInfo]:
         """Extract video metadata from page meta tags when available."""
         video_url = meta.get("og:video") or meta.get("og:video:url")
         if not video_url:
@@ -679,11 +707,7 @@ class ApiScraper:
             html,
             flags=re.IGNORECASE,
         )
-        candidates = [
-            url
-            for url in candidates
-            if "pinimg.com" in url or "pinterest" in url
-        ]
+        candidates = [url for url in candidates if "pinimg.com" in url or "pinterest" in url]
         if not candidates:
             return None
 
@@ -705,230 +729,6 @@ class ApiScraper:
             return int(value)
         except (TypeError, ValueError):
             return 0
-
-    def _scrape_board(
-        self,
-        api: Api,
-        num: int,
-        min_resolution: Tuple[int, int],
-        delay: float,
-        bookmarks: BookmarkManager,
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape pins from a Pinterest board URL.
-
-        Args:
-            api: Pinterest API client.
-            num: Maximum number of pins to scrape.
-            min_resolution: Minimum resolution filter (width, height).
-            delay: Delay between requests in seconds.
-            bookmarks: Bookmark manager for pagination.
-            caption_from_title: Use title as caption.
-        """
-        medias: List[PinterestMedia] = []
-        board_info = api.get_board()
-        board_id = board_info.get_board_id()
-        pin_count = board_info.get_pin_count()
-        target_num = min(num, pin_count)
-        remains = target_num
-
-        logger.info(
-            f"Scraping board with {pin_count} pins (ID: {board_id}), target: {target_num} items"
-        )
-        if self.verbose:
-            logger.debug(f"Board URL: {api.url}")
-
-        with tqdm(total=num, desc="Scraping Board", disable=self.verbose) as pbar:
-            consecutive_empty_responses = 0
-            max_consecutive_failures = 3
-
-            while remains > 0:
-                batch_size = min(50, remains)
-                try:
-                    current_img_batch, bookmarks = self._get_images_with_retry(
-                        api,
-                        batch_size,
-                        bookmarks,
-                        min_resolution,
-                        board_id=board_id,
-                        caption_from_title=caption_from_title,
-                    )
-                    # Reset consecutive failure counter on success
-                    consecutive_empty_responses = 0
-                except EmptyResponseError as e:
-                    consecutive_empty_responses += 1
-                    logger.warning(
-                        f"Failed to fetch batch after retries: {e} "
-                        f"(consecutive failures: {consecutive_empty_responses}/{max_consecutive_failures})"
-                    )
-
-                    # Stop if we hit too many consecutive failures
-                    if consecutive_empty_responses >= max_consecutive_failures:
-                        logger.warning(
-                            f"Stopping: {max_consecutive_failures} consecutive empty responses. "
-                            f"Scraped {len(medias)} items so far."
-                        )
-                        break
-
-                    # Continue to next batch - might be a transient issue
-                    time.sleep(delay)
-                    continue
-                except ValueError as e:
-                    logger.warning(f"Board scraping interrupted: {e}")
-                    break
-                except Exception as e:
-                    logger.error(
-                        f"Unexpected error while scraping board: {e}",
-                        exc_info=self.verbose,
-                    )
-                    raise
-
-                old_count = len(medias)
-                medias.extend(current_img_batch)
-                medias = self._unique_images(medias)
-                new_images_count = len(medias) - old_count
-                remains -= new_images_count
-                pbar.update(new_images_count)
-
-                # Check if we've reached the end before trying to fetch more
-                if "-end-" in bookmarks.get():
-                    logger.debug("Reached end of board (bookmark indicates no more items)")
-                    break
-
-                time.sleep(delay)
-
-                # Only try to fetch missing images if we haven't reached the end
-                try:
-                    remains = self._handle_missing_images(
-                        api,
-                        batch_size,
-                        remains,
-                        bookmarks,
-                        min_resolution,
-                        medias,
-                        pbar,
-                        delay,
-                        board_id,
-                    )
-                except ValueError as e:
-                    logger.error(f"Scraping error: {e}", exc_info=self.verbose)
-                    break
-                except EmptyResponseError as e:
-                    # Empty response when trying to fill gaps - likely reached the end
-                    logger.debug(f"Empty response while filling batch gaps: {e}")
-                    # Don't break - we got some images, just can't fill the gap
-                    break
-
-        return medias
-
-    def _scrape_section(
-        self,
-        api: Api,
-        num: int,
-        min_resolution: Tuple[int, int],
-        delay: float,
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape pins from a board section.
-
-        Uses the section_slug from the API to look up the section ID.
-
-        Args:
-            api: Pinterest API client (must have section_slug set).
-            num: Maximum number of pins to scrape from this section.
-            min_resolution: Minimum resolution filter (width, height).
-            delay: Delay between requests in seconds.
-            caption_from_title: Use title as caption.
-
-        Returns:
-            List of media items from this section.
-        """
-        # First, get the board to obtain board_id
-        board_info = api.get_board()
-        board_id = board_info.get_board_id()
-
-        # Validate section_slug is set
-        if not api.section_slug:
-            logger.error("Section slug is not set in the API client")
-            return []
-
-        # Look up section ID by slug
-        section_id = api.get_section_id_by_slug(board_id, api.section_slug)
-        if not section_id:
-            logger.warning(
-                f"Section '{api.section_slug}' not found in board '{api.boardname}'. "
-                f"Available sections may have different slugs."
-            )
-            return []
-
-        logger.info(
-            f"Scraping section '{api.section_slug}' (ID: {section_id}) from board '{api.boardname}'"
-        )
-
-        return self._scrape_section_by_id(
-            api,
-            section_id,
-            num,
-            min_resolution,
-            delay,
-            caption_from_title=caption_from_title,
-        )
-
-    def _scrape_section_by_id(
-        self,
-        api: Api,
-        section_id: str,
-        num: int,
-        min_resolution: Tuple[int, int],
-        delay: float,
-        caption_from_title: bool = False,
-    ) -> List[PinterestMedia]:
-        """Scrape pins from a single board section.
-
-        Args:
-            api: Pinterest API client.
-            section_id: Section ID to scrape.
-            num: Maximum number of pins to scrape from this section.
-            min_resolution: Minimum resolution filter (width, height).
-            delay: Delay between requests in seconds.
-            caption_from_title: Use title as caption.
-
-        Returns:
-            List of media items from this section.
-        """
-        medias: List[PinterestMedia] = []
-        bookmarks = BookmarkManager(3)
-        remains = num
-
-        while remains > 0:
-            batch_size = min(50, remains)
-            try:
-                current_batch, bookmarks = self._get_section_images(
-                    api,
-                    section_id,
-                    batch_size,
-                    bookmarks,
-                    min_resolution,
-                    caption_from_title=caption_from_title,
-                )
-            except EmptyResponseError:
-                break
-            except Exception as e:
-                logger.warning(f"Error scraping section {section_id}: {e}")
-                break
-
-            old_count = len(medias)
-            medias.extend(current_batch)
-            medias = self._unique_images(medias)
-            new_count = len(medias) - old_count
-            remains -= new_count
-
-            if "-end-" in bookmarks.get():
-                break
-
-            time.sleep(delay)
-
-        return medias
 
     def _download_and_save(
         self,
@@ -1158,100 +958,6 @@ class ApiScraper:
     def _cull_no_alt(self, images: List[PinterestMedia]) -> List[PinterestMedia]:
         """Remove images with no alt text."""
         return [img for img in images if img.alt and img.alt.strip() != ""]
-
-    def _handle_missing_search_images(
-        self,
-        api: Api,
-        batch_size: int,
-        remains: int,
-        bookmarks: BookmarkManager,
-        min_resolution: Tuple[int, int],
-        images: List[PinterestMedia],
-        pbar: tqdm,
-        delay: float,
-    ) -> int:
-        """Handle cases where a batch does not return enough images."""
-        difference = batch_size - len(images[-batch_size:])
-        while difference > 0 and remains > 0:
-            next_response = api.get_search(difference, bookmarks.get())
-            next_response_data = next_response.resource_response.get("data", {}).get("results", [])
-            additional_images = ResponseParser.from_responses(next_response_data, min_resolution)
-            images.extend(additional_images)
-            bookmarks.add_all(next_response.get_bookmarks())
-            remains -= len(additional_images)
-            difference -= len(additional_images)
-            pbar.update(len(additional_images))
-            time.sleep(delay)
-
-        return remains
-
-    def _handle_missing_images(
-        self,
-        api: Api,
-        batch_size: int,
-        remains: int,
-        bookmarks: BookmarkManager,
-        min_resolution: Tuple[int, int],
-        images: List[PinterestMedia],
-        pbar: tqdm,
-        delay: float,
-        board_id: Optional[str] = None,
-    ) -> int:
-        """Handle cases where a batch does not return enough images.
-
-        Returns the updated remains count.
-        """
-        difference = batch_size - len(images[-batch_size:])
-
-        while difference > 0 and remains > 0:
-            # Check if we've reached the end before making more requests
-            if "-end-" in bookmarks.get():
-                logger.debug("Cannot fetch more images: reached end of available content")
-                break
-
-            try:
-                next_response = (
-                    api.get_related_images(difference, bookmarks.get())
-                    if not board_id
-                    else api.get_board_pins(board_id, difference, bookmarks.get())
-                )
-                next_response_data = next_response.resource_response.get("data", [])
-
-                # Handle empty response gracefully
-                if not next_response_data:
-                    logger.debug("No additional images available to fill batch")
-                    break
-
-                additional_images = ResponseParser.from_responses(
-                    next_response_data, min_resolution
-                )
-                images.extend(additional_images)
-                bookmarks.add_all(next_response.get_bookmarks())
-                remains -= len(additional_images)
-                difference -= len(additional_images)
-                pbar.update(len(additional_images))
-                time.sleep(delay)
-
-            except EmptyResponseError as e:
-                # Empty response is expected when no more images are available
-                logger.debug(f"No more images to fetch: {e}")
-                break
-            except Exception as e:
-                # Log other errors but don't fail the entire scrape
-                logger.warning(f"Error while fetching additional images: {e}")
-                break
-
-        return remains
-
-    def _unique_images(self, images: List[PinterestMedia]) -> List[PinterestMedia]:
-        """Return a list of unique PinterestMedia objects based on their 'src' attribute."""
-        unique = []
-        seen = set()
-        for img in images:
-            if img.src not in seen:
-                unique.append(img)
-                seen.add(img.src)
-        return unique
 
     def _display_images(self, images: List[PinterestMedia]):
         """Print scraped media URLs if verbosity is enabled."""
