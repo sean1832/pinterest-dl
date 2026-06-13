@@ -122,6 +122,23 @@ python examples/dump_mode.py
 
 ---
 
+### 7. `streaming_and_progress.py`
+**Lazy iterator API and progress callbacks**
+
+Examples included:
+- Stream `iter_scrape` with your own tqdm bar
+- Process items while streaming and stop early
+- `on_progress` callback with eager `scrape()`
+- Stream search results with `iter_search`
+- Route progress to a custom sink
+
+**Quick start:**
+```bash
+python examples/streaming_and_progress.py
+```
+
+---
+
 ## Running Examples
 
 ### Run Individual Examples
@@ -235,6 +252,22 @@ items = PinterestDL.with_api().scrape_and_download(
     download_streams=True,  # Download videos
     caption="json",         # Save metadata as JSON
 )
+```
+
+### Workflow 6: Stream results and drive your own progress bar
+```python
+import itertools
+from tqdm import tqdm
+from pinterest_dl import PinterestDL
+
+scraper = PinterestDL.with_api()
+num = 30
+
+# iter_scrape yields lazily; islice caps the count, tqdm shows progress
+medias = list(tqdm(
+    itertools.islice(scraper.iter_scrape("YOUR_URL"), num),
+    total=num,
+))
 ```
 
 ---
