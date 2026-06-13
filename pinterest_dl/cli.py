@@ -1,9 +1,11 @@
 import argparse
 import sys
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from getpass import getpass
 from pathlib import Path
-from typing import List
+from typing import Callable, Iterator, List
+
+from tqdm import tqdm
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.common import io
@@ -28,6 +30,23 @@ def parse_resolution(resolution: str) -> tuple[int, int]:
         return width, height
     except ValueError:
         raise ValueError("Invalid resolution format. Use 'width x height'.")
+
+
+@contextmanager
+def scrape_progress(
+    total: int, desc: str, disable: bool
+) -> Iterator[Callable[[PinterestMedia], None]]:
+    """Yield an on_progress callback that drives a tqdm bar for the scrape phase.
+
+    The download phase manages its own bar, so this covers scraping only. In
+    verbose mode the bar is disabled so log lines show instead.
+    """
+    with tqdm(total=total, desc=desc, disable=disable) as pbar:
+
+        def advance(_media: PinterestMedia) -> None:
+            pbar.update(1)
+
+        yield advance
 
 
 def combine_inputs(positionals: List[str], files: List[str] | None) -> List[str]:
@@ -346,20 +365,22 @@ def main() -> None:
                         dump=args.dump,
                     ).with_cookies_path(args.cookies)
                     download = api.related_and_download if related_only else api.scrape_and_download
-                    imgs = download(
-                        url,
-                        args.output,
-                        num,
-                        download_streams=args.video,
-                        skip_remux=args.skip_remux,
-                        min_resolution=parse_resolution(args.resolution)
-                        if args.resolution
-                        else (0, 0),
-                        cache_path=args.cache,
-                        caption=args.caption,
-                        delay=args.delay,
-                        caption_from_title=args.cap_from_title,
-                    )
+                    with scrape_progress(num, "Scraping", args.verbose) as on_progress:
+                        imgs = download(
+                            url,
+                            args.output,
+                            num,
+                            download_streams=args.video,
+                            skip_remux=args.skip_remux,
+                            min_resolution=parse_resolution(args.resolution)
+                            if args.resolution
+                            else (0, 0),
+                            cache_path=args.cache,
+                            caption=args.caption,
+                            delay=args.delay,
+                            caption_from_title=args.cap_from_title,
+                            on_progress=on_progress,
+                        )
                 if imgs and len(imgs) != num:
                     print(
                         f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {num}). Some may have been duplicates, filtered, or failed to download."
@@ -388,15 +409,14 @@ def main() -> None:
                             "Warning: Incognito and headful mode is only available for browser clients."
                         )
 
-                    imgs = (
-                        PinterestDL.with_api(
-                            timeout=args.timeout,
-                            verbose=args.verbose,
-                            ensure_alt=args.ensure_cap,
-                            dump=args.dump,
-                        )
-                        .with_cookies_path(args.cookies)
-                        .search_and_download(
+                    api = PinterestDL.with_api(
+                        timeout=args.timeout,
+                        verbose=args.verbose,
+                        ensure_alt=args.ensure_cap,
+                        dump=args.dump,
+                    ).with_cookies_path(args.cookies)
+                    with scrape_progress(args.num, "Searching", args.verbose) as on_progress:
+                        imgs = api.search_and_download(
                             query,
                             args.output,
                             args.num,
@@ -409,8 +429,8 @@ def main() -> None:
                             caption=args.caption,
                             delay=args.delay,
                             caption_from_title=args.cap_from_title,
+                            on_progress=on_progress,
                         )
-                    )
                     if imgs and len(imgs) != args.num:
                         print(
                             f"Warning: Only ({len(imgs)}) images were successfully downloaded from {query} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
