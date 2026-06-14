@@ -1,8 +1,14 @@
 """Tests for CLI utility functions."""
 
+import io
+import json
+from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import patch
+
 import pytest
 
-from pinterest_dl.cli import combine_inputs, parse_resolution, sanitize_url
+from pinterest_dl.cli import combine_inputs, get_parser, main, parse_resolution, sanitize_url
+from pinterest_dl.domain.media import PinterestMedia
 
 
 class TestParseResolution:
@@ -79,3 +85,56 @@ class TestCombineInputs:
 
         result = combine_inputs([], [str(test_file)])
         assert result == ["url1", "url2", "url3"]
+
+
+class TestJsonMode:
+    def test_parser_accepts_json_flag(self):
+        parser = get_parser()
+
+        assert parser.parse_args(["scrape", "--json", "url"]).json is True
+        assert parser.parse_args(["search", "--json", "cats"]).json is True
+        assert parser.parse_args(["download", "--json", "cache.json"]).json is True
+
+    def test_scrape_json_mode_prints_structured_json(self):
+        media = PinterestMedia(
+            id=123,
+            src="https://i.pinimg.com/test.jpg",
+            alt="caption",
+            origin="https://www.pinterest.com/pin/123/",
+            resolution=(1200, 1800),
+        )
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with (
+            patch("sys.argv", ["pinterest-dl", "scrape", "--json", "https://www.pinterest.com/pin/123/"]),
+            patch("pinterest_dl.cli.PinterestDL") as dl,
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            dl.with_api.return_value.with_cookies_path.return_value.scrape.return_value = [media]
+            main()
+
+        payload = json.loads(stdout.getvalue())
+        assert payload["command"] == "scrape"
+        assert payload["results"][0]["input"] == "https://www.pinterest.com/pin/123/"
+        assert payload["results"][0]["items"][0]["id"] == 123
+        assert stderr.getvalue() == ""
+
+    def test_search_json_mode_sends_errors_to_stderr(self):
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with (
+            patch("sys.argv", ["pinterest-dl", "search", "--json", "cats"]),
+            patch("pinterest_dl.cli.PinterestDL") as dl,
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            dl.with_api.return_value.with_cookies_path.return_value.search.side_effect = RuntimeError("boom")
+            with pytest.raises(SystemExit) as exc:
+                main()
+
+        assert exc.value.code == 1
+        assert stdout.getvalue() == ""
+        assert "Error: boom" in stderr.getvalue()
