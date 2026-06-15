@@ -2,6 +2,27 @@
 
 This directory contains comprehensive examples demonstrating various use cases of the Pinterest-DL library.
 
+## Installation
+
+The API examples (`basic_scraping.py`, `search_functionality.py`, `advanced_control.py`, `dump_mode.py`, `video_downloading.py`, `streaming_and_progress.py`) run on the base install:
+
+```bash
+pip install pinterest-dl
+```
+
+Examples that drive a browser via Playwright -- `authentication_cookies.py` (login) and `advanced_control.py` example 8 (browser mode) -- need the `browser` extra:
+
+```bash
+pip install pinterest-dl[browser]
+playwright install chromium   # download the browser binaries (or: firefox)
+```
+
+To embed alt text as EXIF metadata (`caption="metadata"`), install the `metadata` extra, or use `[all]` to get everything:
+
+```bash
+pip install pinterest-dl[metadata]   # or: pinterest-dl[all]
+```
+
 ## Available Examples
 
 ### 1. `basic_scraping.py`
