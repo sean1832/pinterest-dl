@@ -95,6 +95,11 @@ def emit_json(payload: Any) -> None:
     print(json.dumps(payload, indent=2))
 
 
+def emit_json_error(message: str) -> None:
+    """Print a machine-readable error to stderr, keeping stdout clean for piping."""
+    print(json.dumps({"error": message}), file=sys.stderr)
+
+
 def write_media_cache(items: List[PinterestMedia], cache_path: str | None) -> None:
     """Persist scraped media to the cache file when a path is configured.
 
@@ -569,14 +574,19 @@ def main() -> None:
         else:
             parser.print_help()
     except KeyboardInterrupt:
-        if not json_mode:
+        if json_mode:
+            emit_json_error("Operation cancelled by user.")
+        else:
             print("\nOperation cancelled by user.")
         sys.exit(1)
     except Exception as e:
         # Log with full traceback when verbose, show user-friendly message otherwise
-        if getattr(args, "verbose", False):
+        verbose = getattr(args, "verbose", False)
+        if verbose:
             logger.error(f"An error occurred: {e}", exc_info=True)
-        else:
+        if json_mode:
+            emit_json_error(str(e))
+        elif not verbose:
             print(f"\nError: {e}", file=sys.stderr)
             print("\nRun with --verbose for full traceback.", file=sys.stderr)
         sys.exit(1)
