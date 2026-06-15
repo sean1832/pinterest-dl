@@ -54,21 +54,19 @@ class ApiScraper:
         """Load cookies to the current session.
 
         Args:
-            cookies (list[dict]): List of cookies in Selenium format.
+            cookies (list[dict]): List of cookie dictionaries.
 
         Returns:
             ApiScraper: Instance of ApiScraper with cookies loaded.
         """
         if isinstance(cookies, str) or isinstance(cookies, Path):
             raise ValueError(
-                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
+                "Invalid cookies format. Expected a list of dictionary. "
                 + "If you want to load cookies from a file, use `with_cookies_path` method instead."
             )
         if not isinstance(cookies, list):
-            raise ValueError(
-                "Invalid cookies format. Expected a list of dictionary. In Selenium format."
-            )
-        self.cookies = CookieJar().from_selenium_cookies(cookies)
+            raise ValueError("Invalid cookies format. Expected a list of dictionary.")
+        self.cookies = CookieJar.from_cookies(cookies)
         return self
 
     def with_cookies_path(self, cookies_path: Optional[Union[str, Path]]) -> "ApiScraper":
@@ -88,11 +86,9 @@ class ApiScraper:
 
         cookies = io.read_json(cookies_path)
         if not isinstance(cookies, list):
-            raise ValueError(
-                "Invalid cookies file format. Expected a list of dictionary. In Selenium format."
-            )
+            raise ValueError("Invalid cookies file format. Expected a list of dictionary.")
 
-        self.cookies = CookieJar().from_selenium_cookies(cookies)
+        self.cookies = CookieJar.from_cookies(cookies)
         return self
 
     def scrape(

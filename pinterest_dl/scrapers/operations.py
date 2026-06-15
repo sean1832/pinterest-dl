@@ -1,6 +1,6 @@
 """Shared utility functions for Pinterest scrapers.
 
-This module contains common functionality used by both API and WebDriver scrapers.
+This module contains common functionality used by the API and Playwright scrapers.
 Functions are module-level to avoid unnecessary inheritance hierarchies.
 """
 
