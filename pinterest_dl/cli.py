@@ -95,6 +95,16 @@ def emit_json(payload: Any) -> None:
     print(json.dumps(payload, indent=2))
 
 
+def write_media_cache(items: List[PinterestMedia], cache_path: str | None) -> None:
+    """Persist scraped media to the cache file when a path is configured.
+
+    Used by the --json no-output paths, which bypass scrape_and_download (and thus
+    its built-in caching) to keep stdout clean.
+    """
+    if cache_path:
+        io.write_json(media_list_to_dicts(items), cache_path, indent=4)
+
+
 def validate_cookies_authenticated(cookies: list[dict]) -> bool:
     """Check if cookies contain authenticated Pinterest session.
 
@@ -346,6 +356,7 @@ def main() -> None:
                             )
                             if json_mode and not args.output:
                                 imgs = scraper.scrape(url, num)
+                                write_media_cache(imgs, args.cache)
                             else:
                                 imgs = scraper.scrape_and_download(
                                     url,
@@ -372,6 +383,7 @@ def main() -> None:
                             scraper = scraper.with_cookies_path(args.cookies)
                             if json_mode and not args.output:
                                 imgs = scraper.scrape(url, num)
+                                write_media_cache(imgs, args.cache)
                             else:
                                 imgs = scraper.scrape_and_download(
                                     url,
@@ -415,8 +427,7 @@ def main() -> None:
                             delay=args.delay,
                             caption_from_title=args.cap_from_title,
                         )
-                        if args.cache:
-                            io.write_json(media_list_to_dicts(imgs), args.cache, indent=4)
+                        write_media_cache(imgs, args.cache)
                     else:
                         download = api.related_and_download if related_only else api.scrape_and_download
                         with scrape_progress(num, "Scraping", args.verbose or json_mode) as on_progress:
@@ -491,8 +502,7 @@ def main() -> None:
                             delay=args.delay,
                             caption_from_title=args.cap_from_title,
                         )
-                        if args.cache:
-                            io.write_json(media_list_to_dicts(imgs), args.cache, indent=4)
+                        write_media_cache(imgs, args.cache)
                     else:
                         with scrape_progress(args.num, "Searching", args.verbose or json_mode) as on_progress:
                             imgs = api.search_and_download(
