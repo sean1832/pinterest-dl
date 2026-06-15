@@ -165,6 +165,7 @@ def get_parser() -> argparse.ArgumentParser:
     # login command
     login_cmd = cmd.add_parser("login", help="Login to Pinterest and capture cookies")
     login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
+    login_cmd.add_argument("--from-browser", action="store_true", help="Attempt to load cookies from installed browsers instead of logging in (only Firefox supported due to Chromium encryption)")
     login_cmd.add_argument("--client", default="chromium", choices=["chromium", "firefox"], help="Browser client to login (Playwright)")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
@@ -237,6 +238,14 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def run_login(args: argparse.Namespace) -> None:
+    """Capture Pinterest cookies, either from an installed browser or via Playwright."""
+    if args.from_browser:
+        _run_login_from_browser(args)
+    else:
+        _run_login_playwright(args)
+
+
+def _run_login_playwright(args: argparse.Namespace) -> None:
     """Drive a browser login and persist the captured cookies."""
     email = input("Enter Pinterest email: ")
     password = getpass("Enter Pinterest password: ")
@@ -272,14 +281,25 @@ def run_login(args: argparse.Namespace) -> None:
 
     print("\nNote:")
     print("Please keep your cookies file safe and do not share it with anyone.")
-    print(
-        "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
-    )
+    print("You can use these cookies to scrape private boards. Use the '--cookies [file]' option.")
     print("Example:")
     print(
         r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -n 10 --cookies .\cookies.json'
     )
     print("\nDone.")
+
+
+def _run_login_from_browser(args: argparse.Namespace) -> None:
+    from pinterest_dl.domain.browser_cookies import load_firefox_cookies
+
+    print("Reading cookies from firefox browser...")
+    cookies = load_firefox_cookies(domain="pinterest.com")
+    if not validate_cookies_authenticated(cookies):
+        print("[WARNING] Cookies do not indicate an authenticated session (_auth != 1).")
+        print("Make sure you are logged in to Pinterest in Firefox.")
+        sys.exit(1)
+    io.write_json(cookies, args.output, 4)
+    print(f"[SUCCESS] Authenticated cookies saved to '{args.output}'")
 
 
 def scrape_url_browser(
@@ -505,9 +525,7 @@ def run_download(args: argparse.Namespace, json_mode: bool) -> None:
         raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
 
     if json_mode:
-        emit_json(
-            {"command": "download", "input": args.input, "items": media_list_to_dicts(kept)}
-        )
+        emit_json({"command": "download", "input": args.input, "items": media_list_to_dicts(kept)})
     else:
         print("\nDone.")
 
