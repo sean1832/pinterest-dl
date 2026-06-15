@@ -49,7 +49,6 @@ Examples included:
 - Load cookies from file
 - Use cookies path directly
 - Authenticated search
-- Selenium login (legacy)
 
 **Quick start:**
 ```bash

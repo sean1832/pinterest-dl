@@ -23,11 +23,10 @@ You can use the `PinterestDL` class directly in your Python code to scrape and d
       - [Scrape Media](#scrape-media)
       - [Search Media](#search-media)
     - [2b. With Browser (Playwright)](#2b-with-browser-playwright)
-    - [2c. With Browser (Selenium - Legacy)](#2c-with-browser-selenium---legacy)
 
 ---
 
-> **Note:** Browser automation now uses **Playwright** by default, which is faster and more reliable. Selenium is still available as a fallback via `PinterestDL.with_selenium()` for backward compatibility.
+> **Note:** Browser automation uses **Playwright**, which is fast, reliable, and manages browser binaries automatically via `playwright install`.
 
 ## 1. High-level Scrape and Download
 
@@ -127,7 +126,7 @@ with open("cookies.json", "r") as f:
 images = (
     PinterestDL.with_api()
     .with_cookies(
-        cookies,  # cookies in selenium format
+        cookies,  # list of cookie dicts
     )
     .scrape_and_download(
         url="https://www.pinterest.com/username/private-board/",  # Private board or pin URL
@@ -249,31 +248,4 @@ PinterestDL.add_captions_to_meta(images=kept_media)
 # 6. Add Alt Text as text file (Optional)
 # Extract `alt` text from media and save it as a text file in the downloaded directory
 PinterestDL.add_captions_to_file(kept_media, output_dir, extension="txt")
-```
-
-### 2c. With Browser (Selenium - Legacy)
-
-Selenium is available as a fallback for backward compatibility.
-
-```python
-import json
-import warnings
-
-from pinterest_dl import PinterestDL
-
-# Suppress deprecation warning (Selenium will be deprecated in 1.1.0)
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", DeprecationWarning)
-    
-    # Initialize PinterestDL with Selenium
-    scraped_medias = PinterestDL.with_selenium(
-        browser_type="chrome",  # Browser type to use ('chrome' or 'firefox')
-        headless=True,  # Run browser in headless mode
-        ensure_alt=True,  # Ensure every image has alt text (default: False)
-    ).scrape(
-        url="https://www.pinterest.com/pin/1234567",  # URL of the Pinterest page
-        num=30,  # Maximum number of images to scrape
-    )
-
-# Continue with download, save to JSON, add captions, etc.
 ```

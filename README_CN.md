@@ -14,7 +14,7 @@
 ## 功能
 
 - 从画板、图钉、版块或搜索词中抓取和下载图片及视频。
-- 默认通过 Pinterest API 抓取，速度更快；也支持浏览器自动化（Playwright 或 Selenium）。
+- 默认通过 Pinterest API 抓取，速度更快；也支持 Playwright 浏览器自动化。
 - 支持将视频下载为 MP4（需要 ffmpeg），或直接保存原始 .ts 流（无需 ffmpeg）。
 - 通过浏览器 cookies 登录，可访问私密画板和图钉。
 - 支持同时抓取多个 URL 或搜索词，也可从文件批量导入。

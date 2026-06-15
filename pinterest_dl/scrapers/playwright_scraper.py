@@ -1,8 +1,8 @@
 """Playwright-based Pinterest scraper.
 
 This module provides the PlaywrightScraper class which uses Playwright
-for browser automation, offering better stability and cross-platform
-compatibility compared to Selenium.
+for browser automation, offering stable, cross-platform scraping with
+automatic browser binary management.
 """
 
 import json
@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 class PlaywrightScraper:
     """Pinterest scraper using Playwright browser automation.
 
-    This scraper provides better stability and cross-platform compatibility
-    compared to the Selenium-based WebDriverScraper. Playwright handles
+    Playwright provides stable, cross-platform scraping and handles
     browser binaries automatically via `playwright install`.
 
     Example:
@@ -106,7 +105,7 @@ class PlaywrightScraper:
         """Load cookies to the current browser context.
 
         Args:
-            cookies: List of cookies in Selenium format (will be converted).
+            cookies: List of cookie dictionaries (will be converted to Playwright format).
             wait_sec: Time in seconds to wait after loading cookies.
 
         Returns:
@@ -122,7 +121,7 @@ class PlaywrightScraper:
 
         # Sanitize and convert cookies
         cookies = self._sanitize_cookies(cookies)
-        pw_cookies = CookieJar.selenium_to_playwright(cookies)
+        pw_cookies = CookieJar.to_playwright(cookies)
 
         # Add cookies to context (type: ignore for Playwright's strict typing)
         self.browser.context.add_cookies(pw_cookies)  # type: ignore[arg-type]
@@ -135,7 +134,7 @@ class PlaywrightScraper:
         """Load cookies from a file to the current browser context.
 
         Args:
-            cookies_path: Path to cookies file (Selenium format JSON).
+            cookies_path: Path to cookies file (JSON).
             wait_sec: Time in seconds to wait after loading cookies.
 
         Returns:
@@ -160,7 +159,7 @@ class PlaywrightScraper:
 
         # Sanitize and convert cookies
         cookies = self._sanitize_cookies(cookies)
-        pw_cookies = CookieJar.selenium_to_playwright(cookies)
+        pw_cookies = CookieJar.to_playwright(cookies)
 
         # Add cookies to context (type: ignore for Playwright's strict typing)
         self.browser.context.add_cookies(pw_cookies)  # type: ignore[arg-type]

@@ -1,7 +1,7 @@
 """Playwright-based Pinterest scraping driver.
 
-This module provides the core scraping logic using Playwright,
-mirroring the functionality of the Selenium-based driver.py.
+This module provides the core scraping logic using Playwright:
+login, pin scraping with scroll pagination, and cookie extraction.
 """
 
 import random
@@ -109,7 +109,7 @@ class PlaywrightDriver:
             after_sec: Time in seconds to wait before capturing cookies.
 
         Returns:
-            List of cookie dictionaries in Selenium-compatible format.
+            List of cookie dictionaries in pinterest-dl's stored format.
         """
         print(f"Waiting {after_sec} seconds before capturing cookies...")
         print("(Complete any verification steps in the browser if needed)")
@@ -124,23 +124,23 @@ class PlaywrightDriver:
         # Get cookies from Playwright context
         cookies = self.page.context.cookies()
 
-        # Convert to Selenium-compatible format (expiry vs expires)
-        selenium_cookies = []
+        # Convert to pinterest-dl's stored format (expiry vs Playwright's expires)
+        stored_cookies = []
         for cookie in cookies:
-            sel_cookie = {
+            stored_cookie = {
                 "name": cookie.get("name", ""),
                 "value": cookie.get("value", ""),
                 "domain": cookie.get("domain", ""),
                 "path": cookie.get("path", "/"),
                 "secure": cookie.get("secure", False),
             }
-            # Playwright uses 'expires', Selenium uses 'expiry'
+            # Playwright uses 'expires', stored format uses 'expiry'
             if "expires" in cookie and cookie["expires"] > 0:
-                sel_cookie["expiry"] = int(cookie["expires"])
-            selenium_cookies.append(sel_cookie)
+                stored_cookie["expiry"] = int(cookie["expires"])
+            stored_cookies.append(stored_cookie)
 
         print("Cookies Captured")
-        return selenium_cookies
+        return stored_cookies
 
     def scrape(
         self,

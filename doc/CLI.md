@@ -30,7 +30,6 @@ pinterest-dl login [options]
 | ------------------------------------------- | -------------------------- | -------------- |
 | `-o`, `--output [file]`                     | Path to save cookies file  | `cookies.json` |
 | `--client [chromium/firefox]`               | Browser type to use        | `chromium`     |
-| `--backend [playwright/selenium]` (**NEW**) | Browser automation backend | `playwright`   |
 | `--headful`                                 | Show browser window        | -              |
 | `--incognito`                               | Use incognito mode         | -              |
 | `--verbose`                                 | Enable debug output        | -              |
@@ -85,7 +84,6 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--cap-from-title`                          | Use image title as caption                                | -              |
 | `--dump [PATH]` (**NEW**)                   | Dump API requests/responses to PATH (default: `.dump`)    | -              |
 | `--client [api/chromium/firefox]`           | Scraper backend                                           | `api`          |
-| `--backend [playwright/selenium]` (**NEW**) | Browser automation backend (for browser clients)          | `playwright`   |
 | `--headful`                                 | Show browser window (browser clients only)                | -              |
 | `--incognito`                               | Use incognito mode (browser clients only)                 | -              |
 | `--json` (**NEW**)                          | Print structured JSON to stdout instead of human-readable output | -       |

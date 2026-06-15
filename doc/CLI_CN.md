@@ -33,7 +33,6 @@ pinterest-dl login [选项]
 | --------------------------------- | ---------------- | -------------- |
 | `-o`, `--output [文件]`           | cookies 保存路径 | `cookies.json` |
 | `--client [chromium/firefox]`     | 使用的浏览器类型 | `chromium`     |
-| `--backend [playwright/selenium]` | 浏览器自动化后端 | `playwright`   |
 | `--headful`                       | 显示浏览器窗口   | -              |
 | `--incognito`                     | 启用无痕模式     | -              |
 | `--verbose`                       | 显示调试信息     | -              |
@@ -82,7 +81,6 @@ cat urls.txt | pinterest-dl scrape -f - [选项]
 | `--cap-from-title`                   | 使用图片标题作为说明                                 | -              |
 | `--dump [路径]` (**NEW**)            | 将 API 请求/响应导出到指定目录（默认：`.dump`）      | -              |
 | `--client [api/chromium/firefox]`    | 抓取方式                                             | `api`          |
-| `--backend [playwright/selenium]`    | 浏览器自动化后端（浏览器模式）                       | `playwright`   |
 | `--headful`                          | 显示浏览器窗口（浏览器模式）                         | -              |
 | `--incognito`                        | 无痕模式（浏览器模式）                               | -              |
 | `--verbose`                          | 调试输出                                             | -              |

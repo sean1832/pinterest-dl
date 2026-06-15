@@ -23,11 +23,10 @@
       - [抓取媒体](#抓取媒体)
       - [搜索媒体](#搜索媒体)
     - [2b. 使用浏览器模式 (Playwright)](#2b-使用浏览器模式-playwright)
-    - [2c. 使用浏览器模式 (Selenium - 遗留)](#2c-使用浏览器模式-selenium---遗留)
 
 ---
 
-> **注意：** 浏览器自动化现在默认使用 **Playwright**，更快速、更可靠。Selenium 仍可通过 `PinterestDL.with_selenium()` 作为备用。
+> **注意：** 浏览器自动化使用 **Playwright**，快速、可靠，并通过 `playwright install` 自动管理浏览器二进制文件。
 
 ## 1. 高级整合方法
 
@@ -132,7 +131,7 @@ with open("cookies.json", "r") as f:
 images = (
     PinterestDL.with_api()
     .with_cookies(
-        cookies,  # Selenium 格式的 cookies
+        cookies,  # cookie 字典列表
     )
     .scrape_and_download(
         url="https://www.pinterest.com/pin/1234567",  # 假设这是私密画板 URL
@@ -251,30 +250,4 @@ PinterestDL.add_captions_to_meta(images=kept_media)
 # 6. 将 Alt 文本添加为文本文件（可选）
 # 从媒体中提取 `alt` 文本并将其保存为下载目录中的文本文件
 PinterestDL.add_captions_to_file(kept_media, output_dir, extension="txt")
-```
-
-### 2c. 使用浏览器模式 (Selenium - 遗留)
-
-Selenium 作为备用方案保留，以保持向后兼容性。
-
-```python
-import json
-import warnings
-from pinterest_dl import PinterestDL
-
-# 抑制弃用警告（Selenium 将在 1.1.0 版本弃用）
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", DeprecationWarning)
-    
-    # 使用 Selenium 初始化 PinterestDL
-    scraped_medias = PinterestDL.with_selenium(
-        browser_type="chrome",  # 要使用的浏览器类型（'chrome' 或 'firefox'）
-        headless=True,          # 在无头模式下运行浏览器
-        ensure_alt=True,        # 确保每张图片都有 alt 文本（默认：False）
-    ).scrape(
-        url="https://www.pinterest.com/pin/1234567",  # Pinterest 页面的 URL
-        num=30,                                        # 最大抓取图片数量
-    )
-
-# 继续下载、保存 JSON、添加标题等操作
 ```

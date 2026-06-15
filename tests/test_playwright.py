@@ -74,28 +74,15 @@ class TestPinterestDLFactory:
                 )
             raise
 
-    def test_with_selenium_triggers_deprecation_warning(self):
-        """Test that with_selenium() triggers a deprecation warning."""
-        with pytest.warns(DeprecationWarning, match=r"with_selenium.*Playwright"):
-            try:
-                scraper = PinterestDL.with_selenium(
-                    browser_type="chrome",
-                    headless=True,
-                )
-                scraper.webdriver.quit()
-            except Exception:
-                # Skip if Selenium/Chrome not available
-                pytest.skip("Selenium/Chrome not available for testing")
-
 
 class TestCookieConversion:
-    """Test cookie format conversion between Selenium and Playwright."""
+    """Test cookie format conversion for the stored cookie format."""
 
-    def test_selenium_to_playwright_conversion(self):
-        """Test converting Selenium cookies to Playwright format."""
+    def test_to_playwright_conversion(self):
+        """Test converting stored cookies to Playwright format."""
         from pinterest_dl.domain.cookies import CookieJar
 
-        selenium_cookies = [
+        stored_cookies = [
             {
                 "name": "test_cookie",
                 "value": "test_value",
@@ -106,7 +93,7 @@ class TestCookieConversion:
             }
         ]
 
-        pw_cookies = CookieJar.selenium_to_playwright(selenium_cookies)
+        pw_cookies = CookieJar.to_playwright(stored_cookies)
 
         assert len(pw_cookies) == 1
         assert pw_cookies[0]["name"] == "test_cookie"
@@ -119,72 +106,22 @@ class TestCookieConversion:
         assert "httpOnly" in pw_cookies[0]
         assert "sameSite" in pw_cookies[0]
 
-    def test_playwright_to_selenium_conversion(self):
-        """Test converting Playwright cookies to Selenium format."""
+    def test_from_cookies(self):
+        """Test building a CookieJar from stored cookie dicts."""
         from pinterest_dl.domain.cookies import CookieJar
 
-        playwright_cookies = [
-            {
-                "name": "test_cookie",
-                "value": "test_value",
-                "domain": ".pinterest.com",
-                "path": "/",
-                "expires": 1735689600.0,
-                "secure": True,
-                "httpOnly": False,
-                "sameSite": "Lax",
-            }
-        ]
-
-        sel_cookies = CookieJar.playwright_to_selenium(playwright_cookies)
-
-        assert len(sel_cookies) == 1
-        assert sel_cookies[0]["name"] == "test_cookie"
-        assert sel_cookies[0]["value"] == "test_value"
-        # Selenium uses 'expiry' instead of 'expires'
-        assert "expiry" in sel_cookies[0]
-        assert sel_cookies[0]["expiry"] == 1735689600
-        # Selenium doesn't include httpOnly/sameSite at top level
-        assert "httpOnly" not in sel_cookies[0]
-        assert "sameSite" not in sel_cookies[0]
-
-    def test_cookie_jar_to_playwright(self):
-        """Test CookieJar.to_playwright_cookies() method."""
-        from pinterest_dl.domain.cookies import CookieJar
-
-        jar = CookieJar()
-        jar.set(
-            name="session",
-            value="abc123",
-            domain=".pinterest.com",
-            path="/",
-            secure=True,
-            expires=1735689600,
-        )
-
-        pw_cookies = jar.to_playwright_cookies()
-
-        assert len(pw_cookies) == 1
-        assert pw_cookies[0]["name"] == "session"
-        assert pw_cookies[0]["value"] == "abc123"
-        assert "expires" in pw_cookies[0]
-
-    def test_cookie_jar_from_playwright(self):
-        """Test CookieJar.from_playwright_cookies() method."""
-        from pinterest_dl.domain.cookies import CookieJar
-
-        playwright_cookies = [
+        stored_cookies = [
             {
                 "name": "session",
                 "value": "xyz789",
                 "domain": ".pinterest.com",
                 "path": "/",
-                "expires": 1735689600.0,
+                "expiry": 1735689600,
                 "secure": True,
             }
         ]
 
-        jar = CookieJar.from_playwright_cookies(playwright_cookies)
+        jar = CookieJar.from_cookies(stored_cookies)
 
         # Verify cookie was added
         cookie = jar.get("session", domain=".pinterest.com")

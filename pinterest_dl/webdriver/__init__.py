@@ -1,13 +1,11 @@
 """WebDriver module for Pinterest scraping.
 
-This module provides browser-based scraping functionality:
-- PlaywrightDriver: Recommended, uses Playwright (stable, cross-platform)
-- PlaywrightBrowser: Browser management for Playwright
-- Driver: Legacy Selenium-based driver (for backward compatibility)
+This module provides browser-based scraping functionality using Playwright:
+- PlaywrightDriver: Pinterest page interactions (login, scrape, cookies)
+- PlaywrightBrowser: Browser lifecycle management for Playwright
 """
 
-from .driver import Driver
 from .playwright_browser import PlaywrightBrowser
 from .playwright_driver import PlaywrightDriver
 
-__all__ = ["Driver", "PlaywrightDriver", "PlaywrightBrowser"]
+__all__ = ["PlaywrightDriver", "PlaywrightBrowser"]

@@ -17,7 +17,7 @@ class PlaywrightBrowser:
     """Browser initialization using Playwright.
 
     Playwright handles browser binary management automatically via `playwright install`.
-    No driver management required unlike Selenium.
+    No separate driver management is required.
     """
 
     def __init__(self) -> None:

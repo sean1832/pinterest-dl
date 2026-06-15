@@ -114,7 +114,7 @@ def validate_cookies_authenticated(cookies: list[dict]) -> bool:
     """Check if cookies contain authenticated Pinterest session.
 
     Args:
-        cookies: List of cookie dictionaries in Selenium format.
+        cookies: List of cookie dictionaries.
 
     Returns:
         bool: True if cookies indicate authenticated session (_auth=1), False otherwise.
@@ -166,7 +166,6 @@ def get_parser() -> argparse.ArgumentParser:
     login_cmd = cmd.add_parser("login", help="Login to Pinterest and capture cookies")
     login_cmd.add_argument("-o", "--output", default="cookies.json", help="Output path for cookies")
     login_cmd.add_argument("--client", default="chromium", choices=["chromium", "firefox"], help="Browser client to login (Playwright)")
-    login_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend to use (default: playwright)")
     login_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window")
     login_cmd.add_argument("--incognito", action="store_true", help="Incognito mode")
     login_cmd.add_argument("--wait", type=int, default=10, help="Seconds to wait after login before capturing cookies (default: 15)")
@@ -194,7 +193,6 @@ def get_parser() -> argparse.ArgumentParser:
     scrape_cmd.add_argument("--json", action="store_true", help="Print structured JSON to stdout instead of human-readable output")
 
     scrape_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
-    scrape_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
     scrape_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for browser clients)")
     scrape_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for browser clients)")
 
@@ -219,7 +217,6 @@ def get_parser() -> argparse.ArgumentParser:
     search_cmd.add_argument("--json", action="store_true", help="Print structured JSON to stdout instead of human-readable output")
 
     search_cmd.add_argument("--client", default="api", choices=["api", "chromium", "firefox"], help="Client to use for scraping. Browser clients are slower but more reliable.")
-    search_cmd.add_argument("--backend", default="playwright", choices=["playwright", "selenium"], help="Browser backend for browser clients (default: playwright)")
     search_cmd.add_argument("--incognito", action="store_true", help="Incognito mode (only for browser clients)")
     search_cmd.add_argument("--headful", action="store_true", help="Run in headful mode with browser window (only for browser clients)")
 
@@ -255,31 +252,16 @@ def main() -> None:
             print(f"\nWaiting {args.wait} seconds after login to capture cookies...")
             print("(Increase with --wait if Pinterest requires more time for authentication)\n")
 
-            if args.backend == "selenium":
-                # Map chromium -> chrome for Selenium compatibility
-                browser_type = "chrome" if args.client == "chromium" else args.client
-                import warnings
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", DeprecationWarning)
-                    scraper = PinterestDL.with_selenium(
-                        browser_type=browser_type,
-                        headless=not args.headful,
-                        incognito=args.incognito,
-                        verbose=args.verbose,
-                    )
-                cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
-            else:
-                # Default: Playwright - ENABLE images for login (needed for anti-bot)
-                scraper = PinterestDL.with_browser(
-                    browser_type=args.client,
-                    headless=not args.headful,
-                    incognito=args.incognito,
-                    verbose=args.verbose,
-                    enable_images=True,  # Required for login to work properly
-                )
-                cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
-                scraper.close()
+            # ENABLE images for login (needed for anti-bot)
+            scraper = PinterestDL.with_browser(
+                browser_type=args.client,
+                headless=not args.headful,
+                incognito=args.incognito,
+                verbose=args.verbose,
+                enable_images=True,  # Required for login to work properly
+            )
+            cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
+            scraper.close()
 
             # Validate cookies are authenticated
             if not validate_cookies_authenticated(cookies):
@@ -292,9 +274,6 @@ def main() -> None:
                 print(
                     f"  - Current wait time: {args.wait} seconds (increase with --wait 30 or higher)"
                 )
-                if args.backend == "playwright":
-                    print("\nTip: Try using Selenium backend if Playwright is being detected:")
-                    print("  pinterest-dl login --backend selenium --headful --wait 30")
                 print(
                     "\nCookies will still be saved, but they likely won't work for private boards."
                 )
@@ -341,67 +320,34 @@ def main() -> None:
                 if args.client in ["chromium", "firefox"]:
                     if args.related_only and not json_mode:
                         print("Warning: --related-only requires the API client; ignoring.")
-                    if args.backend == "selenium":
-                        # Selenium backend (legacy)
-                        browser_type = "chrome" if args.client == "chromium" else args.client
-                        import warnings
-
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", DeprecationWarning)
-                            scraper = (
-                                PinterestDL.with_selenium(
-                                    browser_type=browser_type,
-                                    timeout=args.timeout,
-                                    headless=not args.headful,
-                                    incognito=args.incognito,
-                                    verbose=args.verbose,
-                                    ensure_alt=args.ensure_cap,
-                                )
-                                .with_cookies_path(args.cookies)
+                    # DISABLE images for scraping performance
+                    scraper = PinterestDL.with_browser(
+                        browser_type=args.client,
+                        timeout=args.timeout,
+                        headless=not args.headful,
+                        incognito=args.incognito,
+                        verbose=args.verbose,
+                        ensure_alt=args.ensure_cap,
+                        enable_images=False,  # Disable images for faster scraping
+                    )
+                    try:
+                        scraper = scraper.with_cookies_path(args.cookies)
+                        if json_mode and not args.output:
+                            imgs = scraper.scrape(url, num)
+                            write_media_cache(imgs, args.cache)
+                        else:
+                            imgs = scraper.scrape_and_download(
+                                url,
+                                args.output,
+                                num,
+                                min_resolution=parse_resolution(args.resolution)
+                                if args.resolution
+                                else None,
+                                cache_path=args.cache,
+                                caption=args.caption,
                             )
-                            if json_mode and not args.output:
-                                imgs = scraper.scrape(url, num)
-                                write_media_cache(imgs, args.cache)
-                            else:
-                                imgs = scraper.scrape_and_download(
-                                    url,
-                                    args.output,
-                                    num,
-                                    min_resolution=parse_resolution(args.resolution)
-                                    if args.resolution
-                                    else None,
-                                    cache_path=args.cache,
-                                    caption=args.caption,
-                                )
-                    else:
-                        # Playwright backend (default) - DISABLE images for scraping performance
-                        scraper = PinterestDL.with_browser(
-                            browser_type=args.client,
-                            timeout=args.timeout,
-                            headless=not args.headful,
-                            incognito=args.incognito,
-                            verbose=args.verbose,
-                            ensure_alt=args.ensure_cap,
-                            enable_images=False,  # Disable images for faster scraping
-                        )
-                        try:
-                            scraper = scraper.with_cookies_path(args.cookies)
-                            if json_mode and not args.output:
-                                imgs = scraper.scrape(url, num)
-                                write_media_cache(imgs, args.cache)
-                            else:
-                                imgs = scraper.scrape_and_download(
-                                    url,
-                                    args.output,
-                                    num,
-                                    min_resolution=parse_resolution(args.resolution)
-                                    if args.resolution
-                                    else None,
-                                    cache_path=args.cache,
-                                    caption=args.caption,
-                                )
-                        finally:
-                            scraper.close()
+                    finally:
+                        scraper.close()
                 else:
                     if (args.incognito or args.headful) and not json_mode:
                         print(

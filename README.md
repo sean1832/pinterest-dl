@@ -15,7 +15,7 @@ CLI to download images and videos from any Pinterest board, pin, or search query
 ## Features
 
 - Scrape and download images and videos from any board, pin, section, or search query.
-- API-first and fast: scrapes through Pinterest's API by default, with optional browser automation (Playwright or Selenium).
+- API-first and fast: scrapes through Pinterest's API by default, with optional Playwright browser automation.
 - Download videos as MP4 (with ffmpeg) or as raw .ts streams (no ffmpeg required).
 - Reach private boards and pins by authenticating with browser cookies.
 - Scrape multiple URLs or queries at once, or batch them from a file.

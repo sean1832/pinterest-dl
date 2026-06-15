@@ -28,8 +28,7 @@ Dual scraping strategy with a factory entry point:
 ```
 PinterestDL (factory, __init__.py)
   .with_api()      -> ApiScraper        (fast, reverse-engineered API)
-  .with_browser()  -> PlaywrightScraper (recommended for reliability)
-  .with_selenium() -> WebDriverScraper  (legacy)
+  .with_browser()  -> PlaywrightScraper (browser automation, Playwright)
 ```
 
 Layers (top to bottom):
@@ -77,7 +76,7 @@ HLS streams -> AES-128 decrypt -> one of three explicit outputs:
 
 ## Common Pitfalls
 
-- **Cookie format**: scraper uses Selenium format (list of dicts); browser export format differs.
+- **Cookie format**: cookies are stored as a list of dicts with an `expiry` key; Playwright's own format uses `expires` and is converted via `CookieJar.to_playwright()`.
 - **Resolution order**: always `(width, height)`, not `(height, width)`.
 - **URL trailing slash**: CLI sanitizes URLs via `sanitize_url()`; the API parser expects this.
 - **Bookmark manager**: `last` param must be 0-4; manages pagination state across requests.
