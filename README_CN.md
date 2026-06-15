@@ -28,6 +28,10 @@
 ```bash
 pip install pinterest-dl
 ```
+或者安装所有可选依赖：
+```bash
+pip install pinterest-dl[all]
+```
 
 可选依赖提供图像和元数据功能：
 

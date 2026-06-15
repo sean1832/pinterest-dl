@@ -29,6 +29,10 @@ Requires Python 3.10 or newer.
 ```bash
 pip install pinterest-dl
 ```
+Or install all optional dependencies:
+```bash
+pip install pinterest-dl[all]
+```
 
 Optional extras add image and metadata features:
 
