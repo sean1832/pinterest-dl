@@ -10,8 +10,10 @@ from tqdm import tqdm
 
 from pinterest_dl import PinterestDL, __description__, __version__
 from pinterest_dl.common import io
+from pinterest_dl.common.ensure_playwright import ensure_playwright
 from pinterest_dl.common.logging import get_logger, setup_logging
 from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.exceptions import BrowserDependencyError
 from pinterest_dl.scrapers import operations
 
 logger = get_logger(__name__)
@@ -237,6 +239,22 @@ def get_parser() -> argparse.ArgumentParser:
 # fmt: on
 
 
+def require_playwright_or_exit(json_mode: bool = False) -> None:
+    """Fail fast with install guidance when a browser command needs Playwright.
+
+    The library factory logs and raises; the CLI is the final handler, so it
+    prints (or emits JSON) and exits before any browser is launched.
+    """
+    try:
+        ensure_playwright()
+    except BrowserDependencyError as e:
+        if json_mode:
+            emit_json_error(str(e))
+        else:
+            print(f"\nError: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def run_login(args: argparse.Namespace) -> None:
     """Capture Pinterest cookies, either from an installed browser or via Playwright."""
     if args.from_browser:
@@ -247,6 +265,8 @@ def run_login(args: argparse.Namespace) -> None:
 
 def _run_login_playwright(args: argparse.Namespace) -> None:
     """Drive a browser login and persist the captured cookies."""
+    require_playwright_or_exit()
+
     email = input("Enter Pinterest email: ")
     password = getpass("Enter Pinterest password: ")
 
@@ -306,6 +326,8 @@ def scrape_url_browser(
     args: argparse.Namespace, url: str, num: int, json_mode: bool
 ) -> List[PinterestMedia] | None:
     """Scrape a single URL with a Playwright browser client."""
+    require_playwright_or_exit(json_mode)
+
     if args.related_only and not json_mode:
         print("Warning: --related-only requires the API client; ignoring.")
 

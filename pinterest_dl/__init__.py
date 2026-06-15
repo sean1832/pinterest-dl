@@ -9,7 +9,8 @@ Example:
     >>> scraper.download(media, "output/")
 """
 
-from typing import Optional
+import logging
+from typing import TYPE_CHECKING, Literal, Optional
 
 __version__ = "0.0.0.dev0"
 __description__ = "An unofficial Pinterest image downloader"
@@ -22,11 +23,28 @@ __all__ = [
     "__description__",
 ]
 
-from typing import Literal
-
+from pinterest_dl.common.ensure_playwright import ensure_playwright
 from pinterest_dl.domain.media import PinterestMedia
+from pinterest_dl.exceptions import BrowserDependencyError
 from pinterest_dl.scrapers.api_scraper import ApiScraper
-from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
+
+if TYPE_CHECKING:
+    # Playwright is an optional dependency; import only for type checking so that
+    # `import pinterest_dl` stays usable without it installed.
+    from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
+
+logger = logging.getLogger(__name__)
+
+
+def __getattr__(name: str) -> object:
+    # PEP 562: lazily expose PlaywrightScraper so the API path never imports
+    # playwright. Raises BrowserDependencyError with install guidance if missing.
+    if name == "PlaywrightScraper":
+        ensure_playwright()
+        from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
+
+        return PlaywrightScraper
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class PinterestDL:
@@ -97,8 +115,20 @@ class PinterestDL:
             PlaywrightScraper: Instance of PlaywrightScraper with Playwright browser.
 
         Note:
-            Requires `playwright install chromium` (or firefox) to be run first.
+            Requires the optional `browser` extra (`pip install pinterest-dl[browser]`)
+            and `playwright install chromium` (or firefox) to be run first.
+
+        Raises:
+            BrowserDependencyError: If the optional `playwright` dependency is missing.
         """
+        try:
+            ensure_playwright()
+        except BrowserDependencyError as e:
+            logger.error("%s", e)
+            raise
+
+        from pinterest_dl.scrapers.playwright_scraper import PlaywrightScraper
+
         return PlaywrightScraper.create(
             browser_type=browser_type,
             timeout=timeout,

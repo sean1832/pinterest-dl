@@ -7,6 +7,10 @@ class ExecutableNotFoundError(Exception):
     """Exception raised when a required binary is not found in the system PATH."""
 
 
+class BrowserDependencyError(ImportError):
+    """Raised when optional Playwright browser support is needed but not installed."""
+
+
 class UnsupportedMediaTypeError(Exception):
     """Exception raised when the media type is not supported."""
 
