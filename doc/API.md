@@ -5,11 +5,12 @@ You can use the `PinterestDL` class directly in your Python code to scrape and d
 > **💡 Prefer examples?** Check out the [examples/](../examples/) directory for runnable examples covering all use cases.
 
 > **📦 Optional Dependencies:** Some features require additional packages:
+> - **Browser automation** (`PinterestDL.with_browser()`, the `login` command): Requires `playwright`. Install with `pip install pinterest-dl[browser]`, then `playwright install chromium`
 > - **Image operations** (resolution detection, pruning with `min_resolution`): Requires `pillow`. Install with `pip install pinterest-dl[image]`
 > - **Metadata embedding** (`caption="metadata"`): Requires `pyexiv2`. Install with `pip install pinterest-dl[exif]`
 > - **All features**: Install with `pip install pinterest-dl[all]`
 >
-> Without these optional dependencies, you can still scrape and download images, but features requiring image analysis will raise an informative `ImportError`.
+> Without these optional dependencies, you can still scrape and download images with the API client, but features requiring browser automation or image analysis will raise an informative `ImportError`.
 
 ## Table of Contents
 - [Python API Guide](#python-api-guide)

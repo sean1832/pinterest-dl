@@ -34,13 +34,14 @@ Optional extras add image and metadata features:
 
 | Command | Adds |
 | --- | --- |
+| `pip install pinterest-dl[browser]` | Browser automation for `--client chromium/firefox` and `login` (Playwright) |
 | `pip install pinterest-dl[image]` | Image resolution detection and pruning (Pillow) |
 | `pip install pinterest-dl[exif]` | Embed alt text as EXIF metadata (pyexiv2) |
 | `pip install pinterest-dl[metadata]` | Both of the above |
 
 Some features need extra tools on your system:
 
-- Browser backends: run `playwright install chromium` (or `firefox`) before using `--client chromium/firefox`.
+- Browser backends: install the extra with `pip install pinterest-dl[browser]`, then run `playwright install chromium` (or `firefox`) before using `--client chromium/firefox`. The API client (default) needs neither. To capture cookies from an already-installed browser without Playwright, use `pinterest-dl login --from-browser`.
 - Video to MP4: install [ffmpeg](https://ffmpeg.org/). Without it, use `--skip-remux` to keep the raw .ts file.
 
 See [Optional Dependencies](https://github.com/sean1832/pinterest-dl/blob/main/doc/OPTIONAL_DEPENDENCIES.md) for the full matrix.

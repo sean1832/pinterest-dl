@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Install for development
-pip install -e ".[dev]"          # pytest + pytest-mock
-pip install -e ".[all]"          # + pillow + pyexiv2
+pip install -e ".[dev]"          # pytest + pytest-mock + playwright (needed for browser tests)
+pip install -e ".[all]"          # + pillow + pyexiv2 + playwright
+pip install -e ".[browser]"      # playwright only (browser scraping + login)
 
 # Run tests (integration tests excluded by default)
 pytest tests/
@@ -30,6 +31,8 @@ PinterestDL (factory, __init__.py)
   .with_api()      -> ApiScraper        (fast, reverse-engineered API)
   .with_browser()  -> PlaywrightScraper (browser automation, Playwright)
 ```
+
+**Playwright is an optional dependency** (`[browser]` extra). `import pinterest_dl` must never import it. The three `__init__.py` files in `pinterest_dl/`, `scrapers/`, and `webdriver/` expose Playwright classes lazily via PEP 562 `__getattr__`; `with_browser()` and those `__getattr__`s call `common.ensure_playwright.ensure_playwright()` first, which raises `BrowserDependencyError` (with install guidance) when the package is missing. The factory logs and re-raises (library); the CLI pre-checks with `require_playwright_or_exit()` and prints/exits before launching a browser.
 
 Layers (top to bottom):
 

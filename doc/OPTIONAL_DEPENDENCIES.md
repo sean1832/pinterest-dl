@@ -6,7 +6,8 @@ Starting from version 1.0.x, `pillow` and `pyexiv2` have been moved to optional 
 
 | Feature | Required Package | Install Command |
 |---------|-----------------|-----------------|
-| Core scraping & download | None (built-in) | `pip install pinterest-dl` |
+| Core scraping & download (API client) | None (built-in) | `pip install pinterest-dl` |
+| Browser automation (`--client chromium/firefox`, `login`) | `playwright` | `pip install pinterest-dl[browser]` |
 | Image resolution detection | `pillow` | `pip install pinterest-dl[image]` |
 | Image pruning (`min_resolution`) | `pillow` | `pip install pinterest-dl[image]` |
 | EXIF metadata embedding | `pyexiv2` | `pip install pinterest-dl[exif]` |
@@ -19,6 +20,14 @@ Core functionality only - scraping and downloading without image analysis:
 ```bash
 pip install pinterest-dl
 ```
+
+### With Browser Automation
+Enables the `--client chromium/firefox` scrapers and the interactive `login` command via Playwright:
+```bash
+pip install pinterest-dl[browser]
+playwright install chromium   # download the browser binaries (or: firefox)
+```
+The default API client does not need this. To reuse cookies from a browser you already have, run `pinterest-dl login --from-browser` (Firefox) instead, which needs no Playwright.
 
 ### With Image Operations
 Enables resolution detection and pruning features:
