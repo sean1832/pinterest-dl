@@ -137,4 +137,4 @@ class TestJsonMode:
 
         assert exc.value.code == 1
         assert stdout.getvalue() == ""
-        assert "Error: boom" in stderr.getvalue()
+        assert json.loads(stderr.getvalue()) == {"error": "boom"}

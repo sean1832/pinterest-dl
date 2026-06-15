@@ -152,7 +152,7 @@ class PlaywrightScraper:
             raise ValueError("Invalid cookies file format. Expected a list of cookies.")
 
         if self.verbose:
-            print("Navigate to Pinterest homepage before loading cookies.")
+            logger.debug("Navigate to Pinterest homepage before loading cookies.")
 
         # Navigate to Pinterest first (required before adding cookies)
         self.page.goto("https://www.pinterest.com")
@@ -164,7 +164,7 @@ class PlaywrightScraper:
 
         # Add cookies to context (type: ignore for Playwright's strict typing)
         self.browser.context.add_cookies(pw_cookies)  # type: ignore[arg-type]
-        print(f"Loaded cookies from {cookies_path}")
+        logger.info(f"Loaded cookies from {cookies_path}")
 
         time.sleep(wait_sec)
         return self

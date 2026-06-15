@@ -88,6 +88,7 @@ cat urls.txt | pinterest-dl scrape -f - [options]
 | `--backend [playwright/selenium]` (**NEW**) | Browser automation backend (for browser clients)          | `playwright`   |
 | `--headful`                                 | Show browser window (browser clients only)                | -              |
 | `--incognito`                               | Use incognito mode (browser clients only)                 | -              |
+| `--json` (**NEW**)                          | Print structured JSON to stdout instead of human-readable output | -       |
 | `--verbose`                                 | Enable debug output                                       | -              |
 
 > [!TIP]
@@ -129,6 +130,7 @@ cat queries.txt | pinterest-dl search -f - [options]
 | `--ensure-cap`                       | Require alt text on every image                             | -              |
 | `--cap-from-title`                   | Use image title as caption                                  | -              |
 | `--dump [PATH]` (**NEW**)            | Dump API requests/responses to PATH (default: `.dump`)      | -              |
+| `--json` (**NEW**)                   | Print structured JSON to stdout instead of human-readable output | -         |
 | `--verbose`                          | Enable debug output                                         | -              |
 
 ---
@@ -149,4 +151,31 @@ pinterest-dl download <cache.json> [options]
 | `--skip-remux` (**NEW**)             | Skip ffmpeg remux, output raw .ts file (no ffmpeg needed) | -                   |
 | `--caption [txt/json/metadata/none]` | Caption format                                            | `none`              |
 | `--ensure-cap`                       | Require alt text on every image                           | -                   |
+| `--json` (**NEW**)                   | Print structured JSON to stdout instead of human-readable output | -            |
 | `--verbose`                          | Enable debug output                                       | -                   |
+
+---
+
+### JSON output (`--json`)
+
+`scrape`, `search`, and `download` accept `--json` for machine-readable output. When set:
+
+- Human-readable text is suppressed; a single JSON object is written to stdout on completion.
+- Errors are written to stderr as `{"error": <message>}`, so stdout stays clean for piping.
+- Without `-o`/`--output`, no files are downloaded -- only metadata is returned. With `--output`, files are downloaded and each item gains a `local_path`.
+- `--cache` still writes the cache file in JSON mode.
+
+Output shape:
+
+```jsonc
+// scrape / search
+{"command": "scrape", "results": [{"input": "<url>", "items": [ ... ]}]}
+
+// download
+{"command": "download", "input": "cache.json", "items": [ ... ]}
+```
+
+```bash
+# Pipe scraped metadata into jq without downloading anything
+pinterest-dl scrape "<pin_url>" -n 10 --json | jq '.results[0].items[].src'
+```

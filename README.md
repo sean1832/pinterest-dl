@@ -75,6 +75,9 @@ pinterest-dl scrape "<pin_url>" --video -o ./output
 # Reach a private board: log in once, then pass the cookies
 pinterest-dl login -o cookies.json
 pinterest-dl scrape "<private_board_url>" -c cookies.json -o ./output
+
+# Machine-readable output: emit JSON to stdout (no -o means metadata only)
+pinterest-dl scrape "<pin_url>" -n 10 --json | jq '.results[0].items[].src'
 ```
 
 Read the full [CLI guide](https://github.com/sean1832/pinterest-dl/blob/main/doc/CLI.md) for every command and option.
