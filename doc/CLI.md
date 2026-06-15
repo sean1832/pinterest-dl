@@ -21,21 +21,28 @@ pinterest-dl [command] [options]
 Authenticate to Pinterest and save browser cookies for private boards/pins.
 
 ```bash
-pinterest-dl login [options]
+# Recommended - reads cookies from your already-installed Firefox (no extra deps):
+pinterest-dl login --from-browser -o cookies.json
+
+# Alternative - automated login via Playwright (requires: pip install pinterest-dl[browser]):
+pinterest-dl login -o cookies.json
 ```
 
 ![login](images/pinterest-dl-login.gif)
 
-| Options                                     | Description                | Default        |
-| ------------------------------------------- | -------------------------- | -------------- |
-| `-o`, `--output [file]`                     | Path to save cookies file  | `cookies.json` |
-| `--client [chromium/firefox]`               | Browser type to use        | `chromium`     |
-| `--headful`                                 | Show browser window        | -              |
-| `--incognito`                               | Use incognito mode         | -              |
-| `--verbose`                                 | Enable debug output        | -              |
+| Options                                     | Description                                                                 | Default        |
+| ------------------------------------------- | --------------------------------------------------------------------------- | -------------- |
+| `-o`, `--output [file]`                     | Path to save cookies file                                                   | `cookies.json` |
+| `--from-browser`                            | Read cookies from your installed Firefox browser (no Playwright required)   | -              |
+| `--client [chromium/firefox]`               | Playwright browser to use for automated login (requires `[browser]` extra)  | `chromium`     |
+| `--headful`                                 | Show browser window (Playwright only)                                       | -              |
+| `--incognito`                               | Use incognito mode (Playwright only)                                        | -              |
+| `--verbose`                                 | Enable debug output                                                         | -              |
 
-> [!TIP]
->  After running `login`, you'll be prompted for your Pinterest email/password. Cookies are then saved to the specified file.
+> [!NOTE]
+> **No Playwright installed?** Use `--from-browser` to extract cookies from your existing Firefox installation -- no extra packages needed. Chromium-based browsers (Chrome, Edge) are not supported for `--from-browser` due to OS-level cookie encryption.
+>
+> **Want automated login?** Install the browser extra first: `pip install pinterest-dl[browser] && playwright install chromium`. Then run `pinterest-dl login` without `--from-browser`.
 
 
 ---

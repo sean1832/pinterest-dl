@@ -73,7 +73,10 @@ pinterest-dl search "nature photography" -o ./output -n 30
 pinterest-dl scrape "<pin_url>" --video -o ./output
 
 # Reach a private board: log in once, then pass the cookies
-pinterest-dl login -o cookies.json
+# No extra install needed - reads cookies from your Firefox browser:
+pinterest-dl login --from-browser -o cookies.json
+# Or use Playwright (requires: pip install pinterest-dl[browser] && playwright install chromium):
+# pinterest-dl login -o cookies.json
 pinterest-dl scrape "<private_board_url>" -c cookies.json -o ./output
 
 # Machine-readable output: emit JSON to stdout (no -o means metadata only)

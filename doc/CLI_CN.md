@@ -22,23 +22,30 @@ pinterest-dl [命令] [选项]
 获取浏览器 cookies 用于访问私密画板和图钉。
 
 ```bash
-pinterest-dl login [选项]
+# 推荐方式 - 从已安装的 Firefox 浏览器读取 cookies（无需额外依赖）：
+pinterest-dl login --from-browser -o cookies.json
+
+# 备选方式 - 通过 Playwright 自动登录（需要：pip install pinterest-dl[browser]）：
+pinterest-dl login -o cookies.json
 ```
 
 ![登录演示](images/pinterest-dl-login.gif)
 
 #### 选项
 
-| 选项                              | 说明             | 默认值         |
-| --------------------------------- | ---------------- | -------------- |
-| `-o`, `--output [文件]`           | cookies 保存路径 | `cookies.json` |
-| `--client [chromium/firefox]`     | 使用的浏览器类型 | `chromium`     |
-| `--headful`                       | 显示浏览器窗口   | -              |
-| `--incognito`                     | 启用无痕模式     | -              |
-| `--verbose`                       | 显示调试信息     | -              |
+| 选项                              | 说明                                                            | 默认值         |
+| --------------------------------- | --------------------------------------------------------------- | -------------- |
+| `-o`, `--output [文件]`           | cookies 保存路径                                                | `cookies.json` |
+| `--from-browser`                  | 从已安装的 Firefox 浏览器读取 cookies（无需 Playwright）        | -              |
+| `--client [chromium/firefox]`     | Playwright 自动登录使用的浏览器（需要 `[browser]` 扩展包）      | `chromium`     |
+| `--headful`                       | 显示浏览器窗口（仅限 Playwright 模式）                          | -              |
+| `--incognito`                     | 启用无痕模式（仅限 Playwright 模式）                            | -              |
+| `--verbose`                       | 显示调试信息                                                    | -              |
 
-> [!TIP]
-> 执行后会提示输入 Pinterest 账号密码，成功登录后 cookies 将保存到指定文件。
+> [!NOTE]
+> **未安装 Playwright？** 使用 `--from-browser` 从已有的 Firefox 浏览器中提取 cookies，无需任何额外依赖。由于系统级 cookie 加密机制，基于 Chromium 的浏览器（Chrome、Edge）不支持 `--from-browser`。
+>
+> **需要自动登录？** 先安装浏览器扩展包：`pip install pinterest-dl[browser] && playwright install chromium`，然后运行 `pinterest-dl login`（不加 `--from-browser`）。
 
 
 ---

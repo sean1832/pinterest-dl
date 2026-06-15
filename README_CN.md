@@ -72,7 +72,10 @@ pinterest-dl search "自然摄影" -o ./output -n 30
 pinterest-dl scrape "<pin_url>" --video -o ./output
 
 # 访问私密画板：先登录保存 cookies，再使用
-pinterest-dl login -o cookies.json
+# 推荐方式 - 无需额外安装，从已有 Firefox 浏览器读取 cookies：
+pinterest-dl login --from-browser -o cookies.json
+# 备选方式 - 使用 Playwright（需要：pip install pinterest-dl[browser] && playwright install chromium）：
+# pinterest-dl login -o cookies.json
 pinterest-dl scrape "<private_board_url>" -c cookies.json -o ./output
 ```
 
