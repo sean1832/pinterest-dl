@@ -148,42 +148,6 @@ def example_4_cookies_with_search():
     print()
 
 
-def example_5_selenium_login():
-    """Alternative: Login using Selenium (legacy)."""
-    print("Example 5: Selenium Login (Legacy)")
-    print("-" * 50)
-
-    import warnings
-
-    email = input("Enter Pinterest email: ")
-    password = os.getenv("PINTEREST_PASSWORD")
-
-    if not password:
-        print("Warning: Set PINTEREST_PASSWORD environment variable")
-        return
-
-    # Suppress deprecation warning
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-
-        # Login using Selenium
-        cookies = (
-            PinterestDL.with_selenium(
-                browser_type="chrome",  # or 'firefox'
-                headless=True,
-            )
-            .login(email, password)
-            .get_cookies(after_sec=7)
-        )
-
-    # Save cookies
-    with open("cookies_selenium.json", "w") as f:
-        json.dump(cookies, f, indent=4)
-
-    print("> Cookies saved using Selenium (legacy method)")
-    print()
-
-
 if __name__ == "__main__":
     print("=" * 50)
     print("Pinterest-DL Authentication Examples")
@@ -195,10 +159,9 @@ if __name__ == "__main__":
     print("2. Load cookies from file")
     print("3. Use cookies path directly")
     print("4. Cookies with search")
-    print("5. Selenium login (legacy)")
     print()
 
-    choice = input("Enter choice (1-5): ").strip()
+    choice = input("Enter choice (1-4): ").strip()
 
     if choice == "1":
         example_1_login_and_save_cookies()
@@ -208,8 +171,6 @@ if __name__ == "__main__":
         example_3_use_cookies_path_directly()
     elif choice == "4":
         example_4_cookies_with_search()
-    elif choice == "5":
-        example_5_selenium_login()
     else:
         print("Invalid choice. Run the script again.")
 
