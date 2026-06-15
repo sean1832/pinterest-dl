@@ -236,6 +236,282 @@ def get_parser() -> argparse.ArgumentParser:
 # fmt: on
 
 
+def run_login(args: argparse.Namespace) -> None:
+    """Drive a browser login and persist the captured cookies."""
+    email = input("Enter Pinterest email: ")
+    password = getpass("Enter Pinterest password: ")
+
+    print(f"\nWaiting {args.wait} seconds after login to capture cookies...")
+    print("(Increase with --wait if Pinterest requires more time for authentication)\n")
+
+    # ENABLE images for login (needed for anti-bot)
+    scraper = PinterestDL.with_browser(
+        browser_type=args.client,
+        headless=not args.headful,
+        incognito=args.incognito,
+        verbose=args.verbose,
+        enable_images=True,  # Required for login to work properly
+    )
+    cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
+    scraper.close()
+
+    if not validate_cookies_authenticated(cookies):
+        print("\n[WARNING] Login may have failed!")
+        print("The captured cookies do not indicate an authenticated session (_auth != 1).")
+        print("This usually means:")
+        print("  - Login credentials were incorrect")
+        print("  - Pinterest blocked the login (captcha, verification required)")
+        print("  - Not enough time to complete login (try --headful and increase --wait)")
+        print(f"  - Current wait time: {args.wait} seconds (increase with --wait 30 or higher)")
+        print("\nCookies will still be saved, but they likely won't work for private boards.")
+        print(f"Saved to: '{args.output}'\n")
+        sys.exit(1)
+
+    io.write_json(cookies, args.output, 4)
+    print(f"\n[SUCCESS] Authenticated cookies saved to '{args.output}'")
+
+    print("\nNote:")
+    print("Please keep your cookies file safe and do not share it with anyone.")
+    print(
+        "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
+    )
+    print("Example:")
+    print(
+        r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -n 10 --cookies .\cookies.json'
+    )
+    print("\nDone.")
+
+
+def scrape_url_browser(
+    args: argparse.Namespace, url: str, num: int, json_mode: bool
+) -> List[PinterestMedia] | None:
+    """Scrape a single URL with a Playwright browser client."""
+    if args.related_only and not json_mode:
+        print("Warning: --related-only requires the API client; ignoring.")
+
+    # DISABLE images for scraping performance
+    scraper = PinterestDL.with_browser(
+        browser_type=args.client,
+        timeout=args.timeout,
+        headless=not args.headful,
+        incognito=args.incognito,
+        verbose=args.verbose,
+        ensure_alt=args.ensure_cap,
+        enable_images=False,
+    )
+    try:
+        scraper = scraper.with_cookies_path(args.cookies)
+        if json_mode and not args.output:
+            imgs = scraper.scrape(url, num)
+            write_media_cache(imgs, args.cache)
+            return imgs
+        return scraper.scrape_and_download(
+            url,
+            args.output,
+            num,
+            min_resolution=parse_resolution(args.resolution) if args.resolution else None,
+            cache_path=args.cache,
+            caption=args.caption,
+        )
+    finally:
+        scraper.close()
+
+
+def scrape_url_api(
+    args: argparse.Namespace, url: str, num: int, is_pin: bool, json_mode: bool
+) -> List[PinterestMedia] | None:
+    """Scrape a single URL with the reverse-engineered API client."""
+    if (args.incognito or args.headful) and not json_mode:
+        print("Warning: Incognito and headful mode is only available for browser clients.")
+
+    related_only = args.related_only and is_pin
+    if args.related_only and not is_pin and not json_mode:
+        print(f"Warning: --related-only only applies to pin URLs; scraping {url} normally.")
+
+    api = PinterestDL.with_api(
+        timeout=args.timeout,
+        verbose=args.verbose,
+        ensure_alt=args.ensure_cap,
+        dump=args.dump,
+    ).with_cookies_path(args.cookies)
+
+    if json_mode and not args.output:
+        scrape_fn = api.related if related_only else api.scrape
+        imgs = scrape_fn(
+            url,
+            num,
+            min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+            delay=args.delay,
+            caption_from_title=args.cap_from_title,
+        )
+        write_media_cache(imgs, args.cache)
+        return imgs
+
+    download = api.related_and_download if related_only else api.scrape_and_download
+    with scrape_progress(num, "Scraping", args.verbose or json_mode) as on_progress:
+        return download(
+            url,
+            args.output,
+            num,
+            download_streams=args.video,
+            skip_remux=args.skip_remux,
+            min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+            cache_path=args.cache,
+            caption=args.caption,
+            delay=args.delay,
+            caption_from_title=args.cap_from_title,
+            on_progress=on_progress,
+        )
+
+
+def run_scrape(args: argparse.Namespace, json_mode: bool) -> None:
+    """Scrape every input URL, downloading or emitting JSON per the flags."""
+    urls = combine_inputs(args.urls, args.file)
+    if not urls:
+        if json_mode:
+            emit_json({"command": "scrape", "results": []})
+        else:
+            print("No URLs provided. Please provide at least one URL.")
+        return
+
+    if args.cookies:
+        check_and_warn_invalid_cookies(args.cookies, quiet=json_mode)
+
+    json_results: list[dict[str, Any]] = []
+    for url in urls:
+        url = sanitize_url(url)
+        is_pin = looks_like_pin_url(url)
+        # Pin URLs default to the pin itself; boards/sections default to a full page.
+        num = args.num if args.num is not None else (1 if is_pin else 100)
+        if not json_mode:
+            print(f"Scraping {url}...")
+
+        if args.client in ("chromium", "firefox"):
+            imgs = scrape_url_browser(args, url, num, json_mode)
+        else:
+            imgs = scrape_url_api(args, url, num, is_pin, json_mode)
+
+        if not json_mode and imgs and len(imgs) != num:
+            print(
+                f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {num}). Some may have been duplicates, filtered, or failed to download."
+            )
+        if json_mode:
+            json_results.append({"input": url, "items": media_list_to_dicts(imgs or [])})
+
+    if json_mode:
+        emit_json({"command": "scrape", "results": json_results})
+    else:
+        print("\nDone.")
+
+
+def search_query_api(
+    args: argparse.Namespace, query: str, json_mode: bool
+) -> List[PinterestMedia] | None:
+    """Run a single search query with the API client."""
+    if (args.incognito or args.headful) and not json_mode:
+        print("Warning: Incognito and headful mode is only available for browser clients.")
+
+    api = PinterestDL.with_api(
+        timeout=args.timeout,
+        verbose=args.verbose,
+        ensure_alt=args.ensure_cap,
+        dump=args.dump,
+    ).with_cookies_path(args.cookies)
+
+    if json_mode and not args.output:
+        imgs = api.search(
+            query,
+            args.num,
+            min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+            delay=args.delay,
+            caption_from_title=args.cap_from_title,
+        )
+        write_media_cache(imgs, args.cache)
+        return imgs
+
+    with scrape_progress(args.num, "Searching", args.verbose or json_mode) as on_progress:
+        return api.search_and_download(
+            query,
+            args.output,
+            args.num,
+            download_streams=args.video,
+            skip_remux=args.skip_remux,
+            min_resolution=parse_resolution(args.resolution) if args.resolution else (0, 0),
+            cache_path=args.cache,
+            caption=args.caption,
+            delay=args.delay,
+            caption_from_title=args.cap_from_title,
+            on_progress=on_progress,
+        )
+
+
+def run_search(args: argparse.Namespace, json_mode: bool) -> None:
+    """Search every input query, downloading or emitting JSON per the flags."""
+    querys = combine_inputs(args.querys, args.file)
+    if not querys:
+        if json_mode:
+            emit_json({"command": "search", "results": []})
+        else:
+            print("No queries provided. Please provide at least one query.")
+        return
+
+    if args.cookies:
+        check_and_warn_invalid_cookies(args.cookies, quiet=json_mode)
+
+    if args.client in ("chromium", "firefox"):
+        raise NotImplementedError("Search is currently not available for browser clients.")
+
+    json_results: list[dict[str, Any]] = []
+    for query in querys:
+        if not json_mode:
+            print(f"Searching {query}...")
+
+        imgs = search_query_api(args, query, json_mode)
+
+        if not json_mode and imgs and len(imgs) != args.num:
+            print(
+                f"Warning: Only ({len(imgs)}) images were successfully downloaded from {query} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
+            )
+        if json_mode:
+            json_results.append({"input": query, "items": media_list_to_dicts(imgs or [])})
+
+    if json_mode:
+        emit_json({"command": "search", "results": json_results})
+    else:
+        print("\nDone.")
+
+
+def run_download(args: argparse.Namespace, json_mode: bool) -> None:
+    """Download media from a previously cached JSON file and post-process it."""
+    img_datas = io.read_json(args.input)
+    images: List[PinterestMedia] = []
+    for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
+        img = PinterestMedia.from_dict(img_data)
+        if args.ensure_cap:
+            if img.alt and img.alt.strip():
+                images.append(img)
+        else:
+            images.append(img)
+
+    output_dir = args.output or str(Path(args.input).stem)
+    downloaded_imgs = operations.download_media(images, output_dir, args.video, args.skip_remux)
+
+    kept = operations.prune_images(downloaded_imgs, args.resolution, args.verbose)
+    if args.caption == "txt" or args.caption == "json":
+        operations.add_captions_to_file(kept, output_dir, args.caption, args.verbose)
+    elif args.caption == "metadata":
+        operations.add_captions_to_meta(kept, args.verbose)
+    elif args.caption != "none":
+        raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
+
+    if json_mode:
+        emit_json(
+            {"command": "download", "input": args.input, "items": media_list_to_dicts(kept)}
+        )
+    else:
+        print("\nDone.")
+
+
 def main() -> None:
     parser = get_parser()
     args = parser.parse_args()
@@ -246,277 +522,13 @@ def main() -> None:
 
     try:
         if args.cmd == "login":
-            email = input("Enter Pinterest email: ")
-            password = getpass("Enter Pinterest password: ")
-
-            print(f"\nWaiting {args.wait} seconds after login to capture cookies...")
-            print("(Increase with --wait if Pinterest requires more time for authentication)\n")
-
-            # ENABLE images for login (needed for anti-bot)
-            scraper = PinterestDL.with_browser(
-                browser_type=args.client,
-                headless=not args.headful,
-                incognito=args.incognito,
-                verbose=args.verbose,
-                enable_images=True,  # Required for login to work properly
-            )
-            cookies = scraper.login(email, password).get_cookies(after_sec=args.wait)
-            scraper.close()
-
-            # Validate cookies are authenticated
-            if not validate_cookies_authenticated(cookies):
-                print("\n[WARNING] Login may have failed!")
-                print("The captured cookies do not indicate an authenticated session (_auth != 1).")
-                print("This usually means:")
-                print("  - Login credentials were incorrect")
-                print("  - Pinterest blocked the login (captcha, verification required)")
-                print("  - Not enough time to complete login (try --headful and increase --wait)")
-                print(
-                    f"  - Current wait time: {args.wait} seconds (increase with --wait 30 or higher)"
-                )
-                print(
-                    "\nCookies will still be saved, but they likely won't work for private boards."
-                )
-                print(f"Saved to: '{args.output}'\n")
-                sys.exit(1)
-
-            # save cookies
-            io.write_json(cookies, args.output, 4)
-            print(f"\n[SUCCESS] Authenticated cookies saved to '{args.output}'")
-
-            # print instructions
-            print("\nNote:")
-            print("Please keep your cookies file safe and do not share it with anyone.")
-            print(
-                "You can use these cookies to scrape private boards. Use the '--cookies [file]' option."
-            )
-            print("Example:")
-            print(
-                r'    pinterest-dl scrape "https://www.pinterest.com/username/your-board/" "output/pin" -n 10 --cookies .\cookies.json'
-            )
-            print("\nDone.")
+            run_login(args)
         elif args.cmd == "scrape":
-            urls = combine_inputs(args.urls, args.file)
-            if not urls:
-                if json_mode:
-                    emit_json({"command": "scrape", "results": []})
-                else:
-                    print("No URLs provided. Please provide at least one URL.")
-                return
-
-            # Check cookies validity if provided
-            if args.cookies:
-                check_and_warn_invalid_cookies(args.cookies, quiet=json_mode)
-
-            json_results: list[dict[str, Any]] = []
-
-            for url in urls:
-                url = sanitize_url(url)
-                is_pin = looks_like_pin_url(url)
-                # Pin URLs default to the pin itself; boards/sections default to a full page.
-                num = args.num if args.num is not None else (1 if is_pin else 100)
-                if not json_mode:
-                    print(f"Scraping {url}...")
-                if args.client in ["chromium", "firefox"]:
-                    if args.related_only and not json_mode:
-                        print("Warning: --related-only requires the API client; ignoring.")
-                    # DISABLE images for scraping performance
-                    scraper = PinterestDL.with_browser(
-                        browser_type=args.client,
-                        timeout=args.timeout,
-                        headless=not args.headful,
-                        incognito=args.incognito,
-                        verbose=args.verbose,
-                        ensure_alt=args.ensure_cap,
-                        enable_images=False,  # Disable images for faster scraping
-                    )
-                    try:
-                        scraper = scraper.with_cookies_path(args.cookies)
-                        if json_mode and not args.output:
-                            imgs = scraper.scrape(url, num)
-                            write_media_cache(imgs, args.cache)
-                        else:
-                            imgs = scraper.scrape_and_download(
-                                url,
-                                args.output,
-                                num,
-                                min_resolution=parse_resolution(args.resolution)
-                                if args.resolution
-                                else None,
-                                cache_path=args.cache,
-                                caption=args.caption,
-                            )
-                    finally:
-                        scraper.close()
-                else:
-                    if (args.incognito or args.headful) and not json_mode:
-                        print(
-                            "Warning: Incognito and headful mode is only available for browser clients."
-                        )
-
-                    related_only = args.related_only and is_pin
-                    if args.related_only and not is_pin and not json_mode:
-                        print(
-                            f"Warning: --related-only only applies to pin URLs; scraping {url} normally."
-                        )
-
-                    api = PinterestDL.with_api(
-                        timeout=args.timeout,
-                        verbose=args.verbose,
-                        ensure_alt=args.ensure_cap,
-                        dump=args.dump,
-                    ).with_cookies_path(args.cookies)
-
-                    if json_mode and not args.output:
-                        scrape_fn = api.related if related_only else api.scrape
-                        imgs = scrape_fn(
-                            url,
-                            num,
-                            min_resolution=parse_resolution(args.resolution)
-                            if args.resolution
-                            else (0, 0),
-                            delay=args.delay,
-                            caption_from_title=args.cap_from_title,
-                        )
-                        write_media_cache(imgs, args.cache)
-                    else:
-                        download = api.related_and_download if related_only else api.scrape_and_download
-                        with scrape_progress(num, "Scraping", args.verbose or json_mode) as on_progress:
-                            imgs = download(
-                                url,
-                                args.output,
-                                num,
-                                download_streams=args.video,
-                                skip_remux=args.skip_remux,
-                                min_resolution=parse_resolution(args.resolution)
-                                if args.resolution
-                                else (0, 0),
-                                cache_path=args.cache,
-                                caption=args.caption,
-                                delay=args.delay,
-                                caption_from_title=args.cap_from_title,
-                                on_progress=on_progress,
-                            )
-                if not json_mode and imgs and len(imgs) != num:
-                    print(
-                        f"Warning: Only ({len(imgs)}) images were successfully downloaded from {url} (requested: {num}). Some may have been duplicates, filtered, or failed to download."
-                    )
-                if json_mode:
-                    json_results.append({"input": url, "items": media_list_to_dicts(imgs or [])})
-
-            if json_mode:
-                emit_json({"command": "scrape", "results": json_results})
-            else:
-                print("\nDone.")
+            run_scrape(args, json_mode)
         elif args.cmd == "search":
-            querys = combine_inputs(args.querys, args.file)
-            if not querys:
-                if json_mode:
-                    emit_json({"command": "search", "results": []})
-                else:
-                    print("No queries provided. Please provide at least one query.")
-                return
-
-            # Check cookies validity if provided
-            if args.cookies:
-                check_and_warn_invalid_cookies(args.cookies, quiet=json_mode)
-
-            json_results: list[dict[str, Any]] = []
-
-            for query in querys:
-                if not json_mode:
-                    print(f"Searching {query}...")
-                if args.client in ["chromium", "firefox"]:
-                    raise NotImplementedError(
-                        "Search is currently not available for browser clients."
-                    )
-                else:
-                    if (args.incognito or args.headful) and not json_mode:
-                        print(
-                            "Warning: Incognito and headful mode is only available for browser clients."
-                        )
-
-                    api = PinterestDL.with_api(
-                        timeout=args.timeout,
-                        verbose=args.verbose,
-                        ensure_alt=args.ensure_cap,
-                        dump=args.dump,
-                    ).with_cookies_path(args.cookies)
-
-                    if json_mode and not args.output:
-                        imgs = api.search(
-                            query,
-                            args.num,
-                            min_resolution=parse_resolution(args.resolution)
-                            if args.resolution
-                            else (0, 0),
-                            delay=args.delay,
-                            caption_from_title=args.cap_from_title,
-                        )
-                        write_media_cache(imgs, args.cache)
-                    else:
-                        with scrape_progress(args.num, "Searching", args.verbose or json_mode) as on_progress:
-                            imgs = api.search_and_download(
-                                query,
-                                args.output,
-                                args.num,
-                                download_streams=args.video,
-                                skip_remux=args.skip_remux,
-                                min_resolution=parse_resolution(args.resolution)
-                                if args.resolution
-                                else (0, 0),
-                                cache_path=args.cache,
-                                caption=args.caption,
-                                delay=args.delay,
-                                caption_from_title=args.cap_from_title,
-                                on_progress=on_progress,
-                            )
-                    if not json_mode and imgs and len(imgs) != args.num:
-                        print(
-                            f"Warning: Only ({len(imgs)}) images were successfully downloaded from {query} (requested: {args.num}). Some may have been duplicates, filtered, or failed to download."
-                        )
-                if json_mode:
-                    json_results.append({"input": query, "items": media_list_to_dicts(imgs or [])})
-
-            if json_mode:
-                emit_json({"command": "search", "results": json_results})
-            else:
-                print("\nDone.")
+            run_search(args, json_mode)
         elif args.cmd == "download":
-            # prepare image url data
-            img_datas = io.read_json(args.input)
-            images: List[PinterestMedia] = []
-            for img_data in img_datas if isinstance(img_datas, list) else [img_datas]:
-                img = PinterestMedia.from_dict(img_data)
-                if args.ensure_cap:
-                    if img.alt and img.alt.strip():
-                        images.append(img)
-                else:
-                    images.append(img)
-
-            # download images
-            output_dir = args.output or str(Path(args.input).stem)
-            downloaded_imgs = operations.download_media(
-                images, output_dir, args.video, args.skip_remux
-            )
-
-            # post process
-            kept = operations.prune_images(downloaded_imgs, args.resolution, args.verbose)
-            if args.caption == "txt" or args.caption == "json":
-                operations.add_captions_to_file(
-                    kept,
-                    output_dir,
-                    args.caption,
-                    args.verbose,
-                )
-            elif args.caption == "metadata":
-                operations.add_captions_to_meta(kept, args.verbose)
-            elif args.caption != "none":
-                raise ValueError("Invalid caption mode. Use 'txt', 'json', 'metadata', or 'none'.")
-            if json_mode:
-                emit_json({"command": "download", "input": args.input, "items": media_list_to_dicts(kept)})
-            else:
-                print("\nDone.")
+            run_download(args, json_mode)
         else:
             parser.print_help()
     except KeyboardInterrupt:
