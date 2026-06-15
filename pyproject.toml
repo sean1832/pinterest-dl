@@ -27,12 +27,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=9.0.3", "pytest-mock>=3.15.1", "playwright>=1.40.0"]
 browser = ["playwright>=1.40.0"]
 image = ["pillow==12.2.0"]
-exif = ["pyexiv2"]
-metadata = ["pillow==12.2.0", "pyexiv2"]
-all = ["pillow==12.2.0", "pyexiv2", "playwright>=1.40.0"]
+metadata = ["pinterest-dl[image]", "pyexiv2"]
+all = ["pinterest-dl[browser,metadata]"]
+dev = ["pinterest-dl[all]", "pytest>=9.0.3", "pytest-mock>=3.15.1"]
 
 [project.scripts]
 pinterest-dl = "pinterest_dl.cli:main"

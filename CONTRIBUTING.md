@@ -26,11 +26,9 @@ cd pinterest-dl
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-# Install with development dependencies (pytest + pytest-mock)
+# Install for development: all optional features + test tooling (pytest, pytest-mock).
+# This is what you want so the full test suite runs without skips.
 pip install -e ".[dev]"
-
-# Or install everything, including optional image/exif features
-pip install -e ".[all]"
 ```
 
 ## Running Tests

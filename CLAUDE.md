@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Install for development
-pip install -e ".[dev]"          # pytest + pytest-mock + playwright (needed for browser tests)
-pip install -e ".[all]"          # + pillow + pyexiv2 + playwright
+pip install -e ".[dev]"          # everything: all features + pytest + pytest-mock
+pip install -e ".[all]"          # runtime extras only: browser + pillow + pyexiv2
 pip install -e ".[browser]"      # playwright only (browser scraping + login)
 
 # Run tests (integration tests excluded by default)

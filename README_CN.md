@@ -33,13 +33,13 @@ pip install pinterest-dl
 
 | 命令 | 新增功能 |
 | --- | --- |
+| `pip install pinterest-dl[browser]` | 浏览器自动化（`--client chromium/firefox` 和 `login` 命令，需要 Playwright） |
 | `pip install pinterest-dl[image]` | 图像分辨率检测和修剪（Pillow） |
-| `pip install pinterest-dl[exif]` | 将 alt 文本嵌入 EXIF 元数据（pyexiv2） |
-| `pip install pinterest-dl[metadata]` | 以上两者 |
+| `pip install pinterest-dl[metadata]` | 将 alt 文本嵌入 EXIF 元数据（添加 pyexiv2，已包含 `[image]`） |
 
 部分功能还需要系统级工具：
 
-- 浏览器后端：使用 `--client chromium/firefox` 之前，先运行 `playwright install chromium`（或 `firefox`）。
+- 浏览器后端：先安装 `pip install pinterest-dl[browser]`，再运行 `playwright install chromium`（或 `firefox`）。默认 API 客户端无需安装。如需从已有浏览器提取 cookies，可使用 `pinterest-dl login --from-browser`（Firefox），无需 Playwright。
 - 视频转 MP4：需要安装 [ffmpeg](https://ffmpeg.org/)。不安装时可用 `--skip-remux` 保留原始 .ts 文件。
 
 完整说明见[可选依赖文档](https://github.com/sean1832/pinterest-dl/blob/main/doc/OPTIONAL_DEPENDENCIES_CN.md)。

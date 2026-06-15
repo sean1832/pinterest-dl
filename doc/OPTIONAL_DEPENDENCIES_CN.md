@@ -6,11 +6,12 @@
 
 | 功能 | 所需包 | 安装命令 |
 |------|--------|----------|
-| 核心抓取与下载 | 无（内置） | `pip install pinterest-dl` |
+| 核心抓取与下载（API 客户端） | 无（内置） | `pip install pinterest-dl` |
+| 浏览器自动化（`--client chromium/firefox`、`login`） | `playwright` | `pip install pinterest-dl[browser]` |
 | 图像分辨率检测 | `pillow` | `pip install pinterest-dl[image]` |
 | 图像修剪（`min_resolution`） | `pillow` | `pip install pinterest-dl[image]` |
-| EXIF 元数据嵌入 | `pyexiv2` | `pip install pinterest-dl[exif]` |
-| 所有图像/元数据功能 | 两者 | `pip install pinterest-dl[all]` |
+| EXIF 元数据嵌入 | `pillow` + `pyexiv2` | `pip install pinterest-dl[metadata]` |
+| 所有可选功能 | 以上全部 | `pip install pinterest-dl[all]` |
 
 ## 安装方式
 
@@ -20,30 +21,36 @@
 pip install pinterest-dl
 ```
 
+### 包含浏览器自动化
+启用 `--client chromium/firefox` 抓取器和交互式 `login` 命令（基于 Playwright）：
+```bash
+pip install pinterest-dl[browser]
+playwright install chromium   # 下载浏览器二进制文件（或：firefox）
+```
+默认 API 客户端无需此依赖。如需复用已有浏览器中的 cookies，可改用 `pinterest-dl login --from-browser`（Firefox），无需安装 Playwright。
+
 ### 包含图像操作
-启用分辨率检测和图像修剪功能：
+启用分辨率检测和图像修剪功能（Pillow）：
 ```bash
 pip install pinterest-dl[image]
 ```
 
 ### 包含 EXIF 元数据支持
-启用将 alt 文本嵌入图片 EXIF 元数据的功能：
+启用将 alt 文本嵌入图片 EXIF 元数据的功能。添加 pyexiv2，并已包含上述图像操作：
 ```bash
-pip install pinterest-dl[exif]
+pip install pinterest-dl[metadata]
 ```
 
 ### 包含所有可选功能
-同时安装 Pillow 和 pyexiv2：
+同时安装浏览器、图像和元数据相关依赖：
 ```bash
-pip install pinterest-dl[metadata]
-# 或
 pip install pinterest-dl[all]
 ```
 
 ### 开发环境
-包含测试工具（pytest、pytest-mock）：
+包含所有可选功能及测试工具（pytest、pytest-mock），确保完整测试套件无跳过运行：
 ```bash
-pip install pinterest-dl[dev,all]
+pip install pinterest-dl[dev]
 ```
 
 ## 不安装可选依赖能用哪些功能？
@@ -112,11 +119,8 @@ pip install --upgrade pinterest-dl[all]
 # 如果你用到了 min_resolution：
 pip install --upgrade pinterest-dl[image]
 
-# 如果你用到了 caption="metadata"：
-pip install --upgrade pinterest-dl[exif]
-
-# 两者都用：
-pip install --upgrade pinterest-dl[all]
+# 如果你用到了 caption="metadata"（已包含图像操作）：
+pip install --upgrade pinterest-dl[metadata]
 
 # 两者都不用：
 pip install --upgrade pinterest-dl
@@ -180,11 +184,11 @@ def _get_PIL() -> Any:
 
 ```toml
 [project.optional-dependencies]
-dev = ["pytest>=7.0.0", "pytest-mock>=3.10.0"]
-image = ["pillow==10.4.0"]
-exif = ["pyexiv2"]
-metadata = ["pillow==10.4.0", "pyexiv2"]
-all = ["pillow==10.4.0", "pyexiv2"]
+browser = ["playwright>=1.40.0"]
+image = ["pillow==12.2.0"]
+metadata = ["pinterest-dl[image]", "pyexiv2"]
+all = ["pinterest-dl[browser,metadata]"]
+dev = ["pinterest-dl[all]", "pytest>=9.0.3", "pytest-mock>=3.15.1"]
 ```
 
 ## 常见问题
@@ -211,7 +215,7 @@ pip install pillow pyexiv2
 **我应该用哪种安装方式？**
 - 大多数用户：`pip install pinterest-dl[all]`，最省心
 - 最小安装：`pip install pinterest-dl`，不需要图像分析时用
-- 按需定制：根据实际需求选择 `[image]` 或 `[exif]`
+- 按需定制：根据实际需求选择 `[browser]`、`[image]` 或 `[metadata]`
 
 ## 另请参阅
 

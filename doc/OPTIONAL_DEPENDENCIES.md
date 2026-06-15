@@ -10,8 +10,8 @@ Starting from version 1.0.x, `pillow` and `pyexiv2` have been moved to optional 
 | Browser automation (`--client chromium/firefox`, `login`) | `playwright` | `pip install pinterest-dl[browser]` |
 | Image resolution detection | `pillow` | `pip install pinterest-dl[image]` |
 | Image pruning (`min_resolution`) | `pillow` | `pip install pinterest-dl[image]` |
-| EXIF metadata embedding | `pyexiv2` | `pip install pinterest-dl[exif]` |
-| All image/metadata features | Both | `pip install pinterest-dl[all]` |
+| EXIF metadata embedding | `pillow` + `pyexiv2` | `pip install pinterest-dl[metadata]` |
+| All optional features | All of the above | `pip install pinterest-dl[all]` |
 
 ## Installation Options
 
@@ -30,29 +30,27 @@ playwright install chromium   # download the browser binaries (or: firefox)
 The default API client does not need this. To reuse cookies from a browser you already have, run `pinterest-dl login --from-browser` (Firefox) instead, which needs no Playwright.
 
 ### With Image Operations
-Enables resolution detection and pruning features:
+Enables resolution detection and pruning features (Pillow):
 ```bash
 pip install pinterest-dl[image]
 ```
 
 ### With EXIF Metadata Support
-Enables embedding alt text as EXIF metadata in image files:
+Enables embedding alt text as EXIF metadata in image files. Adds `pyexiv2` and includes the image operations above:
 ```bash
-pip install pinterest-dl[exif]
+pip install pinterest-dl[metadata]
 ```
 
 ### With All Optional Features
-Installs both Pillow and pyexiv2:
+Installs the browser, image, and metadata extras together:
 ```bash
-pip install pinterest-dl[metadata]
-# or
 pip install pinterest-dl[all]
 ```
 
 ### For Development
-Includes testing tools (pytest, pytest-mock):
+Includes all optional features plus testing tools (pytest, pytest-mock), so the full test suite runs without skips:
 ```bash
-pip install pinterest-dl[dev,all]
+pip install pinterest-dl[dev]
 ```
 
 ## What Works Without Optional Dependencies?
@@ -125,11 +123,8 @@ pip install --upgrade pinterest-dl[all]
 # If you use min_resolution:
 pip install --upgrade pinterest-dl[image]
 
-# If you use caption="metadata":
-pip install --upgrade pinterest-dl[exif]
-
-# If you use both:
-pip install --upgrade pinterest-dl[all]
+# If you use caption="metadata" (includes image operations):
+pip install --upgrade pinterest-dl[metadata]
 
 # If you use neither:
 pip install --upgrade pinterest-dl
@@ -193,11 +188,11 @@ Optional dependencies are defined in `pyproject.toml`:
 
 ```toml
 [project.optional-dependencies]
-dev = ["pytest>=7.0.0", "pytest-mock>=3.10.0"]
-image = ["pillow==10.4.0"]
-exif = ["pyexiv2"]
-metadata = ["pillow==10.4.0", "pyexiv2"]
-all = ["pillow==10.4.0", "pyexiv2"]
+browser = ["playwright>=1.40.0"]
+image = ["pillow==12.2.0"]
+metadata = ["pinterest-dl[image]", "pyexiv2"]
+all = ["pinterest-dl[browser,metadata]"]
+dev = ["pinterest-dl[all]", "pytest>=9.0.3", "pytest-mock>=3.15.1"]
 ```
 
 ## FAQ
@@ -225,7 +220,7 @@ pip install pillow pyexiv2
 A: 
 - Most users: `pip install pinterest-dl[all]` (safest, includes everything)
 - Minimal install: `pip install pinterest-dl` (if you don't need image analysis)
-- Custom: Choose `[image]` or `[exif]` based on your needs
+- Custom: Choose `[browser]`, `[image]`, or `[metadata]` based on your needs
 
 ## See Also
 

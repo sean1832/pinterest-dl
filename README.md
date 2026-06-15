@@ -36,8 +36,7 @@ Optional extras add image and metadata features:
 | --- | --- |
 | `pip install pinterest-dl[browser]` | Browser automation for `--client chromium/firefox` and `login` (Playwright) |
 | `pip install pinterest-dl[image]` | Image resolution detection and pruning (Pillow) |
-| `pip install pinterest-dl[exif]` | Embed alt text as EXIF metadata (pyexiv2) |
-| `pip install pinterest-dl[metadata]` | Both of the above |
+| `pip install pinterest-dl[metadata]` | Embed alt text as EXIF metadata (adds pyexiv2; includes `[image]`) |
 
 Some features need extra tools on your system:
 
