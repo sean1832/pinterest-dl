@@ -3,6 +3,7 @@
 import io
 import json
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -138,3 +139,62 @@ class TestJsonMode:
         assert exc.value.code == 1
         assert stdout.getvalue() == ""
         assert json.loads(stderr.getvalue()) == {"error": "boom"}
+
+
+class TestDownloadCommand:
+    """The `download` subcommand re-downloads media from a cached JSON file."""
+
+    @staticmethod
+    def _write_cache(tmp_path, resolutions):
+        items = [
+            {
+                "id": i,
+                "src": f"https://i.pinimg.com/originals/{i}.jpg",
+                "alt": f"pin {i}",
+                "origin": f"https://www.pinterest.com/pin/{i}/",
+                "resolution": {"x": x, "y": y},
+            }
+            for i, (x, y) in enumerate(resolutions, start=1)
+        ]
+        cache = tmp_path / "cache.json"
+        cache.write_text(json.dumps(items))
+        return cache
+
+    @staticmethod
+    def _fake_download(media, output_dir, *args, **kwargs):
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        for item in media:
+            item.local_path = out / f"{item.id}.jpg"
+            item.local_path.write_bytes(b"jpg")
+        return media
+
+    def _run(self, argv):
+        stdout = io.StringIO()
+        with (
+            patch("sys.argv", ["pinterest-dl", *argv]),
+            patch("pinterest_dl.cli.operations.download_media", side_effect=self._fake_download),
+            redirect_stdout(stdout),
+            redirect_stderr(io.StringIO()),
+        ):
+            main()
+        return json.loads(stdout.getvalue())
+
+    def test_download_without_resolution_keeps_everything(self, tmp_path):
+        cache = self._write_cache(tmp_path, [(800, 1200), (300, 300)])
+        out = tmp_path / "out"
+
+        payload = self._run(["download", str(cache), "-o", str(out), "--json"])
+
+        assert payload["command"] == "download"
+        assert [item["id"] for item in payload["items"]] == [1, 2]
+        assert sorted(p.name for p in out.iterdir()) == ["1.jpg", "2.jpg"]
+
+    def test_download_with_resolution_prunes_smaller_media(self, tmp_path):
+        cache = self._write_cache(tmp_path, [(800, 1200), (300, 300)])
+        out = tmp_path / "out"
+
+        payload = self._run(["download", str(cache), "-o", str(out), "-r", "512x512", "--json"])
+
+        assert [item["id"] for item in payload["items"]] == [1]
+        assert [p.name for p in out.iterdir()] == ["1.jpg"]
