@@ -538,7 +538,8 @@ def run_download(args: argparse.Namespace, json_mode: bool) -> None:
     output_dir = args.output or str(Path(args.input).stem)
     downloaded_imgs = operations.download_media(images, output_dir, args.video, args.skip_remux)
 
-    kept = operations.prune_images(downloaded_imgs, args.resolution, args.verbose)
+    min_resolution = parse_resolution(args.resolution) if args.resolution else (0, 0)
+    kept = operations.prune_images(downloaded_imgs, min_resolution, args.verbose)
     if args.caption == "txt" or args.caption == "json":
         operations.add_captions_to_file(kept, output_dir, args.caption, args.verbose)
     elif args.caption == "metadata":
