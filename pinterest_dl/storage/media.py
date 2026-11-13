@@ -140,7 +140,9 @@ def prune_local(
             logger.debug(f"Local path or size not set for {media.src}")
         return False
 
-    if media.resolution < resolution:
+    width, height = media.resolution
+    min_width, min_height = resolution
+    if width < min_width or height < min_height:
         media.local_path.unlink()
         if verbose:
             logger.debug(
